@@ -1,0 +1,70 @@
+<main class="login-page">
+  <div class="login-orb login-orb-top" aria-hidden="true"></div>
+  <div class="login-orb login-orb-bottom" aria-hidden="true"></div>
+
+  <section class="login-shell" aria-label="Bynfor Moment sign in">
+    <aside class="login-hero">
+      <div class="login-brand">
+        <img src="images/bynfor-auctions-logo-small.png" alt="Bynfor" />
+        <span>Connect People. Build Tomorrow.</span>
+      </div>
+
+      <div class="hero-copy">
+        <h1>Moments<br /><strong>For Every Memory</strong></h1>
+        <p class="hero-features">Capture <i>•</i> Share <i>•</i> Relive <i>•</i> Together</p>
+      </div>
+
+      <div class="hero-illustration" aria-hidden="true">
+        <span class="orbit orbit-one"></span><span class="orbit orbit-two"></span>
+        <div class="chat-bubble"><i class="fa fa-quote-right"></i></div>
+        <div class="team-tile"><i class="fa fa-users"></i></div>
+        <div class="folder-tile"><i class="fa fa-star"></i></div>
+        <div class="image-tile"><i class="fa fa-picture-o"></i></div>
+        <div class="chat-window">
+          <div class="window-dots"><b></b><b></b><b></b></div>
+          <div class="contact-row"><span class="contact-avatar cyan"></span><i></i><i></i></div>
+          <div class="contact-row"><span class="contact-avatar purple"></span><i></i><i></i></div>
+        </div>
+        <div class="illustration-base"></div>
+      </div>
+
+      <blockquote>&ldquo;Every moment matters,<br />every memory connects us.&rdquo;</blockquote>
+      <div class="hero-pagination"><b></b><i></i><i></i><span></span></div>
+    </aside>
+
+    <section class="login-card">
+      <label class="language-chip" title="Language">
+        <i class="fa fa-globe" aria-hidden="true"></i>
+        <select [ngModel]="currentLang" (ngModelChange)="changeLang($event)" aria-label="Language">
+          <option *ngFor="let lang of langs" [value]="lang">{{ lang }}</option>
+        </select>
+      </label>
+      <div class="login-card-heading">
+        <h2>{{ 'moment.login.welcome' | i18next }}</h2>
+        <p>{{ 'moment.login.subtitle' | i18next }}</p>
+      </div>
+      <div *ngIf="checking" class="checking"><i class="fa fa-spinner fa-spin" aria-hidden="true"></i> {{ 'moment.login.checking' | i18next }}</div>
+
+      <form *ngIf="!checking" [formGroup]="form" (ngSubmit)="submit()">
+        <label class="login-field">
+          <span>{{ 'moment.login.username' | i18next }}</span>
+          <span class="input-wrap"><i class="fa fa-user-o" aria-hidden="true"></i><input class="login-input" type="text" formControlName="username" autocomplete="username" [placeholder]="'moment.login.usernamePlaceholder' | i18next" /></span>
+        </label>
+        <label class="login-field">
+          <span>{{ 'moment.login.password' | i18next }}</span>
+          <span class="input-wrap"><i class="fa fa-lock" aria-hidden="true"></i><input class="login-input" [type]="showPassword ? 'text' : 'password'" formControlName="password" autocomplete="current-password" [placeholder]="'moment.login.passwordPlaceholder' | i18next" /><button type="button" class="password-visibility" (click)="showPassword = !showPassword" [attr.aria-label]="(showPassword ? 'moment.login.hidePassword' : 'moment.login.showPassword') | i18next"><i class="fa" [ngClass]="showPassword ? 'fa-eye-slash' : 'fa-eye'" aria-hidden="true"></i></button></span>
+        </label>
+        <div class="login-options">
+          <label class="remember-choice"><input type="checkbox" checked /><span><i class="fa fa-check"></i></span>{{ 'moment.login.keepSignedIn' | i18next }}</label>
+          <button type="button" class="forgot-link" (click)="backToMain()">{{ 'moment.login.forgotPassword' | i18next }}</button>
+        </div>
+        <div class="error" *ngIf="error"><i class="fa fa-exclamation-circle" aria-hidden="true"></i>{{ error }}</div>
+        <button class="login-button" type="submit" [disabled]="form.invalid || loading"><i class="fa" [ngClass]="loading ? 'fa-spinner fa-spin' : 'fa-sign-in'" aria-hidden="true"></i><span>{{ loading ? ('moment.login.signingIn' | i18next) : ('moment.login.signin' | i18next) }}</span></button>
+      </form>
+
+      <div class="login-divider"><span></span><p>{{ 'moment.login.secureSignin' | i18next }}</p><span></span></div>
+      <p class="login-help">{{ 'moment.login.noAccount' | i18next }} <button type="button" (click)="backToMain()">{{ 'moment.login.contactAdmin' | i18next }}</button></p>
+      <button type="button" class="back-link" (click)="backToMain()"><i class="fa fa-arrow-left" aria-hidden="true"></i> {{ 'moment.login.backToBynfor' | i18next }}</button>
+    </section>
+  </section>
+</main>

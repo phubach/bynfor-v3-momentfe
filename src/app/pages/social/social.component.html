@@ -1,0 +1,12 @@
+<div class="social-shell">
+  <nav class="social-nav">
+    <div class="nav-tabs">
+      <a routerLink="/social/moment" routerLinkActive="active"><i class="fa fa-clock-o" aria-hidden="true"></i> {{ 'social.momentTab' | i18next }}</a>
+      <a routerLink="/social/video" routerLinkActive="active"><i class="fa fa-play-circle-o" aria-hidden="true"></i> {{ 'social.videoTab' | i18next }}</a>
+    </div>
+    <button type="button" class="logout-btn" (click)="logout()"><i class="fa fa-sign-out" aria-hidden="true"></i> {{ 'social.logout' | i18next }}</button>
+  </nav>
+  <div class="social-body">
+    <router-outlet></router-outlet>
+  </div>
+</div>

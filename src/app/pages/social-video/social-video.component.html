@@ -1,0 +1,77 @@
+<div class="reel" (wheel)="onWheel($event)">
+  <div *ngIf="isLoadingVideos" class="reel-state"><i class="fa fa-spinner fa-spin" aria-hidden="true"></i> {{ 'social.loading' | i18next }}</div>
+  <div *ngIf="!isLoadingVideos && error" class="reel-state error">
+    {{ error | i18next }} <button type="button" (click)="loadVideos(true)">{{ 'social.retry' | i18next }}</button>
+  </div>
+  <div *ngIf="!isLoadingVideos && !videos.length && !error" class="reel-state">{{ 'social.emptyVideo' | i18next }}</div>
+
+  <ng-container *ngIf="videos.length">
+    <div class="reel-tabs">
+      <button type="button" [class.active]="isFollowing === 'FOR_YOU'" (click)="switchTab('FOR_YOU')">{{ 'social.forYou' | i18next }}</button>
+      <button type="button" [class.active]="isFollowing === 'FOLLOWING'" (click)="switchTab('FOLLOWING')">{{ 'social.followingTab' | i18next }}</button>
+    </div>
+
+    <button type="button" class="reel-nav up" *ngIf="selectedIndex > 0" (click)="prevVideo()" aria-label="Previous">
+      <i class="fa fa-chevron-up" aria-hidden="true"></i>
+    </button>
+    <button type="button" class="reel-nav down" *ngIf="selectedIndex < videos.length - 1" (click)="nextVideo()" aria-label="Next">
+      <i class="fa fa-chevron-down" aria-hidden="true"></i>
+    </button>
+
+    <div class="reel-item" *ngFor="let v of videos; let i = index" [class.active]="selectedIndex === i" [hidden]="selectedIndex !== i">
+      <ng-container *ngIf="inWindow(i)">
+        <video
+          [id]="videoId(v, i)"
+          [src]="v.attachmentUrl"
+          loop
+          playsinline
+          preload="metadata"
+          (click)="togglePlay()"></video>
+        <div class="tap-hint" *ngIf="selectedIndex === i && paused" (click)="togglePlay()">
+          <i class="fa fa-play" aria-hidden="true"></i>
+        </div>
+
+        <div class="reel-info" (click)="togglePlay()">
+          <strong>{{ '@' + userName(v) }}</strong>
+          <p>{{ v.description }}</p>
+        </div>
+
+        <div class="reel-rail">
+          <button type="button" [class.liked]="v.likedByMe" (click)="toggleLike($event)" aria-label="Like">
+            <i class="fa" [ngClass]="v.likedByMe ? 'fa-heart' : 'fa-heart-o'" aria-hidden="true"></i>
+            <span>{{ likeCount(v) }}</span>
+          </button>
+          <button type="button" (click)="openComments($event)" aria-label="Comments">
+            <i class="fa fa-comment-o" aria-hidden="true"></i>
+            <span>{{ commentList(v).length }}</span>
+          </button>
+          <button type="button" (click)="toggleMute($event)" aria-label="Mute">
+            <i class="fa" [ngClass]="muted ? 'fa-volume-off' : 'fa-volume-up'" aria-hidden="true"></i>
+          </button>
+        </div>
+      </ng-container>
+    </div>
+
+    <div class="comment-drawer" *ngIf="showComments && current()" (click)="closeComments()">
+      <div class="drawer-body" (click)="$event.stopPropagation()">
+        <div class="drawer-head">
+          <strong>{{ 'social.comments' | i18next }} ({{ commentList(current()).length }})</strong>
+          <button type="button" (click)="closeComments()"><i class="fa fa-times" aria-hidden="true"></i></button>
+        </div>
+        <div class="drawer-list">
+          <div class="comment" *ngFor="let c of commentList(current())">
+            <strong>{{ c.userName || c.firstName || ('social.unknownUser' | i18next) }}</strong>
+            <span>{{ c.comment || c.message }}</span>
+          </div>
+          <div class="drawer-empty" *ngIf="!commentList(current()).length">{{ 'social.emptyComment' | i18next }}</div>
+        </div>
+        <div class="drawer-input">
+          <input [(ngModel)]="commentDraft" maxlength="255" [placeholder]="'social.writeComment' | i18next" (keyup.enter)="sendComment()" />
+          <button type="button" (click)="sendComment()" [disabled]="sendingComment">
+            <i class="fa fa-paper-plane-o" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>

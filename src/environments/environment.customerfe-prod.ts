@@ -1,0 +1,42 @@
+export const environment = {
+  production: true,
+  jwt_username: 'jwtclient',
+  jwt_password: 'Pass!234',
+  recaptcha_site_key: '6LfGb7IZAAAAAEHRPV92z1mzLmZcnd4xbbW_rvhH',
+  jitsiDomain: 'meet.bynfor.com',
+  ftpBase: 'https://prod-sftp.bynfor.com',
+
+  AUTH_API_ENDPOINT: 'https://gateway-api.bynfor.com/auth',
+  API_ENDPOINT: 'https://gateway-api.bynfor.com/inventory',
+  MERCHANT_API_ENDPOINT: 'https://gateway-api.bynfor.com/merchant',
+  API_ENDPOINT_CUSTOMER: 'https://gateway-api.bynfor.com/customer',
+  API_ENDPOINT_PAYMENT: 'https://gateway-api.bynfor.com/payment',
+  API_ENDPOINT_NOTIFICATION: 'https://gateway-api.bynfor.com/notification',
+  API_ENDPOINT_AUCTION: 'https://gateway-api.bynfor.com/auction',
+  API_ENDPOINT_STORE: 'https://gateway-api.bynfor.com/store',
+  API_ENDPOINT_SHIPPING: 'https://gateway-api.bynfor.com/shipping',
+  API_ENDPOINT_MERCHANT: 'https://gateway-api.bynfor.com/merchant',
+  API_ENDPOINT_MEMBERSHIP: 'https://gateway-api.bynfor.com/rewards',
+  API_ENDPOINT_SOCKET_IO: 'https://socket.bynfor.com',
+  API_OPERRTEL: 'https://prodapi.operrtel.com/api/v1',
+
+  bynforPrefix: '699',
+  facebookOauthClientId: '348855182911418',
+  googleOauthClientId: '1076923135244-jackelkorh9n7n1nejri7hl3btnq1928.apps.googleusercontent.com',
+  firebase: {
+    apiKey: "AIzaSyAPzzQuTHmgCEivjE4v5uVNn3-Q-4B_JEc",
+    authDomain: "bynfor-942fa.firebaseapp.com",
+    databaseURL: "https://bynfor-942fa.firebaseio.com",
+    projectId: "bynfor-942fa",
+    storageBucket: "bynfor-942fa.appspot.com",
+    messagingSenderId: "71702476498",
+    appId: "1:71702476498:web:20988aa9f773d11c3c5f0b",
+    measurementId: "G-PBSF834GE4"
+  },
+  uspsUserId: '041FREEL4941',
+  unsplashAccessKey: '3psQ9x5bYnIuPTB2rol1Hqj6Ex1a6gYXh3bo97zIRQQ',
+  appId: '3FnXZN7JxE0JwUNaW5DM',
+  secretKey: '4clAE2PrTvv32Rk0ywSXP4Kcuph0JEwcgOi9tBI4',
+  environment: 'PROD', // DEV | QA | PROD | empty string // used in in home page generic username settings, it can be empty
+  fe_url: 'https://bynfor.com/'
+};
