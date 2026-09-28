@@ -1,0 +1,27 @@
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: rgba(0, 0, 0, 0.5);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.card {
+  width: min(360px, 100%);
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px;
+  color: #0f1f4a;
+
+  h4 { margin: 0 0 8px; }
+  .opt { display: flex; gap: 8px; align-items: center; padding: 6px 0; font-size: 14px; }
+  textarea { width: 100%; border: 1px solid #d7e3f4; border-radius: 8px; padding: 8px; font: inherit; }
+
+  .actions {
+    display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px;
+    button { border: 0; border-radius: 8px; background: #1769ff; color: #fff; padding: 8px 14px; font: inherit; cursor: pointer; }
+    button.ghost { background: #e8edf5; color: #0f1f4a; }
+  }
+}

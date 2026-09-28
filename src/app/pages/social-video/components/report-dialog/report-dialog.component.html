@@ -1,0 +1,16 @@
+<div class="overlay" *ngIf="open" (click)="cancel.emit()">
+  <div class="card" (click)="$event.stopPropagation()">
+    <h4>{{ 'Report' | i18next }}</h4>
+    <label class="opt" *ngFor="let r of reasons">
+      <input type="radio" name="rv-report" [value]="r" [(ngModel)]="selected" (ngModelChange)="isOther = false" /> {{ r }}
+    </label>
+    <label class="opt">
+      <input type="radio" name="rv-report" [value]="'__other'" [(ngModel)]="selected" (click)="isOther = true" /> {{ 'common.other' | i18next }}
+    </label>
+    <textarea *ngIf="isOther" [(ngModel)]="other" rows="2" maxlength="255"></textarea>
+    <div class="actions">
+      <button type="button" class="ghost" (click)="cancel.emit()">{{ 'common.cancel' | i18next }}</button>
+      <button type="button" [disabled]="busy || (!selected && !other)" (click)="send()">{{ 'common.confirm' | i18next }}</button>
+    </div>
+  </div>
+</div>

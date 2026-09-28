@@ -1,0 +1,64 @@
+.info {
+  position: absolute;
+  left: 12px;
+  right: 84px;
+  bottom: 12px;
+  color: #fff;
+  z-index: 5;
+}
+
+.creator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  overflow: hidden;
+  background: #33415e;
+  color: #fff;
+  cursor: pointer;
+  padding: 0;
+
+  img { width: 100%; height: 100%; object-fit: cover; }
+  span { display: grid; place-items: center; width: 100%; height: 100%; font-weight: 700; }
+}
+
+.name {
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.follow {
+  border: 1px solid #fff;
+  background: transparent;
+  color: #fff;
+  border-radius: 999px;
+  font-size: 12px;
+  padding: 4px 12px;
+  cursor: pointer;
+
+  &.on { background: #1769ff; border-color: #1769ff; }
+}
+
+.desc {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+
+  a { color: #ffd9e8; font-weight: 600; cursor: pointer; }
+}

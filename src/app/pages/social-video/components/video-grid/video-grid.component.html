@@ -1,0 +1,38 @@
+<div class="grid-page">
+  <div class="topbar">
+    <button type="button" class="back" (click)="back.emit()">‹ {{ 'common.back' | i18next }}</button>
+    <div class="modes">
+      <button type="button" [class.active]="mode === 'browse'" (click)="modeChange.emit('browse')">🎬 Videos</button>
+      <button type="button" [class.active]="mode === 'history'" (click)="modeChange.emit('history')">🕘 History</button>
+    </div>
+  </div>
+
+  <div class="searchrow" *ngIf="mode === 'browse'">
+    <input [(ngModel)]="draft" maxlength="120" placeholder="#hashtag / keyword" (keyup.enter)="search.emit(draft)" />
+    <button type="button" (click)="search.emit(draft)">🔍</button>
+  </div>
+
+  <div class="cats" *ngIf="mode === 'browse'">
+    <button type="button" [class.active]="!activeCategory" (click)="categoryChange.emit(null)">{{ 'all' | i18next }}</button>
+    <button type="button" *ngFor="let c of categories" [class.active]="activeCategory === c._id" (click)="categoryChange.emit(c._id)">
+      <img *ngIf="c.icon" [src]="c.icon" alt="" /> {{ c.name }}
+    </button>
+  </div>
+
+  <div class="loading" *ngIf="loading">{{ 'header.Loading' | i18next }}</div>
+
+  <div class="grid" *ngIf="!loading">
+    <button type="button" class="cell" *ngFor="let v of videos" (click)="play.emit(v)">
+      <img *ngIf="thumb(v)" [src]="thumb(v)" alt="" loading="lazy" />
+      <span class="ph" *ngIf="!thumb(v)">▶</span>
+      <span class="cap">{{ title(v) }}</span>
+    </button>
+  </div>
+  <div class="empty" *ngIf="!loading && !videos.length">{{ 'no_matching_items_found' | i18next }}</div>
+
+  <div class="more" *ngIf="!loading && hasMore">
+    <button type="button" (click)="loadMore.emit()" [disabled]="loadingMore">
+      {{ loadingMore ? ('header.Loading' | i18next) : ('view_more' | i18next) }}
+    </button>
+  </div>
+</div>

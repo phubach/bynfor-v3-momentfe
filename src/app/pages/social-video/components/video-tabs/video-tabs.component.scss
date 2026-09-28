@@ -1,0 +1,25 @@
+.vtabs {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: flex;
+  gap: 14px;
+
+  button {
+    border: 0;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 2px;
+
+    &.active {
+      color: #fff;
+      border-bottom: 2px solid #fff;
+    }
+  }
+}

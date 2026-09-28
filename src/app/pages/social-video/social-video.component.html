@@ -1,77 +1,205 @@
-<div class="reel" (wheel)="onWheel($event)">
-  <div *ngIf="isLoadingVideos" class="reel-state"><i class="fa fa-spinner fa-spin" aria-hidden="true"></i> {{ 'social.loading' | i18next }}</div>
-  <div *ngIf="!isLoadingVideos && error" class="reel-state error">
-    {{ error | i18next }} <button type="button" (click)="loadVideos(true)">{{ 'social.retry' | i18next }}</button>
-  </div>
-  <div *ngIf="!isLoadingVideos && !videos.length && !error" class="reel-state">{{ 'social.emptyVideo' | i18next }}</div>
+<div class="sv-page">
+  <app-category-bar
+    [categories]="categories"
+    [selectedId]="categoryId"
+    (back)="backToMoment()"
+    (select)="selectCategory($event)"
+    (history)="openHistory()"></app-category-bar>
 
-  <ng-container *ngIf="videos.length">
-    <div class="reel-tabs">
-      <button type="button" [class.active]="isFollowing === 'FOR_YOU'" (click)="switchTab('FOR_YOU')">{{ 'social.forYou' | i18next }}</button>
-      <button type="button" [class.active]="isFollowing === 'FOLLOWING'" (click)="switchTab('FOLLOWING')">{{ 'social.followingTab' | i18next }}</button>
+  <app-people-suggest-modal
+    [open]="showPeopleModal"
+    [people]="suggestPeople"
+    [loading]="loadingPeople"
+    (viewMore)="getSuggestPeople()"
+    (dismiss)="hidePeopleModal()"
+    (doNotShowAgain)="doNotShowPeopleAgain()"
+    (addFriend)="peopleAddFriend($event)"
+    (removeFriend)="peopleRemoveFriend($event)"
+    (cancelRequest)="peopleCancelRequest($event)"
+    (acceptRequest)="peopleAcceptRequest($event)"
+    (rejectRequest)="peopleRejectRequest($event)"
+    (follow)="peopleFollow($event)"
+    (unfollow)="peopleUnfollow($event)"></app-people-suggest-modal>
+
+  <div class="sv-body" (wheel)="onWheel($event)">
+    <div *ngIf="loadingFirst" class="sv-state">⏳ {{ 'header.Loading' | i18next }}</div>
+    <div *ngIf="!loadingFirst && error" class="sv-state error">
+      {{ error | i18next }} <button type="button" (click)="getVideos()">{{ 'social.retry' | i18next }}</button>
+    </div>
+    <div *ngIf="!loadingFirst && !error && tab !== 'FRIEND' && !videos.length && !showGrid" class="sv-state">
+      {{ 'social.emptyVideo' | i18next }}
     </div>
 
-    <button type="button" class="reel-nav up" *ngIf="selectedIndex > 0" (click)="prevVideo()" aria-label="Previous">
-      <i class="fa fa-chevron-up" aria-hidden="true"></i>
-    </button>
-    <button type="button" class="reel-nav down" *ngIf="selectedIndex < videos.length - 1" (click)="nextVideo()" aria-label="Next">
-      <i class="fa fa-chevron-down" aria-hidden="true"></i>
-    </button>
+    <!-- Tab bạn bè: giữ nguyên tính năng video-friend -->
+    <div class="reel-stage" *ngIf="tab === 'FRIEND' && !showGrid">
+      <app-video-tabs [active]="tab" (change)="switchTab($event)"></app-video-tabs>
+      <app-friend-pane
+        [friends]="friends"
+        [loading]="loadingFriends"
+        (follow)="followFriend($event)"
+        (unfollow)="unfollowFriend($event)"></app-friend-pane>
+    </div>
 
-    <div class="reel-item" *ngFor="let v of videos; let i = index" [class.active]="selectedIndex === i" [hidden]="selectedIndex !== i">
-      <ng-container *ngIf="inWindow(i)">
-        <video
-          [id]="videoId(v, i)"
-          [src]="v.attachmentUrl"
-          loop
-          playsinline
-          preload="metadata"
-          (click)="togglePlay()"></video>
-        <div class="tap-hint" *ngIf="selectedIndex === i && paused" (click)="togglePlay()">
-          <i class="fa fa-play" aria-hidden="true"></i>
-        </div>
+    <!-- Reels: 1 video active + rail + info -->
+    <div class="reel-stage" *ngIf="tab !== 'FRIEND' && (videos.length || showGrid)">
+      <app-video-tabs *ngIf="!showGrid" [active]="tab" (change)="switchTab($event)"></app-video-tabs>
 
-        <div class="reel-info" (click)="togglePlay()">
-          <strong>{{ '@' + userName(v) }}</strong>
-          <p>{{ v.description }}</p>
-        </div>
+      <app-video-grid
+        *ngIf="showGrid"
+        [videos]="gridVideos"
+        [loading]="gridLoading"
+        [loadingMore]="gridLoadingMore"
+        [hasMore]="gridHasMore"
+        [categories]="categories"
+        [activeCategory]="gridCategory"
+        [keyword]="gridKeyword"
+        [mode]="gridMode"
+        (back)="closeGrid()"
+        (modeChange)="gridModeChange($event)"
+        (categoryChange)="gridCategoryChange($event)"
+        (search)="gridSearch($event)"
+        (loadMore)="gridLoadMore()"
+        (play)="gridPlay($event)"></app-video-grid>
 
-        <div class="reel-rail">
-          <button type="button" [class.liked]="v.likedByMe" (click)="toggleLike($event)" aria-label="Like">
-            <i class="fa" [ngClass]="v.likedByMe ? 'fa-heart' : 'fa-heart-o'" aria-hidden="true"></i>
-            <span>{{ likeCount(v) }}</span>
-          </button>
-          <button type="button" (click)="openComments($event)" aria-label="Comments">
-            <i class="fa fa-comment-o" aria-hidden="true"></i>
-            <span>{{ commentList(v).length }}</span>
-          </button>
-          <button type="button" (click)="toggleMute($event)" aria-label="Mute">
-            <i class="fa" [ngClass]="muted ? 'fa-volume-off' : 'fa-volume-up'" aria-hidden="true"></i>
-          </button>
+      <ng-container *ngIf="!showGrid">
+        <button type="button" class="nav up" *ngIf="selectedIndex > 0" (click)="prevVideo()">▲</button>
+        <button type="button" class="nav down" *ngIf="selectedIndex < videos.length - 1" (click)="nextVideo()">▼</button>
+
+        <ng-container *ngFor="let v of videos; let i = index">
+          <div class="reel" [class.active]="selectedIndex === i" [hidden]="selectedIndex !== i" *ngIf="selectedIndex === i">
+            <app-reel-player
+              [videoId]="videoDomId(v, i)"
+              [src]="v.attachmentUrl"
+              [poster]="posterOf(v)"
+              [muted]="muted"
+              [paused]="paused"
+              [loading]="!!loadMap[i]"
+              [failed]="!!v.error"
+              [currentTime]="timeMap[i] || 0"
+              [duration]="durMap[i] || 0"
+              [showHeart]="showHeart"
+              (togglePlay)="togglePlay()"
+              (doubleTap)="doubleTapLike()"
+              (seek)="seekTo(i, $event)"
+              (retry)="retry(i)"
+              (loaded)="onLoaded(i)"
+              (time)="onTime(i, $event)"
+              (error)="onVideoError(i)"></app-reel-player>
+
+            <app-reel-info
+              [video]="v"
+              [followed]="isCreatorFollowed"
+              [followLoading]="followBusy"
+              [isOwn]="creator && myUserId && creator.id == myUserId"
+              (follow)="followCreator()"
+              (unfollow)="unfollowCreator()"
+              (openProfile)="openProfileFor(creator)"
+              (hashtag)="goHashtag($event)"></app-reel-info>
+
+            <app-action-rail
+              [muted]="muted"
+              [liked]="isLiked(v)"
+              [likeCount]="likeCount(v)"
+              [commentCount]="commentsOf(v).length"
+              [endorsed]="isEndorsed(v)"
+              [endorseCount]="endorseCount(v)"
+              [canReport]="!(creator && myUserId && creator.id == myUserId)"
+              (toggleMute)="toggleMute()"
+              (endorse)="endorse()"
+              (like)="toggleLike()"
+              (openLikes)="openLikeList()"
+              (report)="showReport = true"
+              (openComments)="openComments()"
+              (share)="showShare = true"></app-action-rail>
+          </div>
+        </ng-container>
+
+        <app-comment-sheet
+          *ngIf="showComments && current()"
+          [comments]="commentsOf(current())"
+          [draft]="commentDraft"
+          [sending]="sendingComment"
+          [replyTo]="replyTo"
+          [editingId]="editingId"
+          [myUserId]="myUserId"
+          [hashTags]="hashTags"
+          (draftChange)="commentDraft = $event"
+          (draftInput)="onDraftInput($event)"
+          (hashTagPick)="pickHashTag($event)"
+          (send)="sendComment()"
+          (close)="showComments = false"
+          (reply)="replyTo = $event"
+          (cancelReply)="replyTo = null"
+          (edit)="editingId = $event.comment_id || null"
+          (cancelEdit)="editingId = null"
+          (saveEdit)="saveEdit($event)"
+          (remove)="removeComment($event)"
+          (like)="likeComment($event)"
+          (hashtag)="goHashtag($event)"
+          (openProfile)="openProfileFor($event)"></app-comment-sheet>
+
+        <app-report-dialog
+          [open]="showReport"
+          [busy]="reportBusy"
+          (cancel)="showReport = false"
+          (submit)="submitReport($event)"></app-report-dialog>
+
+        <app-share-sheet
+          [open]="showShare"
+          (close)="showShare = false"
+          (copy)="copyLink()"
+          (facebook)="shareFacebook()"
+          (twitter)="shareTwitter()"
+          (wechat)="shareWeChat()"
+          (instagram)="shareInstagram()"
+          (description)="showDescription = true; showShare = false"></app-share-sheet>
+
+        <app-like-list
+          [open]="showLikes"
+          [users]="likeUsers"
+          [loading]="loadingLikes"
+          [page]="pageLike"
+          [pageSize]="pageSizeLike"
+          [total]="totalLikes"
+          [activeTab]="likeTab"
+          [commentCount]="commentsOf(current()).length"
+          [myUserId]="myUserId"
+          [expressions]="likeExprMap"
+          [commentedIds]="likeCommentedIds"
+          (close)="showLikes = false"
+          (tabChange)="likeTabChange($event)"
+          (pageChange)="likePageChange($event)"
+          (addFriend)="likeAddFriend($event)"
+          (cancelFriend)="likeCancelFriend($event)"
+          (follow)="likeFollow($event)"
+          (unfollow)="likeUnfollow($event)"></app-like-list>
+
+        <app-creator-profile
+          [open]="showProfile"
+          [profile]="memberProfile"
+          [loading]="profileLoading"
+          [relation]="relationUser"
+          [isMine]="isMyProfile()"
+          (close)="closeProfile()"
+          (addFriend)="profileAddFriend()"
+          (cancelRequest)="profileCancelRequest()"
+          (acceptRequest)="profileAcceptRequest()"
+          (removeFriend)="profileRemoveFriend()"
+          (follow)="profileFollow()"
+          (unfollow)="profileUnfollow()"></app-creator-profile>
+
+        <div class="desc-modal" *ngIf="showDescription && current()" (click)="showDescription = false">
+          <div class="desc-card" (click)="$event.stopPropagation()">
+            <div class="desc-head"><strong>{{ 'Description' | i18next }}</strong><button type="button" (click)="showDescription = false">✕</button></div>
+            <div class="desc-creator" *ngIf="creator" (click)="openProfileFor(creator); showDescription = false">
+              <b>{{ creator.userName || ((creator.firstName || '') + ' ' + (creator.lastName || '')) }}</b>
+            </div>
+            <p>{{ current()?.description || current()?.content }}</p>
+            <p class="desc-product" *ngIf="current()?.product">#{{ current()?.product }}#</p>
+            <div class="desc-likes">❤️ {{ likeCount(current()) }}</div>
+          </div>
         </div>
       </ng-container>
     </div>
-
-    <div class="comment-drawer" *ngIf="showComments && current()" (click)="closeComments()">
-      <div class="drawer-body" (click)="$event.stopPropagation()">
-        <div class="drawer-head">
-          <strong>{{ 'social.comments' | i18next }} ({{ commentList(current()).length }})</strong>
-          <button type="button" (click)="closeComments()"><i class="fa fa-times" aria-hidden="true"></i></button>
-        </div>
-        <div class="drawer-list">
-          <div class="comment" *ngFor="let c of commentList(current())">
-            <strong>{{ c.userName || c.firstName || ('social.unknownUser' | i18next) }}</strong>
-            <span>{{ c.comment || c.message }}</span>
-          </div>
-          <div class="drawer-empty" *ngIf="!commentList(current()).length">{{ 'social.emptyComment' | i18next }}</div>
-        </div>
-        <div class="drawer-input">
-          <input [(ngModel)]="commentDraft" maxlength="255" [placeholder]="'social.writeComment' | i18next" (keyup.enter)="sendComment()" />
-          <button type="button" (click)="sendComment()" [disabled]="sendingComment">
-            <i class="fa fa-paper-plane-o" aria-hidden="true"></i>
-          </button>
-        </div>
-      </div>
-    </div>
-  </ng-container>
+  </div>
 </div>

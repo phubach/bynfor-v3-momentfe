@@ -1,0 +1,52 @@
+.rail {
+  position: absolute;
+  right: 8px;
+  bottom: 90px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .like-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+
+    button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      color: #fff;
+
+      .ic { font-size: 26px; line-height: 1; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)); }
+      &.liked .ic { transform: scale(1.08); }
+    }
+
+    .num { font-size: 12px; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,.6); color: #fff; }
+    .num.link { text-decoration: underline; background: none; border: 0; padding: 0; font: inherit; font-size: 12px; cursor: pointer; }
+  }
+
+  > button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    color: #fff;
+
+    .ic { font-size: 26px; line-height: 1; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)); }
+    .num { font-size: 12px; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+    .num.link { color: #fff; text-decoration: underline; background: none; border: 0; padding: 0; font: inherit; font-size: 12px; cursor: pointer; }
+    &.liked .ic { transform: scale(1.08); }
+    &.more .ic {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: #1769ff; display: grid; place-items: center; font-size: 18px;
+    }
+  }
+}

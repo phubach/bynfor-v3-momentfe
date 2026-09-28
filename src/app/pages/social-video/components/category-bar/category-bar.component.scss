@@ -1,0 +1,62 @@
+.catbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fff;
+  border-bottom: 1px solid #e8edf5;
+}
+
+.catbar-back {
+  flex: none;
+  border: 1px solid #dfe6f2;
+  background: #f2f5fa;
+  color: #0f1f4a;
+  border-radius: 8px;
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.catbar-history {
+  flex: none;
+  border: 1px solid #dfe6f2;
+  background: #f2f5fa;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.catbar-scroll {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: thin;
+}
+
+.cat-pill {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #e3e9f4;
+  background: #f7f9fc;
+  color: #33415e;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+
+  img { width: 18px; height: 18px; object-fit: contain; }
+  .cat-emoji { font-size: 15px; }
+
+  &.active {
+    background: #1769ff;
+    border-color: #1769ff;
+    color: #fff;
+  }
+}

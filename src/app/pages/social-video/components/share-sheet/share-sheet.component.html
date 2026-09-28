@@ -1,0 +1,11 @@
+<div class="overlay" *ngIf="open" (click)="close.emit()">
+  <div class="menu" (click)="$event.stopPropagation()">
+    <button type="button" (click)="description.emit()">📝 {{ 'Description' | i18next }}</button>
+    <button type="button" (click)="copy.emit()">🔗 {{ 'copy_url' | i18next }}</button>
+    <button type="button" (click)="facebook.emit()">📘 Facebook</button>
+    <button type="button" (click)="twitter.emit()">𝕏 Twitter / X</button>
+    <button type="button" (click)="wechat.emit()">💬 WeChat</button>
+    <button type="button" (click)="instagram.emit()">📸 Instagram</button>
+    <button type="button" class="ghost" (click)="close.emit()">{{ 'common.cancel' | i18next }}</button>
+  </div>
+</div>

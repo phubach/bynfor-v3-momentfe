@@ -21,6 +21,19 @@ import { LoginComponent } from './pages/login/login.component';
 import { SocialComponent } from './pages/social/social.component';
 import { SocialMomentComponent } from './pages/social-moment/social-moment.component';
 import { SocialVideoComponent } from './pages/social-video/social-video.component';
+import { CategoryBarComponent } from './pages/social-video/components/category-bar/category-bar.component';
+import { VideoTabsComponent } from './pages/social-video/components/video-tabs/video-tabs.component';
+import { ReelPlayerComponent } from './pages/social-video/components/reel-player/reel-player.component';
+import { ReelInfoComponent } from './pages/social-video/components/reel-info/reel-info.component';
+import { ActionRailComponent } from './pages/social-video/components/action-rail/action-rail.component';
+import { CommentSheetComponent } from './pages/social-video/components/comment-sheet/comment-sheet.component';
+import { FriendPaneComponent } from './pages/social-video/components/friend-pane/friend-pane.component';
+import { ReportDialogComponent } from './pages/social-video/components/report-dialog/report-dialog.component';
+import { ShareSheetComponent } from './pages/social-video/components/share-sheet/share-sheet.component';
+import { LikeListComponent } from './pages/social-video/components/like-list/like-list.component';
+import { PeopleSuggestModalComponent } from './pages/social-video/components/people-suggest-modal/people-suggest-modal.component';
+import { CreatorProfileComponent } from './pages/social-video/components/creator-profile/creator-profile.component';
+import { VideoGridComponent } from './pages/social-video/components/video-grid/video-grid.component';
 import { TokenInterceptor } from './core/auth/token.interceptor';
 
 export function appInit(i18next: ITranslationService) {
@@ -76,7 +89,26 @@ export const I18N_PROVIDERS = [
 ];
 
 @NgModule({
-  declarations: [AppComponent, LoginComponent, SocialComponent, SocialMomentComponent, SocialVideoComponent],
+  declarations: [
+    AppComponent,
+    LoginComponent,
+    SocialComponent,
+    SocialMomentComponent,
+    SocialVideoComponent,
+    CategoryBarComponent,
+    VideoTabsComponent,
+    ReelPlayerComponent,
+    ReelInfoComponent,
+    ActionRailComponent,
+    CommentSheetComponent,
+    FriendPaneComponent,
+    ReportDialogComponent,
+    ShareSheetComponent,
+    LikeListComponent,
+    PeopleSuggestModalComponent,
+    CreatorProfileComponent,
+    VideoGridComponent,
+  ],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,

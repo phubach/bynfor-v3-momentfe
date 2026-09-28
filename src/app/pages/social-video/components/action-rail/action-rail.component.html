@@ -1,0 +1,31 @@
+<div class="rail">
+  <button type="button" (click)="toggleMute.emit()" [attr.aria-label]="'sound'">
+    <span class="ic">{{ muted ? '🔇' : '🔊' }}</span>
+  </button>
+
+  <button type="button" (click)="endorse.emit()" [attr.aria-label]="'endorse'">
+    <span class="ic credit" [class.gold]="endorsed">{{ endorsed ? '🪙' : '🥈' }}</span>
+    <span class="num" *ngIf="endorseCount > 0">{{ endorseCount }}</span>
+  </button>
+
+  <div class="like-group" role="group" aria-label="like">
+    <button type="button" [class.liked]="liked" (click)="like.emit()">
+      <span class="ic">{{ liked ? '❤️' : '🤍' }}</span>
+    </button>
+    <button type="button" class="num link" *ngIf="likeCount > 0" (click)="openLikes.emit()">{{ likeCount }}</button>
+    <span class="num" *ngIf="!likeCount">1</span>
+  </div>
+
+  <button type="button" *ngIf="canReport" (click)="report.emit()" [attr.aria-label]="'report'">
+    <span class="ic">🚩</span>
+  </button>
+
+  <button type="button" (click)="openComments.emit()" [attr.aria-label]="'comments'">
+    <span class="ic">💬</span>
+    <span class="num">{{ commentCount }}</span>
+  </button>
+
+  <button type="button" class="more" (click)="share.emit()" [attr.aria-label]="'more'">
+    <span class="ic">⋮</span>
+  </button>
+</div>

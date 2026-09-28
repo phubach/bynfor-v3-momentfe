@@ -1,0 +1,75 @@
+<div class="overlay" *ngIf="open" (click)="dismiss.emit()">
+  <div class="card" (click)="$event.stopPropagation()">
+    <div class="head">
+      <h5>{{ 'People who you may know' | i18next }}</h5>
+      <button type="button" class="x" (click)="dismiss.emit()">✕</button>
+    </div>
+
+    <div class="grid">
+      <div class="person" *ngFor="let item of people">
+        <div class="ava">
+          <img *ngIf="hasAvatar(item)" [src]="item.profilePictureUrl" alt="" (error)="item.error = true" />
+          <span *ngIf="!hasAvatar(item)">{{ initials(item) }}</span>
+        </div>
+        <div class="name">{{ displayName(item) }}</div>
+        <div class="actions">
+          <!-- Kết bạn (nút nhắn tin sang live-chat tạm bỏ theo yêu cầu leader) -->
+          <button
+            type="button"
+            *ngIf="canAddFriend(item)"
+            [disabled]="item.isLoadAction"
+            title="{{ 'campaigns_modal.send_friend_request' | i18next }}"
+            (click)="addFriend.emit(item)">＋</button>
+          <button
+            type="button"
+            class="on"
+            *ngIf="isFriend(item)"
+            [disabled]="item.isLoadAction"
+            title="{{ 'translation.friends' | i18next }}"
+            (click)="removeFriend.emit(item)">✓</button>
+          <button
+            type="button"
+            class="danger"
+            *ngIf="isSentRequest(item)"
+            [disabled]="item.isLoadAction"
+            title="{{ 'campaigns_modal.cancel_request' | i18next }}"
+            (click)="cancelRequest.emit(item)">✋</button>
+          <ng-container *ngIf="isReceivedRequest(item)">
+            <button
+              type="button"
+              class="on"
+              [disabled]="item.isLoadAction"
+              (click)="acceptRequest.emit(item)">✓</button>
+            <button
+              type="button"
+              class="danger"
+              [disabled]="item.isLoadAction"
+              (click)="rejectRequest.emit(item)">✕</button>
+          </ng-container>
+          <!-- Follow -->
+          <button
+            type="button"
+            *ngIf="canFollow(item)"
+            [disabled]="item.isLoadAction"
+            title="{{ 'campaigns_modal.follow' | i18next }}"
+            (click)="follow.emit(item)">📌</button>
+          <button
+            type="button"
+            class="on"
+            *ngIf="isFollowing(item)"
+            [disabled]="item.isLoadAction"
+            title="{{ 'campaigns_modal.unfollow' | i18next }}"
+            (click)="unfollow.emit(item)">📌</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="loading" *ngIf="loading">{{ 'header.Loading' | i18next }}</div>
+    <div class="more" (click)="viewMore.emit()">{{ 'view_more' | i18next }}</div>
+
+    <div class="foot">
+      <button type="button" (click)="doNotShowAgain.emit()">{{ 'cancel_and_not_show_again' | i18next }}</button>
+      <button type="button" (click)="dismiss.emit()">{{ 'common.cancel' | i18next }}</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,51 @@
+<div class="overlay" *ngIf="open" (click)="close.emit()">
+  <div class="card" (click)="$event.stopPropagation()">
+    <div class="head">
+      <div class="tabs">
+        <button
+          type="button"
+          *ngFor="let t of tabs"
+          class="emoji-tab"
+          [class.active]="activeTab === t.id"
+          (click)="tabChange.emit(t.id)">{{ t.native }}</button>
+        <button
+          type="button"
+          class="emoji-tab"
+          *ngIf="commentCount"
+          [class.active]="activeTab === 'Comment'"
+          (click)="tabChange.emit('Comment')">💬 {{ commentCount }}</button>
+      </div>
+      <button type="button" class="x" (click)="close.emit()">✕</button>
+    </div>
+
+    <div class="loading" *ngIf="loading">{{ 'header.Loading' | i18next }}</div>
+
+    <div class="row" *ngFor="let u of users">
+      <div class="ava">
+        <img *ngIf="u.profilePictureUrl && u.profilePictureUrl !== 'null'" [src]="u.profilePictureUrl" alt="" />
+        <span *ngIf="!u.profilePictureUrl || u.profilePictureUrl === 'null'">{{ (label(u).charAt(0) || '?').toUpperCase() }}</span>
+      </div>
+      <div class="who">
+        <div class="name">{{ label(u) }} <span *ngIf="u.verified" class="verified">✔</span></div>
+        <div class="expr">
+          <span *ngIf="expressions[u.id]">{{ expressions[u.id] }}</span>
+          <span *ngIf="commentedIds[u.id]" class="cmt">💬</span>
+        </div>
+      </div>
+      <div class="ops" *ngIf="!isMe(u)">
+        <button type="button" *ngIf="canAddFriend(u)" (click)="addFriend.emit(u)">＋ {{ 'common-phrases.send-friend-request' | i18next }}</button>
+        <button type="button" class="info" *ngIf="isRequested(u)" disabled>✓ {{ 'common-phrases.friend-request-sent' | i18next }}</button>
+        <button type="button" *ngIf="isFriend(u)" (click)="cancelFriend.emit(u)">✓ {{ 'common-list.friends' | i18next }}</button>
+        <button type="button" *ngIf="canFollow(u)" (click)="follow.emit(u)">{{ 'common-list.follow' | i18next }}</button>
+        <button type="button" class="info" *ngIf="isFollowing(u)" (click)="unfollow.emit(u)">{{ 'common-list.following' | i18next }}</button>
+      </div>
+    </div>
+    <div class="empty" *ngIf="!loading && !users.length">{{ 'no_matching_items_found' | i18next }}</div>
+
+    <div class="pager" *ngIf="totalPages() > 1">
+      <button type="button" [disabled]="page <= 1" (click)="pageChange.emit(page - 1)">❮ {{ 'datatable.previous' | i18next }}</button>
+      <span>{{ page }} / {{ totalPages() }}</span>
+      <button type="button" [disabled]="page >= totalPages()" (click)="pageChange.emit(page + 1)">{{ 'datatable.next' | i18next }} ❯</button>
+    </div>
+  </div>
+</div>

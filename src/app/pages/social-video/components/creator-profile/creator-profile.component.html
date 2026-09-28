@@ -1,0 +1,46 @@
+<div class="overlay" *ngIf="open" (click)="close.emit()">
+  <div class="card" (click)="$event.stopPropagation()" *ngIf="profile">
+    <div class="head">
+      <h5>👤 {{ fullName() }} {{ 'translation.profile' | i18next }}</h5>
+      <button type="button" (click)="close.emit()">✕</button>
+    </div>
+    <div class="body">
+      <div class="ava">
+        <img *ngIf="profile.profilePictureUrl" [src]="profile.profilePictureUrl" alt="" />
+        <span *ngIf="!profile.profilePictureUrl">{{ avatarText() }}</span>
+      </div>
+      <h3>{{ fullName() }}</h3>
+      <div class="rows">
+        <div *ngIf="profile.businessName"><b>Business:</b> {{ profile.businessName }}</div>
+        <div *ngIf="location()"><b>Location:</b> {{ location() }}</div>
+        <div *ngIf="profile.businessYearEstablishment"><b>Foundation:</b> {{ profile.businessYearEstablishment }}</div>
+        <div *ngIf="profile.email"><b>Email:</b> {{ profile.email }}</div>
+        <div *ngIf="profile.businessCategory"><b>Category:</b> {{ profile.businessCategory }}</div>
+        <div *ngIf="profile.businessSummary"><b>Summary:</b> {{ profile.businessSummary }}</div>
+        <div *ngIf="genderLabel()"><b>Gender:</b> {{ genderLabel() }}</div>
+        <div *ngIf="profile.phone"><b>Phone:</b> {{ profile.phone }}</div>
+        <div *ngIf="profile.businessWebsite"><b>Website:</b> {{ profile.businessWebsite }}</div>
+      </div>
+    </div>
+    <div class="foot" *ngIf="!isMine">
+      <ng-container *ngIf="status !== ERelationStatus.BLOCKED">
+        <button
+          type="button"
+          *ngIf="status !== ERelationStatus.FRIEND && status !== ERelationStatus.FRIEND_REQUEST && status !== ERelationStatus.FRIEND_AND_FOLLOW && status !== ERelationStatus.FRIEND_AND_FOLLOW_REQUEST && !receivedRequest"
+          (click)="addFriend.emit()">＋ {{ 'campaigns_modal.send_friend_request' | i18next }}</button>
+        <button type="button" class="on" *ngIf="status === ERelationStatus.FRIEND_REQUEST || status === ERelationStatus.FRIEND_AND_FOLLOW_REQUEST" (click)="cancelRequest.emit()">✓ {{ 'sum_live_chat.friend_request_sent' | i18next }}</button>
+        <button type="button" *ngIf="receivedRequest" (click)="acceptRequest.emit()">✓ Accept Request</button>
+        <button type="button" class="on" *ngIf="status === ERelationStatus.FRIEND_AND_FOLLOW || status === ERelationStatus.FRIEND" (click)="removeFriend.emit()">✓ {{ 'translation.friends' | i18next }}</button>
+        <button type="button" *ngIf="!following" (click)="follow.emit()">＋ {{ 'campaigns_modal.follow' | i18next }}</button>
+        <button type="button" class="on" *ngIf="following" (click)="unfollow.emit()">✓ {{ 'campaigns_modal.following' | i18next }}</button>
+      </ng-container>
+      <button type="button" class="ghost" (click)="close.emit()">{{ 'Close' | i18next }}</button>
+    </div>
+    <div class="foot" *ngIf="isMine">
+      <button type="button" class="ghost" (click)="close.emit()">{{ 'Close' | i18next }}</button>
+    </div>
+  </div>
+  <div class="card" (click)="$event.stopPropagation()" *ngIf="!profile">
+    <div class="loading">{{ 'header.Loading' | i18next }}</div>
+  </div>
+</div>

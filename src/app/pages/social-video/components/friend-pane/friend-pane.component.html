@@ -1,0 +1,13 @@
+<div class="friends">
+  <div class="loading" *ngIf="loading">{{ 'header.Loading' | i18next }}</div>
+  <div class="row" *ngFor="let f of friends">
+    <div class="ava">
+      <img *ngIf="f.profilePictureUrl && f.profilePictureUrl !== 'null'" [src]="f.profilePictureUrl" alt="" />
+      <span *ngIf="!f.profilePictureUrl || f.profilePictureUrl === 'null'">{{ avatar(f) }}</span>
+    </div>
+    <div class="name">{{ label(f) }}</div>
+    <button type="button" *ngIf="!f.following" (click)="follow.emit(f)">{{ 'common.follow' | i18next }}</button>
+    <button type="button" class="off" *ngIf="f.following" (click)="unfollow.emit(f)">{{ 'campaigns_modal.unfollow' | i18next }}</button>
+  </div>
+  <div class="empty" *ngIf="!loading && !friends.length">{{ 'no_video_available' | i18next }}</div>
+</div>

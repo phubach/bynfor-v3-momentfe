@@ -1,0 +1,26 @@
+<div class="info" *ngIf="video">
+  <div class="creator">
+    <button type="button" class="avatar" (click)="openProfile.emit()">
+      <img
+        *ngIf="video.userResponseMoment?.profilePictureUrl && video.userResponseMoment.profilePictureUrl !== 'null'"
+        [src]="video.userResponseMoment.profilePictureUrl"
+        alt="" />
+      <span *ngIf="!video.userResponseMoment?.profilePictureUrl || video.userResponseMoment.profilePictureUrl === 'null'">{{ avatarText() }}</span>
+    </button>
+    <button type="button" class="name" (click)="openProfile.emit()">{{ displayName() }}</button>
+    <button
+      type="button"
+      class="follow"
+      *ngIf="!isOwn"
+      [disabled]="followLoading"
+      [class.on]="followed"
+      (click)="followed ? unfollow.emit() : follow.emit()">
+      {{ (followed ? 'common.following' : 'common.follow') | i18next }}
+    </button>
+  </div>
+  <p class="desc">
+    <ng-container *ngFor="let p of parts()">
+      <a *ngIf="p.tag" (click)="hashtag.emit(p.tag)">#{{ p.tag }}</a><span *ngIf="!p.tag">{{ p.text }}</span>
+    </ng-container>
+  </p>
+</div>

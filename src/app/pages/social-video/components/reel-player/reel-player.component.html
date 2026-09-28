@@ -1,0 +1,38 @@
+<div class="player" (click)="onTap()">
+  <video
+    #el
+    [id]="videoId"
+    [src]="src"
+    [muted]="muted"
+    loop
+    playsinline
+    preload="metadata"
+    (loadeddata)="onLoaded(el)"
+    (timeupdate)="onTime(el)"
+    (error)="error.emit()"></video>
+
+  <div class="spinner" *ngIf="loading"><span></span><span></span><span></span></div>
+
+  <img
+    *ngIf="loading && poster && !posterFailed && !failed"
+    class="poster"
+    [src]="poster"
+    alt=""
+    (error)="posterFailed = true" />
+
+  <div class="big-play" *ngIf="paused && !failed">▶</div>
+  <div class="heart-burst" *ngIf="showHeart">💖</div>
+
+  <div class="err" *ngIf="failed" (click)="$event.stopPropagation()">
+    <div>⚠️ {{ 'video_file_cannot_be_played' | i18next }}</div>
+    <button type="button" (click)="retry.emit(); $event.stopPropagation()">{{ 'Retry' | i18next }}</button>
+  </div>
+
+  <div class="seek" *ngIf="duration > 0 && !failed" (click)="$event.stopPropagation()">
+    <span>{{ toClock(currentTime) }}/{{ toClock(duration) }}</span>
+    <input
+      type="range" min="0" max="100" step="0.1"
+      [value]="duration ? (currentTime * 100) / duration : 0"
+      (change)="seek.emit($any($event.target).value)" />
+  </div>
+</div>

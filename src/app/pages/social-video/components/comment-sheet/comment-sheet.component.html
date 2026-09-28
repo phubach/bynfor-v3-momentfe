@@ -1,0 +1,119 @@
+<div class="sheet" (click)="close.emit()">
+  <div class="body" (click)="$event.stopPropagation()">
+    <div class="head">
+      <strong>{{ 'Comments' | i18next }} ({{ comments.length }})</strong>
+      <button type="button" (click)="close.emit()">✕</button>
+    </div>
+
+    <div class="list">
+      <ng-container *ngFor="let c of roots()">
+        <div class="row">
+          <div class="ava" (click)="openProfile.emit(c.createdByFull)">
+            <img *ngIf="c.createdByFull?.profilePictureUrl && c.createdByFull.profilePictureUrl !== 'null'" [src]="c.createdByFull.profilePictureUrl" alt="" />
+            <span *ngIf="!c.createdByFull?.profilePictureUrl || c.createdByFull.profilePictureUrl === 'null'">{{ (name(c).charAt(0) || '?').toUpperCase() }}</span>
+          </div>
+          <div class="bubble">
+            <div class="who">{{ name(c) }}</div>
+            <div *ngIf="editingId !== c.comment_id" class="txt">
+              <ng-container *ngFor="let s of segments(c)">
+                <span *ngIf="s.kind === 'text'">{{ s.value }}</span>
+                <a *ngIf="s.kind === 'link'" (click)="openLink(s.value)">{{ s.value }}</a>
+                <a *ngIf="s.kind === 'tag'" class="tag" (click)="hashtag.emit(s.value)">#{{ s.value }}</a>
+              </ng-container>
+            </div>
+            <div class="editbox" *ngIf="editingId === c.comment_id">
+              <input [(ngModel)]="editText" maxlength="200" />
+              <button type="button" class="ghost" (click)="editEmojiFor = editEmojiFor ? null : key(c)">😀</button>
+              <button type="button" (click)="saveEdit.emit({ c: c, text: editText })">✓</button>
+              <button type="button" class="ghost" (click)="cancelEdit.emit()">✕</button>
+            </div>
+            <div class="emojis" *ngIf="editEmojiFor === key(c)">
+              <button type="button" *ngFor="let e of typingEmojis" (click)="appendEditEmoji(e)">{{ e }}</button>
+            </div>
+            <div class="when">{{ formatDate(c.commentedAt) }}</div>
+            <div class="meta">
+              <button type="button" (click)="like.emit({ c: c, emoji: myEmoji(c) })" [class.on]="iLiked(c)">
+                {{ lastEmoji(c) || '👍' }} {{ likeCount(c) || '' }}
+              </button>
+              <button type="button" class="ghost" (click)="chooserFor = chooserFor === key(c) ? null : key(c)">＋</button>
+              <button type="button" (click)="reply.emit(c)">↩ {{ 'Reply' | i18next }}</button>
+              <ng-container *ngIf="mine(c)">
+                <button type="button" (click)="startEdit(c)">✎</button>
+                <button type="button" (click)="remove.emit(c)">🗑</button>
+              </ng-container>
+            </div>
+            <div class="emojis" *ngIf="chooserFor === key(c)">
+              <button type="button" *ngFor="let e of expressionPresets" (click)="like.emit({ c: c, emoji: e }); chooserFor = null">{{ e }}</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="row sub" *ngFor="let r of repliesOf(c.comment_id)">
+          <div class="ava sm" (click)="openProfile.emit(r.createdByFull)">
+            <img *ngIf="r.createdByFull?.profilePictureUrl && r.createdByFull.profilePictureUrl !== 'null'" [src]="r.createdByFull.profilePictureUrl" alt="" />
+            <span *ngIf="!r.createdByFull?.profilePictureUrl || r.createdByFull.profilePictureUrl === 'null'">{{ (name(r).charAt(0) || '?').toUpperCase() }}</span>
+          </div>
+          <div class="bubble">
+            <div class="who">{{ name(r) }}</div>
+            <div *ngIf="editingId !== r.comment_id" class="txt">
+              <ng-container *ngFor="let s of segments(r)">
+                <span *ngIf="s.kind === 'text'">{{ s.value }}</span>
+                <a *ngIf="s.kind === 'link'" (click)="openLink(s.value)">{{ s.value }}</a>
+                <a *ngIf="s.kind === 'tag'" class="tag" (click)="hashtag.emit(s.value)">#{{ s.value }}</a>
+              </ng-container>
+            </div>
+            <div class="editbox" *ngIf="editingId === r.comment_id">
+              <input [(ngModel)]="editText" maxlength="200" />
+              <button type="button" class="ghost" (click)="editEmojiFor = editEmojiFor ? null : key(r)">😀</button>
+              <button type="button" (click)="saveEdit.emit({ c: r, text: editText })">✓</button>
+              <button type="button" class="ghost" (click)="cancelEdit.emit()">✕</button>
+            </div>
+            <div class="emojis" *ngIf="editEmojiFor === key(r)">
+              <button type="button" *ngFor="let e of typingEmojis" (click)="appendEditEmoji(e)">{{ e }}</button>
+            </div>
+            <div class="when">{{ formatDate(r.commentedAt) }}</div>
+            <div class="meta">
+              <button type="button" (click)="like.emit({ c: r, emoji: myEmoji(r) })" [class.on]="iLiked(r)">
+                {{ lastEmoji(r) || '👍' }} {{ likeCount(r) || '' }}
+              </button>
+              <button type="button" class="ghost" (click)="chooserFor = chooserFor === key(r) ? null : key(r)">＋</button>
+              <ng-container *ngIf="mine(r)">
+                <button type="button" (click)="startEdit(r)">✎</button>
+                <button type="button" (click)="remove.emit(r)">🗑</button>
+              </ng-container>
+            </div>
+            <div class="emojis" *ngIf="chooserFor === key(r)">
+              <button type="button" *ngFor="let e of expressionPresets" (click)="like.emit({ c: r, emoji: e }); chooserFor = null">{{ e }}</button>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+      <div class="empty" *ngIf="!comments.length">{{ 'social.emptyComment' | i18next }}</div>
+    </div>
+
+    <div class="replybar" *ngIf="replyTo">↩ {{ name(replyTo) }} <button type="button" (click)="cancelReply.emit()">✕</button></div>
+
+    <div class="suggest" *ngIf="hashTags.length">
+      <button type="button" *ngFor="let h of hashTags" (click)="hashTagPick.emit(h.name)">
+        <b>#</b> {{ h.name }} <span *ngIf="h.count">({{ h.count }})</span>
+      </button>
+    </div>
+
+    <div class="input">
+      <input
+        #draftEl
+        [ngModel]="draft"
+        (input)="onDraftInput(draftEl)"
+        (keyup)="trackCaret(draftEl)"
+        (click)="trackCaret(draftEl)"
+        maxlength="200"
+        [placeholder]="'social.writeComment' | i18next"
+        (keyup.enter)="send.emit()" />
+      <button type="button" class="ghost" (click)="showMainEmoji = !showMainEmoji">😀</button>
+      <button type="button" (click)="send.emit()" [disabled]="sending">➤</button>
+    </div>
+    <div class="emojis main" *ngIf="showMainEmoji">
+      <button type="button" *ngFor="let e of typingEmojis" (click)="appendEmoji(e)">{{ e }}</button>
+    </div>
+  </div>
+</div>
