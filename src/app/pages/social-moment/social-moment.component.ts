@@ -25,6 +25,8 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
   friendPost = false;
   filterUserId = '';
   meId = '';
+  hasMore = true;
+  private scrollHandler: any;
   openMenuId: string | null = null;
   copiedId: string | null = null;
   busyRelation: { [id: string]: boolean } = {};
@@ -55,10 +57,19 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
       this.loadFeed(true);
       if (postId) this.pinPost(postId);
     });
+    // Cuộn tới đáy thì tự tải thêm (không dùng nút Load more).
+    this.scrollHandler = () => {
+      const nearBottom = window.innerHeight + window.scrollY + 1000 >= document.body.scrollHeight;
+      if (nearBottom && this.hasMore && !this.loading && !this.loadingMore && this.moments.length) {
+        this.loadFeed(false);
+      }
+    };
+    window.addEventListener('scroll', this.scrollHandler);
   }
 
   ngOnDestroy(): void {
     this.querySub?.unsubscribe();
+    window.removeEventListener('scroll', this.scrollHandler);
   }
 
   /** Ghim 1 bài cụ thể lên đầu feed khi mở link ?postId=. */
@@ -88,13 +99,16 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
       this.page = 1;
       this.loading = true;
       this.error = '';
+      this.hasMore = true;
     } else {
+      if (!this.hasMore) return;
       this.loadingMore = true;
     }
     this.momentService.getWallMoments(this.pageSize, this.page, this.myPost, this.friendPost, this.filterUserId || undefined).subscribe({
       next: (res: any) => {
         const list = res?.data || res || [];
         this.moments = reset ? list : [...this.moments, ...list];
+        if (list.length < this.pageSize) this.hasMore = false;
         this.page++;
         this.loading = false;
         this.loadingMore = false;
@@ -107,15 +121,34 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
     });
   }
 
+  private abbrev(first: any, last: any, full: any, user: any): string {
+    const f = (first || '').trim();
+    const l = (last || '').trim();
+    if (f) return (f.charAt(0) + (l ? l.charAt(0) : '')).toUpperCase();
+    const fullName = (full || '').trim().replace(/\s+/g, ' ');
+    if (fullName) {
+      const parts = fullName.split(' ');
+      if (parts.length >= 2) return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+      return fullName.replace(/\s+/g, '').slice(0, 2).toUpperCase();
+    }
+    const name = (user || '').trim();
+    return name ? name.replace(/\s+/g, '').slice(0, 2).toUpperCase() : '';
+  }
+
+  /** Tên hiển thị: first+last, rồi fullName/name, rồi userName. */
+  private displayName(u: any): string {
+    const full = [u?.firstName, u?.lastName].filter(Boolean).join(' ');
+    if (full) return full;
+    return (u?.fullName || u?.name || u?.userName || '').trim();
+  }
+
   /** Người đăng: ưu tiên createdByFull như customerfe, rồi tới userResponseMoment. */
   poster(m: any): any {
     return m?.createdByFull || m?.userResponseMoment || {};
   }
 
   posterName(m: any): string {
-    const u = this.poster(m);
-    if (u.firstName) return [u.firstName, u.lastName].filter(Boolean).join(' ');
-    return u.userName || '';
+    return this.displayName(this.poster(m));
   }
 
   posterAvatar(m: any): string {
@@ -125,11 +158,7 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
 
   posterText(m: any): string {
     const u = this.poster(m);
-    const first = (u.firstName || '').trim();
-    const last = (u.lastName || '').trim();
-    const name = (u.userName || '').trim();
-    if (first) return (first.charAt(0) + (last ? last.charAt(0) : '')).toUpperCase();
-    return name ? name.replace(/\s+/g, '').slice(0, 2).toUpperCase() : '?';
+    return this.abbrev(u.firstName, u.lastName, u.fullName || u.name, u.userName) || '?';
   }
 
   /** Giải mã nội dung giống customerfe (decodeUtf8): hết ký tự %... */
@@ -198,7 +227,115 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ---------- menu ⋮ (giống social-moment-item của customerfe) ----------
+  readonly commentPreview = 3;
+  viewAllComments: { [id: string]: boolean } = {};
+  commentMenuId: string | null = null;
+  editingCommentId: string | null = null;
+  editDraft = '';
+  savingEdit = false;
+  likedComments: { [id: string]: boolean } = {};
+
+  /** "Abir, MT liked" từ 2 expression đầu (giống firstCustomerLike). */
+  likeSummary(m: any): string {
+    const names = (m?.expressions || [])
+      .filter((e: any) => e?.firstName || e?.userName)
+      .slice(0, 2)
+      .map((e: any) => e.firstName || e.userName);
+    return names.join(', ');
+  }
+
+  visibleComments(m: any): any[] {
+    const list = m?.comments || [];
+    return this.viewAllComments[m._id] ? list : list.slice(0, this.commentPreview);
+  }
+
+  hiddenCommentCount(m: any): number {
+    return Math.max(0, (m?.comments || []).length - this.commentPreview);
+  }
+
+  commentUser(c: any): any {
+    return c?.createdByFull || { userName: c?.userName, firstName: c?.firstName, lastName: c?.lastName, profilePictureUrl: c?.profilePictureUrl };
+  }
+
+  commentUserName(c: any): string {
+    const u = this.commentUser(c);
+    if (u.firstName) return [u.firstName, u.lastName].filter(Boolean).join(' ');
+    return u.userName || '';
+  }
+
+  commentAvatar(c: any): string {
+    const url = (this.commentUser(c).profilePictureUrl || '').trim();
+    return url && url !== 'null' ? url : '';
+  }
+
+  commentAvatarText(c: any): string {
+    const u = this.commentUser(c);
+    const first = (u.firstName || '').trim();
+    const last = (u.lastName || '').trim();
+    const name = (u.userName || '').trim();
+    if (first) return (first.charAt(0) + (last ? last.charAt(0) : '')).toUpperCase();
+    return name ? name.replace(/\s+/g, '').slice(0, 2).toUpperCase() : '?';
+  }
+
+  commentId(c: any): string {
+    return c?.comment_id || c?._id || '';
+  }
+
+  isOwnComment(c: any): boolean {
+    if (!this.meId) return false;
+    const u = this.commentUser(c);
+    const id = UserService.profileId(u) || c?.from || c?.createdBy;
+    return !!id && String(id) === String(this.meId);
+  }
+
+  likeFeedComment(m: any, c: any): void {
+    const id = this.commentId(c);
+    if (!m?._id || !id || this.likedComments[id]) return;
+    this.likedComments[id] = true;
+    c.expressions = [...(c.expressions || []), '👍'];
+    this.momentService.expressComment(m._id, id).subscribe({
+      error: () => {
+        delete this.likedComments[id];
+        c.expressions = (c.expressions || []).slice(0, -1);
+      },
+    });
+  }
+
+  startEditComment(c: any): void {
+    this.editingCommentId = this.commentId(c);
+    this.editDraft = this.decodeText(c.comment || c.message);
+    this.commentMenuId = null;
+  }
+
+  cancelEditComment(): void {
+    this.editingCommentId = null;
+    this.editDraft = '';
+  }
+
+  saveEditComment(m: any, c: any): void {
+    const text = (this.editDraft || '').trim();
+    if (!text || this.savingEdit) return;
+    this.savingEdit = true;
+    this.momentService.editComment(m._id, { ...c, comment: text, editedComment: text }).subscribe({
+      next: () => {
+        c.comment = text;
+        c.message = text;
+        this.savingEdit = false;
+        this.cancelEditComment();
+      },
+      error: () => (this.savingEdit = false),
+    });
+  }
+
+  deleteFeedComment(m: any, c: any): void {
+    this.commentMenuId = null;
+    this.momentService.deleteComment(m._id, c).subscribe({
+      next: () => {
+        const id = this.commentId(c);
+        m.comments = (m.comments || []).filter((x: any) => this.commentId(x) !== id);
+      },
+    });
+  }
 
   authorId(m: any): string {
     const id =

@@ -20,6 +20,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { LoginComponent } from './pages/login/login.component';
 import { SocialComponent } from './pages/social/social.component';
 import { SocialMomentComponent } from './pages/social-moment/social-moment.component';
+import { CameraCaptureComponent } from './pages/social-moment/make-post/camera-capture/camera-capture.component';
 import { ShortsStripComponent } from './pages/social-moment/shorts-strip/shorts-strip.component';
 import { MakePostComponent } from './pages/social-moment/make-post/make-post.component';
 import { SocialVideoComponent } from './pages/social-video/social-video.component';
@@ -99,6 +100,7 @@ export const I18N_PROVIDERS = [
     LoginComponent,
     SocialComponent,
     SocialMomentComponent,
+    CameraCaptureComponent,
     SocialVideoComponent,
     CategoryBarComponent,
     VideoTabsComponent,

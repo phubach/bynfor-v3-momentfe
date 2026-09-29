@@ -16,8 +16,8 @@
 
     <aside class="vdp-side">
       <div class="vdp-author clickable" (click)="goToProfile($event)">
-        <img class="avatar-img" *ngIf="avatarUrl(video?.userResponseMoment)" [src]="avatarUrl(video?.userResponseMoment)" alt="" />
-        <span class="avatar" *ngIf="!avatarUrl(video?.userResponseMoment)">
+        <img class="avatar-img" *ngIf="avatarUrl(video?.userResponseMoment) && !video.authorImgBroken" [src]="avatarUrl(video?.userResponseMoment)" alt="" (error)="video.authorImgBroken = true" />
+        <span class="avatar" *ngIf="!avatarUrl(video?.userResponseMoment) || video.authorImgBroken">
           {{ avatarText(video?.userResponseMoment) }}
         </span>
         <div class="author-text">
@@ -37,8 +37,8 @@
 
       <div class="vdp-comments">
         <div class="comment-row" *ngFor="let c of comments">
-          <img class="avatar-img sm" *ngIf="avatarUrl(c?.createdByFull || c)" [src]="avatarUrl(c?.createdByFull || c)" alt="" />
-          <span class="avatar sm" *ngIf="!avatarUrl(c?.createdByFull || c)">
+          <img class="avatar-img sm" *ngIf="avatarUrl(c?.createdByFull || c) && !c.imgBroken" [src]="avatarUrl(c?.createdByFull || c)" alt="" (error)="c.imgBroken = true" />
+          <span class="avatar sm" *ngIf="!avatarUrl(c?.createdByFull || c) || c.imgBroken">
             {{ avatarText(c?.createdByFull || c) }}
           </span>
           <div class="comment-bubble">
@@ -51,8 +51,14 @@
 
             <div class="reply-list" *ngIf="repliesOf(c.comment_id || c._id).length">
               <div class="reply" *ngFor="let r of repliesOf(c.comment_id || c._id)">
-                <strong>{{ commentUserName(r) }}</strong>
-                <span>{{ decodeText(r.comment || r.message) }}</span>
+                <img class="avatar-img xs" *ngIf="avatarUrl(r?.createdByFull || r) && !r.imgBroken" [src]="avatarUrl(r?.createdByFull || r)" alt="" (error)="r.imgBroken = true" />
+                <span class="avatar xs" *ngIf="!avatarUrl(r?.createdByFull || r) || r.imgBroken">
+                  {{ avatarText(r?.createdByFull || r) }}
+                </span>
+                <div class="reply-text">
+                  <strong>{{ commentUserName(r) }}</strong>
+                  <span>{{ decodeText(r.comment || r.message) }}</span>
+                </div>
               </div>
             </div>
 

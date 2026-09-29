@@ -33,6 +33,11 @@
     </div>
   </div>
   <div class="menu-backdrop" *ngIf="openMenu" (click)="openMenu = null"></div>
+  <app-camera-capture
+    *ngIf="captureMode"
+    [mode]="captureMode"
+    (captured)="onCaptured($event)"
+    (closed)="captureMode = null"></app-camera-capture>
   <div class="composer-collapsed" *ngIf="!expanded" (click)="expanded = true">
     <span class="avatar clickable" (click)="goToMyProfile($event)">
       <img *ngIf="meAvatarUrl()" [src]="meAvatarUrl()" alt="" />
@@ -43,11 +48,19 @@
   </div>
 
   <div class="composer-open" *ngIf="expanded">
-    <textarea
-      [(ngModel)]="content"
-      rows="3"
-      maxlength="2000"
-      [placeholder]="'social.whatsNew' | i18next"></textarea>
+    <div class="composer-input-row">
+      <span class="avatar clickable" (click)="goToMyProfile($event)">
+        <img *ngIf="meAvatarUrl()" [src]="meAvatarUrl()" alt="" />
+        <span *ngIf="!meAvatarUrl() && meAvatarText()">{{ meAvatarText() }}</span>
+        <i class="fa fa-user-o" *ngIf="!meAvatarUrl() && !meAvatarText()" aria-hidden="true"></i>
+      </span>
+      <textarea
+        class="pill-input"
+        [(ngModel)]="content"
+        rows="1"
+        maxlength="2000"
+        [placeholder]="'social.whatsNew' | i18next"></textarea>
+    </div>
 
     <div class="preview-grid" *ngIf="images.length || video">
       <div class="preview-item" *ngFor="let img of images; let i = index">
@@ -64,18 +77,34 @@
       </div>
     </div>
 
-    <div class="composer-error" *ngIf="error">{{ error | i18next }}</div>
+    <div class="composer-error" *ngIf="error">{{ error | i18next }}<span *ngIf="serverError"> ({{ serverError }})</span></div>
 
     <div class="composer-bar">
       <div class="attach-btns">
-        <label class="attach-btn" [title]="'social.addPhotos' | i18next">
-          <i class="fa fa-picture-o" aria-hidden="true"></i>
-          <input type="file" accept="image/*" multiple hidden (change)="onPickImages($event)" />
-        </label>
-        <label class="attach-btn" *ngIf="!video" [title]="'social.addVideo' | i18next">
-          <i class="fa fa-video-camera" aria-hidden="true"></i>
-          <input type="file" accept="video/*" hidden (change)="onPickVideo($event)" />
-        </label>
+        <div class="attach-dropdown">
+          <button type="button" class="attach-btn" (click)="openMenu = openMenu === 'attach' ? null : 'attach'"
+            [title]="'social.attachMedia' | i18next" aria-label="Attach">
+            <i class="fa fa-camera" aria-hidden="true"></i>
+          </button>
+          <ul class="attach-menu" *ngIf="openMenu === 'attach'">
+            <li>
+              <button type="button" class="attach-item" (click)="openCapture('photo')">
+                <i class="fa fa-camera" aria-hidden="true"></i> {{ 'social.takePhoto' | i18next }}
+              </button>
+            </li>
+            <li>
+              <button type="button" class="attach-item" (click)="openCapture('video')">
+                <i class="fa fa-video-camera" aria-hidden="true"></i> {{ 'social.takeVideo' | i18next }}
+              </button>
+            </li>
+            <li>
+              <label class="attach-item">
+                <i class="fa fa-upload" aria-hidden="true"></i> {{ 'social.uploadMedia' | i18next }}
+                <input type="file" accept="image/*,video/*" multiple hidden (change)="onUploadMixed($event)" />
+              </label>
+            </li>
+          </ul>
+        </div>
         <small class="attach-hint" *ngIf="images.length">{{ images.length }}/{{ maxImages }}</small>
       </div>
       <button type="button" class="post-btn" (click)="submit()" [disabled]="!canPost()">

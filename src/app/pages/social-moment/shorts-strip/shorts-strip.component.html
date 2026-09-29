@@ -1,0 +1,38 @@
+<div class="shorts" *ngIf="loading || videos.length">
+  <div class="shorts-head">
+    <span class="shorts-title"><i class="fa fa-film" aria-hidden="true"></i> {{ 'social.shorts' | i18next }}</span>
+  </div>
+
+  <div class="shorts-wrap">
+    <button type="button" class="shorts-arrow left" (click)="scrollBy(-1)" aria-label="Previous">
+      <i class="fa fa-chevron-left" aria-hidden="true"></i>
+    </button>
+    <div class="shorts-track" #track>
+      <div class="short-card" *ngFor="let v of videos; let i = index" (click)="openDetail(v, i)">
+        <div class="short-thumb">
+          <video #vp preload="metadata" muted playsinline [src]="v.attachmentUrl"
+            (mouseover)="previewPlay(vp)" (mouseout)="previewStop(vp)"></video>
+        </div>
+        <div class="short-desc">{{ v.description }}</div>
+        <div class="short-user">
+          <img *ngIf="avatarUrl(v)" [src]="avatarUrl(v)" alt="" />
+          <span class="mini-avatar" *ngIf="!avatarUrl(v)">{{ avatarText(v) }}</span>
+          <span class="user-name">{{ userName(v) }}</span>
+          <span class="likes"><i class="fa fa-heart-o" aria-hidden="true"></i> {{ likeCount(v) }}</span>
+        </div>
+      </div>
+    </div>
+    <button type="button" class="shorts-arrow right" (click)="scrollBy(1)" aria-label="Next">
+      <i class="fa fa-chevron-right" aria-hidden="true"></i>
+    </button>
+  </div>
+</div>
+
+<app-video-detail-popup
+  *ngIf="selected"
+  [video]="selected"
+  [hasPrev]="selectedIndex > 0"
+  [hasNext]="selectedIndex < videos.length - 1"
+  (close)="closeDetail()"
+  (prev)="stepDetail(-1)"
+  (next)="stepDetail(1)"></app-video-detail-popup>

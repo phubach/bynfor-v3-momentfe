@@ -11871,6 +11871,21 @@
     "shareMoment": "Share Moment",
     "noComments": "There are no comments.",
     "audGroup": "Group",
-    "shorts": "Shorts"
+    "shorts": "Shorts",
+    "attachMedia": "Attach photos or videos",
+    "takePhoto": "Take Photo",
+    "takeVideo": "Take Video",
+    "uploadMedia": "Upload Images & Videos",
+    "capture": "Capture",
+    "retake": "Retake",
+    "useMedia": "Use",
+    "startRecord": "Record",
+    "stopRecord": "Stop",
+    "cameraError": "Cannot access the camera. Please allow permission and try again.",
+    "liked": "liked",
+    "loadMoreComments": "Load {{count}} More Comments.",
+    "edit": "Edit",
+    "delete": "Delete",
+    "cancel": "Cancel"
   }
 }

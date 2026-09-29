@@ -8,8 +8,8 @@
 
   <article class="moment-card" *ngFor="let m of moments">
     <header class="moment-head">
-      <img class="avatar-img clickable" *ngIf="posterAvatar(m)" [src]="posterAvatar(m)" alt="" (click)="goToProfile(m)" />
-      <span class="avatar clickable" *ngIf="!posterAvatar(m)" (click)="goToProfile(m)">{{ posterText(m) }}</span>
+      <img class="avatar-img clickable" *ngIf="posterAvatar(m) && !m.imgBroken" [src]="posterAvatar(m)" alt="" (error)="m.imgBroken = true" (click)="goToProfile(m)" />
+      <span class="avatar clickable" *ngIf="!posterAvatar(m) || m.imgBroken" (click)="goToProfile(m)">{{ posterText(m) }}</span>
       <div class="head-text">
         <strong class="clickable" (click)="goToProfile(m)">{{ posterName(m) || ('social.unknownUser' | i18next) }}<i class="fa fa-check-circle verified" *ngIf="m?.verified" aria-hidden="true"></i></strong>
         <small>{{ m.createdAt | date: 'short' }} · <i class="fa fa-globe" aria-hidden="true"></i> {{ audienceKey(m) | i18next }}</small>
@@ -71,11 +71,58 @@
     </footer>
 
     <div class="comments" *ngIf="expandedComments[m._id]">
+      <div class="like-summary">
+        <span class="liked-by" *ngIf="likeSummary(m)"><i class="fa fa-heart" aria-hidden="true"></i> {{ likeSummary(m) }} {{ 'social.liked' | i18next }}</span>
+        <span class="summary-counts">
+          <span class="pill"><i class="fa fa-heart" aria-hidden="true"></i> {{ m.likeCount || 0 }}</span>
+          <span class="pill"><i class="fa fa-thumbs-o-up" aria-hidden="true"></i> {{ (m.expressions || []).length }}</span>
+          <span class="pill"><i class="fa fa-commenting-o" aria-hidden="true"></i> {{ (m.comments || []).length }}</span>
+        </span>
+      </div>
+
       <div class="no-comments" *ngIf="!(m.comments || []).length">{{ 'social.noComments' | i18next }}</div>
-      <!--<div class="comment" *ngFor="let c of m.comments">
-        <strong>{{ c.userName || c.firstName || ('social.unknownUser' | i18next) }}</strong>
-        <span>{{ c.comment }}</span>
-      </div>-->
+
+      <div class="comment-row" *ngFor="let c of visibleComments(m)">
+        <img class="avatar-img sm" *ngIf="commentAvatar(c) && !c.imgBroken" [src]="commentAvatar(c)" alt="" (error)="c.imgBroken = true" (click)="goToProfile(c)" />
+        <span class="avatar sm" *ngIf="!commentAvatar(c) || c.imgBroken" (click)="goToProfile(c)">{{ commentAvatarText(c) }}</span>
+        <div class="comment-bubble">
+          <div class="comment-head">
+            <strong (click)="goToProfile(c)">{{ commentUserName(c) || ('social.unknownUser' | i18next) }}</strong>
+            <i class="fa fa-check-circle verified" *ngIf="c?.verified" aria-hidden="true"></i>
+          </div>
+          <div class="comment-text" *ngIf="editingCommentId !== commentId(c)">{{ decodeText(c.comment || c.message) }}</div>
+          <div class="comment-edit" *ngIf="editingCommentId === commentId(c)">
+            <input [(ngModel)]="editDraft" maxlength="200" (keyup.enter)="saveEditComment(m, c)" />
+            <button type="button" (click)="saveEditComment(m, c)" [disabled]="savingEdit || !editDraft.trim()">
+              <i class="fa fa-paper-plane-o" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="cancel" (click)="cancelEditComment()">{{ 'social.cancel' | i18next }}</button>
+          </div>
+          <small class="comment-time">{{ c.commentedAt | date: 'short' }}</small>
+        </div>
+        <div class="comment-actions">
+          <button type="button" [class.on]="likedComments[commentId(c)]" (click)="likeFeedComment(m, c)" aria-label="Like">
+            <i class="fa fa-thumbs-o-up" aria-hidden="true"></i>
+            <span *ngIf="(c.expressions || []).length">{{ (c.expressions || []).length }}</span>
+          </button>
+          <div class="cmenu-wrap" *ngIf="isOwnComment(c)">
+            <button type="button" (click)="commentMenuId = commentMenuId === commentId(c) ? null : commentId(c)" aria-label="More">
+              <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
+            </button>
+            <ul class="cmenu-list" *ngIf="commentMenuId === commentId(c)">
+              <li><button type="button" (click)="startEditComment(c)">{{ 'social.edit' | i18next }}</button></li>
+              <li><button type="button" class="danger" (click)="deleteFeedComment(m, c)">{{ 'social.delete' | i18next }}</button></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="more-comments" *ngIf="!viewAllComments[m._id] && hiddenCommentCount(m) > 0">
+        <button type="button" (click)="viewAllComments[m._id] = true">
+          {{ 'social.loadMoreComments' | i18next: { count: hiddenCommentCount(m) } }}
+        </button>
+      </div>
+
       <div class="comment-box">
         <input [(ngModel)]="commentDrafts[m._id]" maxlength="255" [placeholder]="'social.writeComment' | i18next" (keyup.enter)="sendComment(m)" />
         <button type="button" (click)="sendComment(m)" [disabled]="sendingComment[m._id]">
@@ -85,9 +132,7 @@
     </div>
   </article>
 
-  <div class="load-more" *ngIf="!loading && moments.length">
-    <button type="button" (click)="loadFeed(false)" [disabled]="loadingMore">
-      {{ loadingMore ? ('social.loading' | i18next) : ('social.loadMore' | i18next) }}
-    </button>
+  <div class="loading-more" *ngIf="loadingMore">
+    <i class="fa fa-spinner fa-spin" aria-hidden="true"></i> {{ 'social.loading' | i18next }}
   </div>
 </div>

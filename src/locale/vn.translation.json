@@ -11854,6 +11854,21 @@
     "shareMoment": "Chia sẻ khoảnh khắc",
     "noComments": "Chưa có bình luận nào.",
     "audGroup": "Nhóm",
-    "shorts": "Shorts"
+    "shorts": "Shorts",
+    "attachMedia": "Đính kèm ảnh hoặc video",
+    "takePhoto": "Chụp ảnh",
+    "takeVideo": "Quay video",
+    "uploadMedia": "Tải ảnh & video lên",
+    "capture": "Chụp",
+    "retake": "Chụp lại",
+    "useMedia": "Dùng",
+    "startRecord": "Quay",
+    "stopRecord": "Dừng",
+    "cameraError": "Không thể truy cập camera. Vui lòng cấp quyền rồi thử lại.",
+    "liked": "đã thích",
+    "loadMoreComments": "Xem thêm {{count}} bình luận.",
+    "edit": "Sửa",
+    "delete": "Xóa",
+    "cancel": "Hủy"
   }
 }

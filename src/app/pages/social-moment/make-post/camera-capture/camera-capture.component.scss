@@ -1,0 +1,103 @@
+.cam-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.cam-panel {
+  width: min(560px, 100%);
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.cam-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eef2f7;
+
+  .cam-x {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font-size: 16px;
+    color: #0f1f4a;
+  }
+}
+
+.cam-body {
+  padding: 14px 16px;
+}
+
+.cam-state {
+  text-align: center;
+  color: #5e6f93;
+  padding: 32px 0;
+
+  &.error { color: #d83a43; }
+}
+
+.cam-stage {
+  position: relative;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+
+  video, img {
+    width: 100%;
+    max-height: 52vh;
+    display: block;
+    object-fit: contain;
+    background: #000;
+  }
+
+  .rec-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #ff4d4d;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 12px;
+  }
+}
+
+.cam-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 12px;
+
+  .cam-btn {
+    border: 1px solid #d7e3f4;
+    border-radius: 8px;
+    background: #fff;
+    padding: 10px 20px;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 600;
+    color: #0f1f4a;
+
+    i { margin-right: 6px; }
+
+    &.primary {
+      background: #1769ff;
+      border-color: #1769ff;
+      color: #fff;
+    }
+
+    &.recording {
+      border-color: #e0245e;
+      color: #e0245e;
+    }
+  }
+}

@@ -19,9 +19,21 @@ export class MomentService {
     return this.http.get<any>(`${this.base}/moment/${id}`);
   }
 
-  /** Đăng moment mới (gọn theo CreateMomentComponent). */
   createMoment(body: { content: string; attachments: any[]; accessedBy?: string }) {
-    return this.http.post<any>(`${this.base}/moment`, body);
+    const payload: any = {
+      accessedBy: body.accessedBy || 'IS_PUBLIC',
+      tagUsers: [],
+      tags: [],
+      activity: 'No Feeling/Activity',
+      subActivity: '',
+      attachments: body.attachments || [],
+      content: body.content || '',
+      redPacketShare: false,
+      isDisplayPublic: false,
+      momentCampaign: null,
+      isSocialBusinessAccountMoments: false,
+    };
+    return this.http.post<any>(`${this.base}/moment`, payload);
   }
 
   /** Upload ảnh (giống CreateMomentComponent): trả về [{origin, small}]. */
@@ -48,7 +60,7 @@ export class MomentService {
   }
 
   /** BE giữ nguyên: POST /moment-comment/expression/:momentId/:commentId */
-  expressComment(momentId: string, commentId: string, expression: any) {
+  expressComment(momentId: string, commentId: string, expression: any = '👍') {
     return this.http.post<any>(`${this.base}/moment-comment/expression/${momentId}/${commentId}`, expression);
   }
 

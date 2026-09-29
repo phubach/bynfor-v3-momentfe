@@ -1,0 +1,44 @@
+<div class="cam-backdrop" (click)="close()">
+  <div class="cam-panel" (click)="$event.stopPropagation()">
+    <div class="cam-head">
+      <strong>{{ titleKey | i18next }}</strong>
+      <button type="button" class="cam-x" (click)="close()" aria-label="Close">
+        <i class="fa fa-times" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <div class="cam-body">
+      <div *ngIf="starting" class="cam-state"><i class="fa fa-spinner fa-spin" aria-hidden="true"></i> {{ 'social.loading' | i18next }}</div>
+      <div *ngIf="!starting && error" class="cam-state error">{{ error | i18next }}</div>
+
+      <div class="cam-stage" [hidden]="starting || !!error">
+        <!-- photo: live hoặc ảnh đã chụp -->
+        <video id="capture-live-video" playsinline muted [hidden]="mode === 'photo' && !!photoPreview"></video>
+        <img *ngIf="mode === 'photo' && photoPreview" [src]="photoPreview" alt="" />
+        <!-- video: live hoặc bản đã quay -->
+        <video *ngIf="mode === 'video' && recordedUrl" [src]="recordedUrl" controls playsinline></video>
+        <span class="rec-badge" *ngIf="mode === 'video' && recording">● {{ formatTime(recordSecs) }}</span>
+      </div>
+
+      <div class="cam-actions" *ngIf="!starting && !error">
+        <!-- photo -->
+        <ng-container *ngIf="mode === 'photo'">
+          <button type="button" class="cam-btn primary" *ngIf="!photoPreview" (click)="capturePhoto()">
+            <i class="fa fa-camera" aria-hidden="true"></i> {{ 'social.capture' | i18next }}
+          </button>
+          <button type="button" class="cam-btn" *ngIf="photoPreview" (click)="retakePhoto()">{{ 'social.retake' | i18next }}</button>
+          <button type="button" class="cam-btn primary" *ngIf="photoPreview" (click)="usePhoto()">{{ 'social.useMedia' | i18next }}</button>
+        </ng-container>
+        <!-- video -->
+        <ng-container *ngIf="mode === 'video'">
+          <button type="button" class="cam-btn" [class.recording]="recording" *ngIf="!recordedUrl" (click)="toggleRecord()">
+            <i class="fa fa-video-camera" aria-hidden="true"></i>
+            {{ recording ? ('social.stopRecord' | i18next) + ' (' + formatTime(recordSecs) + ')' : ('social.startRecord' | i18next) }}
+          </button>
+          <button type="button" class="cam-btn" *ngIf="recordedUrl" (click)="retakeVideo()">{{ 'social.retake' | i18next }}</button>
+          <button type="button" class="cam-btn primary" *ngIf="recordedUrl" (click)="useVideo()">{{ 'social.useMedia' | i18next }}</button>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</div>

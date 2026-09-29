@@ -30,6 +30,7 @@ export class MakePostComponent implements OnInit {
   expanded = false;
   posting = false;
   error = '';
+  serverError = '';
   readonly maxImages = 6;
 
   /** Audience của bài đăng (giống dropdown Public của customerfe). */
@@ -48,7 +49,8 @@ export class MakePostComponent implements OnInit {
     { value: 'friends', icon: 'fa-users', labelKey: 'social.filterFriends' },
     { value: 'mine', icon: 'fa-bullhorn', labelKey: 'social.filterMine' },
   ];
-  openMenu: 'filter' | 'audience' | null = null;
+  openMenu: 'filter' | 'audience' | 'attach' | null = null;
+  captureMode: 'photo' | 'video' | null = null;
 
   constructor(private momentService: MomentService, private userService: UserService, private router: Router) {}
 
@@ -96,22 +98,59 @@ export class MakePostComponent implements OnInit {
 
   onPickImages(e: Event): void {
     const files = Array.from((e.target as HTMLInputElement).files || []).filter((f) => f.type.startsWith('image/'));
-    for (const file of files) {
-      if (this.images.length >= this.maxImages) break;
-      this.images.push({ file, preview: URL.createObjectURL(file) });
-    }
+    this.addImageFiles(files);
     (e.target as HTMLInputElement).value = '';
     this.expanded = true;
   }
 
   onPickVideo(e: Event): void {
     const file = Array.from((e.target as HTMLInputElement).files || []).find((f) => f.type.startsWith('video/'));
-    if (file) {
-      this.clearVideo();
-      this.video = { file, preview: URL.createObjectURL(file) };
-    }
+    if (file) this.setVideoFile(file);
     (e.target as HTMLInputElement).value = '';
     this.expanded = true;
+  }
+
+  /** Mở modal camera thật (giống Take Photo/Video của customerfe). */
+  openCapture(mode: 'photo' | 'video'): void {
+    this.openMenu = null;
+    this.captureMode = mode;
+    this.expanded = true;
+  }
+
+  /** Nhận file từ modal camera, đưa vào danh sách đính kèm chờ đăng. */
+  onCaptured(media: { file: File; preview: string; kind: 'photo' | 'video' }): void {
+    this.captureMode = null;
+    if (media.kind === 'photo') {
+      if (this.images.length < this.maxImages) {
+        this.images.push({ file: media.file, preview: media.preview });
+      }
+    } else {
+      this.clearVideo();
+      this.video = { file: media.file, preview: media.preview };
+    }
+    this.expanded = true;
+  }
+
+  onUploadMixed(e: Event): void {
+    const files = Array.from((e.target as HTMLInputElement).files || []);
+    this.addImageFiles(files.filter((f) => f.type.startsWith('image/')));
+    const video = files.find((f) => f.type.startsWith('video/'));
+    if (video) this.setVideoFile(video);
+    (e.target as HTMLInputElement).value = '';
+    this.openMenu = null;
+    this.expanded = true;
+  }
+
+  private addImageFiles(files: File[]): void {
+    for (const file of files) {
+      if (this.images.length >= this.maxImages) break;
+      this.images.push({ file, preview: URL.createObjectURL(file) });
+    }
+  }
+
+  private setVideoFile(file: File): void {
+    this.clearVideo();
+    this.video = { file, preview: URL.createObjectURL(file) };
   }
 
   removeImage(index: number): void {
@@ -165,9 +204,12 @@ export class MakePostComponent implements OnInit {
           ...res.data,
           userResponseMoment: res.data.userResponseMoment || me,
         });
+      } else {
+        throw new Error(res?.message || 'post-failed');
       }
       this.reset();
-    } catch {
+    } catch (e: any) {
+      this.serverError = e?.error?.message || e?.message || '';
       this.error = 'social.postFailed';
     } finally {
       this.posting = false;

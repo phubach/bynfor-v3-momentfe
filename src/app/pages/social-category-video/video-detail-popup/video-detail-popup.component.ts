@@ -89,10 +89,16 @@ export class VideoDetailPopupComponent implements OnChanges {
   avatarText(u: any): string {
     const firstName = (u?.firstName || '').trim();
     const lastName = (u?.lastName || '').trim();
-    const userName = (u?.userName || '').trim();
     if (firstName) {
       return (firstName.charAt(0) + (lastName ? lastName.charAt(0) : '')).toUpperCase();
     }
+    const full = (u?.fullName || u?.name || '').trim().replace(/\s+/g, ' ');
+    if (full) {
+      const parts = full.split(' ');
+      if (parts.length >= 2) return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+      return full.replace(/\s+/g, '').slice(0, 2).toUpperCase();
+    }
+    const userName = (u?.userName || '').trim();
     return userName ? userName.replace(/\s+/g, '').slice(0, 2).toUpperCase() : '';
   }
 
@@ -109,7 +115,8 @@ export class VideoDetailPopupComponent implements OnChanges {
 
   commentUserName(c: any): string {
     const u = c?.createdByFull || {};
-    return u.userName || [u.firstName, u.lastName].filter(Boolean).join(' ') || c?.userName || c?.firstName || '';
+    if (u.firstName) return [u.firstName, u.lastName].filter(Boolean).join(' ');
+    return (u.fullName || u.name || u.userName || c?.fullName || c?.name || c?.userName || c?.firstName || '').trim();
   }
 
   toggleVideoLike(): void {
