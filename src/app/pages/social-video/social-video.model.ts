@@ -23,6 +23,7 @@ export interface ReelComment {
 
 export interface ReelVideo {
   id: string;
+  _id?: string;
   momentId: string;
   attachmentUrl: string;
   description?: string;

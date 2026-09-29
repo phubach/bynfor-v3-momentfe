@@ -115,10 +115,19 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    // Momentfe không lưu profile local như customerfe -> lấy user hiện tại từ BE.
+    // (Trước đây đọc localStorage 'bynfor_profile' luôn ra null, làm isEndorsed/isLiked
+    // và các check "chính mình" sai -> endorse cứ gửi ADD trùng -> BE từ chối -> tụt số.)
     try {
       const raw = localStorage.getItem('bynfor_profile');
       this.myUserId = raw ? JSON.parse(raw)?.id ?? null : null;
     } catch { this.myUserId = null; }
+    this.userService.getCurrentUser().subscribe({
+      next: (me: any) => {
+        if (me?.id != null || me?.userId != null) this.myUserId = me.id ?? me.userId;
+      },
+      error: () => {},
+    });
     this.getVideoCategories();
     this.getVideos();
     this.getSuggestPeople(true);
@@ -574,9 +583,13 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ---------- Endorse (gốc: endorseClick, optimistic + rollback) ----------
+  // ---------- Endorse (gốc: endorseClick, optimistic + rollback + báo lỗi) ----------
+  private endorserId(e: any): any {
+    return e?.userId ?? e?.expressedBy;
+  }
+
   isEndorsed(v: ReelVideo | null): boolean {
-    return !!v && (v.endorsements || []).some((e) => String(e.userId) === String(this.myUserId));
+    return !!v && (v.endorsements || []).some((e) => String(this.endorserId(e)) === String(this.myUserId));
   }
 
   endorseCount(v: ReelVideo | null): number {
@@ -586,7 +599,9 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
 
   endorse(): void {
     const v = this.current();
-    if (!v?.momentId) return;
+    // Gốc: '/endorse-moment/' + (m._id || m.momentId) — giữ y hệt, không chỉ dùng momentId.
+    const targetId = (v as any)?._id || v?.momentId;
+    if (!v || !targetId) return;
     const operation = this.isEndorsed(v) ? 'REMOVE' : 'ADD';
     const prev = [...(v.endorsements || [])];
     const prevCount = this.endorseCount(v);
@@ -594,21 +609,35 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
       v.endorsements = [...prev, { userId: this.myUserId as any } as any];
       v.endorsementCount = prevCount + 1;
     } else {
-      v.endorsements = prev.filter((e) => String(e.userId) !== String(this.myUserId));
+      v.endorsements = prev.filter((e) => String(this.endorserId(e)) !== String(this.myUserId));
       v.endorsementCount = Math.max(0, prevCount - 1);
     }
-    this.momentService.endorse(v.momentId, operation as any).subscribe({
+    this.momentService.endorse(targetId, operation as any).subscribe({
       next: (res: any) => {
         if (res?.data) {
           v.endorsements = res.data.endorsements || v.endorsements;
           v.endorsementCount = res.data.endorsementCount ?? this.endorseCount(v);
         }
       },
-      error: () => {
+      error: (err: any) => {
         v.endorsements = prev;
         v.endorsementCount = prevCount;
+        // Gốc hiện alertService.errorTop — bản mới toast để không fail trong im lặng.
+        this.showToast(err?.error?.message || 'Endorse failed');
       },
     });
+  }
+
+  // ---------- Toast lỗi nhẹ (thay alertService/toastr của gốc) ----------
+  toast = '';
+
+  showToast(msg: string): void {
+    this.toast = msg;
+    this.timers.push(
+      setTimeout(() => {
+        this.toast = '';
+      }, 3200),
+    );
   }
 
   // ---------- Follow / friend creator (gốc: follow/unfollow/syncCreatorFollowState) ----------
@@ -687,7 +716,8 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
     this.loadingPeople = true;
     this.userService.getPeople(this.pagePeople, this.sizePeople).subscribe({
       next: (res: any) => {
-        this.suggestPeople.push(...(res?.data || []));
+        const list = Array.isArray(res?.data) ? res.data : res?.data?.list || [];
+        this.suggestPeople.push(...list);
         this.loadingPeople = false;
         if (first) this.showPeopleModal = true;
       },
@@ -719,6 +749,7 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
   }
 
   peopleRemoveFriend(item: any): void {
+    if (this.myUserId == null) return;
     item.isLoadAction = true;
     this.relations.removeFromFriends(item.id, this.myUserId as any).subscribe({
       next: () => {
@@ -1047,7 +1078,7 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
   }
 
   profileRemoveFriend(): void {
-    if (!this.memberProfile?.id) return;
+    if (!this.memberProfile?.id || this.myUserId == null) return;
     if (!confirm('Remove friend?')) return;
     this.relations.removeFromFriends(this.memberProfile.id, this.myUserId as any).subscribe({
       next: () => {

@@ -58,3 +58,9 @@
   margin: 0 auto;
   padding: 16px 12px 48px;
 }
+
+// Trang video cần dải category full-width: chỉ nới riêng route video,
+// không ảnh hưởng moment / category / profile.
+.social-body:has(app-social-video) {
+  max-width: 1280px;
+}

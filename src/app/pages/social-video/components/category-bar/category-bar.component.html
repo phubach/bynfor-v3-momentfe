@@ -1,11 +1,18 @@
 <div class="catbar">
   <button type="button" class="catbar-back" (click)="back.emit()">‹ {{ 'common.back' | i18next }}</button>
-  <div class="catbar-scroll">
+
+  <button type="button" class="catbar-arrow" (click)="scrollBy(-1)" aria-label="Scroll left">‹</button>
+  <div
+    class="catbar-scroll"
+    #scroller
+    [class.can-left]="canLeft"
+    [class.can-right]="canRight"
+    (scroll)="onScroll()">
     <button
       type="button"
       class="cat-pill"
       [class.active]="!selectedId"
-      (click)="select.emit(null)">
+      (click)="pick(null, $event)">
       <span class="cat-emoji">🧰</span><span>{{ 'all' | i18next }}</span>
     </button>
     <button
@@ -13,7 +20,7 @@
       class="cat-pill"
       *ngFor="let c of categories"
       [class.active]="selectedId === c._id"
-      (click)="select.emit(c._id)">
+      (click)="pick(c._id, $event)">
       <img *ngIf="c.icon" [src]="c.icon" alt="" />
       <span>{{ c.name }}</span>
     </button>
@@ -21,9 +28,11 @@
       type="button"
       class="cat-pill"
       [class.active]="selectedId === '1'"
-      (click)="select.emit('1')">
+      (click)="pick('1', $event)">
       <span class="cat-emoji">❄️</span><span>{{ 'common.other' | i18next }}</span>
     </button>
   </div>
-  <button type="button" class="catbar-history" (click)="history.emit()" title="History">🕘</button>
+  <button type="button" class="catbar-arrow" (click)="scrollBy(1)" aria-label="Scroll right">›</button>
+
+  <button type="button" class="catbar-history" (click)="history.emit()" title="History">🕘 <span>History</span></button>
 </div>

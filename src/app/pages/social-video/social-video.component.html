@@ -199,6 +199,8 @@
             <div class="desc-likes">❤️ {{ likeCount(current()) }}</div>
           </div>
         </div>
+
+        <div class="sv-toast" *ngIf="toast">{{ toast }}</div>
       </ng-container>
     </div>
   </div>
