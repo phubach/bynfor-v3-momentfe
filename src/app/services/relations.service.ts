@@ -2,11 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 
-/**
- * Minimal Relations API — BE giữ nguyên như customerfe (relations.service.ts):
- *  POST/DELETE /customers/:id/friends, /followers, GET relation, GET friends-with-following.
- * Chỉ tách những API mà social-video (reels) thực sự dùng.
- */
 @Injectable({ providedIn: 'root' })
 export class RelationsService {
   private readonly customerBase = environment.API_ENDPOINT_CUSTOMER;

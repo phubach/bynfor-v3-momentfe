@@ -4,6 +4,12 @@
   gap: 12px;
 }
 
+.menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+}
+
 .state {
   text-align: center;
   padding: 32px 12px;
@@ -52,11 +58,81 @@
 
   .avatar-img { object-fit: cover; }
 
+  .clickable { cursor: pointer; }
+
   .head-text {
     display: flex;
     flex-direction: column;
+    flex: 1;
+    min-width: 0;
+
+    strong {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .verified {
+      color: #57b9dc;
+      font-size: 13px;
+    }
 
     small { color: #5e6f93; }
+  }
+
+  .head-menu {
+    position: relative;
+    flex-shrink: 0;
+
+    .menu-btn {
+      width: 32px;
+      height: 32px;
+      border: 1px solid #d7e3f4;
+      border-radius: 8px;
+      background: #fff;
+      color: #1769ff;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .menu-list {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      z-index: 20;
+      min-width: 220px;
+      margin: 0;
+      padding: 6px;
+      list-style: none;
+      background: #fff;
+      border: 1px solid #d7e3f4;
+      border-radius: 10px;
+      box-shadow: 0 10px 28px rgba(15, 31, 74, 0.14);
+
+      button {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 0;
+        background: transparent;
+        padding: 9px 10px;
+        border-radius: 7px;
+        font: inherit;
+        font-size: 13px;
+        color: #0f1f4a;
+        cursor: pointer;
+        text-align: left;
+
+        i { width: 18px; color: #57b9dc; }
+
+        &:hover { background: #f0f4fa; }
+
+        .muted { color: #8a8a8a; }
+
+        .copied { color: #28a745; margin-left: auto; }
+      }
+    }
   }
 }
 
@@ -113,6 +189,13 @@
     font-size: 14px;
 
     strong { margin-right: 6px; }
+  }
+
+  .no-comments {
+    text-align: center;
+    color: #8a8a8a;
+    font-size: 13px;
+    padding: 4px 0 8px;
   }
 
   .comment-box {

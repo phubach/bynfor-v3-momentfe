@@ -8,13 +8,30 @@ export class MomentService {
 
   constructor(private http: HttpClient) {}
 
-  getWallMoments(pageSize = 20, pageNumber = 1) {
-    const params: any = { size: pageSize, page: pageNumber, myPost: false, fromTopMoment: false, forAdmin: false, hideByAdmin: false };
+  getWallMoments(pageSize = 20, pageNumber = 1, myPost = false, friendPost = false, userId?: any) {
+    const params: any = { size: pageSize, page: pageNumber, myPost, fromTopMoment: false, forAdmin: false, hideByAdmin: false };
+    if (userId != null) params.userId = userId;
+    if (friendPost) params.friendAndFollower = true;
     return this.http.get<any>(`${this.base}/moments-wall`, { params });
   }
 
   getWallMoment(id: string) {
     return this.http.get<any>(`${this.base}/moment/${id}`);
+  }
+
+  /** Đăng moment mới (gọn theo CreateMomentComponent). */
+  createMoment(body: { content: string; attachments: any[]; accessedBy?: string }) {
+    return this.http.post<any>(`${this.base}/moment`, body);
+  }
+
+  /** Upload ảnh (giống CreateMomentComponent): trả về [{origin, small}]. */
+  uploadImages(formData: FormData) {
+    return this.http.post<any>(`${this.base}/products/resized/images/list`, formData);
+  }
+
+  /** Upload video (giống CreateMomentComponent): trả về [url]. */
+  uploadVideos(formData: FormData) {
+    return this.http.post<any>(`${this.base}/chat-video/upload/list?isMoment=true`, formData);
   }
 
   express(momentId: string, operation: 'ADD' | 'REMOVE', expression = 'LIKE', content = '👍') {
@@ -107,5 +124,16 @@ export class MomentService {
 
   getVideoHistories(page = 1, pageSize = 20) {
     return this.http.get<any>(`${this.base}/video-history?page=${page}&size=${pageSize}`);
+  }
+
+  getCountMoments(id: string | number) {
+    return this.http.get<any>(`${this.base}/count-moments/${id}`);
+  }
+
+  getMediaFiles(page = 1, pageSize = 18, userId?: string | number, mediaType?: string) {
+    let url = `${this.base}/media-files?page=${page}&size=${pageSize}&isFollowing=false`;
+    if (userId) url += `&customerId=${userId}`;
+    if (mediaType && mediaType !== 'TAG') url += `&type=${mediaType}`;
+    return this.http.post<any>(url, { keyword: mediaType === 'TAG' ? '#' : '' });
   }
 }

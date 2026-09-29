@@ -1,19 +1,58 @@
 <div class="feed">
+  <div class="menu-backdrop" *ngIf="openMenuId" (click)="openMenuId = null"></div>
+  <app-make-post (posted)="onPosted($event)" (filterChange)="onFilterChange($event)"></app-make-post>
+  <app-shorts-strip></app-shorts-strip>
   <div *ngIf="loading" class="state"><i class="fa fa-spinner fa-spin" aria-hidden="true"></i> {{ 'social.loading' | i18next }}</div>
   <div *ngIf="!loading && error" class="state error">{{ error | i18next }} <button type="button" (click)="loadFeed(true)">{{ 'social.retry' | i18next }}</button></div>
   <div *ngIf="!loading && !moments.length && !error" class="state">{{ 'social.emptyMoment' | i18next }}</div>
 
   <article class="moment-card" *ngFor="let m of moments">
     <header class="moment-head">
-      <span class="avatar" *ngIf="!m?.userResponseMoment?.profilePictureUrl || m?.userResponseMoment?.profilePictureUrl === 'null'">{{ avatarText(m) }}</span>
-      <img class="avatar-img" *ngIf="m?.userResponseMoment?.profilePictureUrl && m?.userResponseMoment?.profilePictureUrl !== 'null'" [src]="m.userResponseMoment.profilePictureUrl" alt="" />
+      <img class="avatar-img clickable" *ngIf="posterAvatar(m)" [src]="posterAvatar(m)" alt="" (click)="goToProfile(m)" />
+      <span class="avatar clickable" *ngIf="!posterAvatar(m)" (click)="goToProfile(m)">{{ posterText(m) }}</span>
       <div class="head-text">
-        <strong>{{ userName(m) }}</strong>
-        <small>{{ m.createdAt | date: 'short' }}</small>
+        <strong class="clickable" (click)="goToProfile(m)">{{ posterName(m) || ('social.unknownUser' | i18next) }}<i class="fa fa-check-circle verified" *ngIf="m?.verified" aria-hidden="true"></i></strong>
+        <small>{{ m.createdAt | date: 'short' }} · <i class="fa fa-globe" aria-hidden="true"></i> {{ audienceKey(m) | i18next }}</small>
+      </div>
+      <div class="head-menu">
+        <button type="button" class="menu-btn" (click)="toggleMenu(m)" aria-label="More">
+          <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
+        </button>
+        <ul class="menu-list" *ngIf="openMenuId === m._id">
+          <li>
+            <button type="button" (click)="viewAllPosts(m)">
+              <i class="fa fa-archive" aria-hidden="true"></i> {{ 'social.viewAllPosts' | i18next }}
+            </button>
+          </li>
+          <li *ngIf="!isMine(m) && !m.friended && !m.friendRequested">
+            <button type="button" (click)="addFriend(m)">
+              <i class="fa fa-user-plus" aria-hidden="true"></i> {{ 'social.addFriend' | i18next }}
+              <span class="muted" *ngIf="m.mutualFriendNo">({{ m.mutualFriendNo }} {{ 'social.mutual' | i18next }})</span>
+            </button>
+          </li>
+          <li *ngIf="!isMine(m)">
+            <button type="button" (click)="toggleFollow(m)">
+              <i class="fa" [ngClass]="m.followed ? 'fa-check' : 'fa-thumb-tack'" aria-hidden="true"></i>
+              {{ (m.followed ? 'social.following' : 'social.follow') | i18next }}
+              <span class="muted" *ngIf="m.mutualFollowerNo">({{ m.mutualFollowerNo }} {{ 'social.mutual' | i18next }})</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" (click)="copyUrl(m)">
+              <i class="fa fa-link" aria-hidden="true"></i> {{ 'social.copyUrl' | i18next }}
+              <span class="copied" *ngIf="copiedId === m._id">{{ 'social.copied' | i18next }}</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" (click)="shareMoment(m)">
+              <i class="fa fa-share" aria-hidden="true"></i> {{ 'social.shareMoment' | i18next }}
+            </button>
+          </li>
+        </ul>
       </div>
     </header>
 
-    <p class="moment-content" *ngIf="m.content || m.description">{{ m.content || m.description }}</p>
+    <p class="moment-content" *ngIf="m.content || m.description">{{ decodeText(m.content || m.description) }}</p>
 
     <div class="moment-media" *ngIf="images(m).length">
       <img *ngFor="let att of images(m).slice(0, 4)" [src]="att.attachmentUrl" alt="" loading="lazy" />
@@ -32,6 +71,7 @@
     </footer>
 
     <div class="comments" *ngIf="expandedComments[m._id]">
+      <div class="no-comments" *ngIf="!(m.comments || []).length">{{ 'social.noComments' | i18next }}</div>
       <!--<div class="comment" *ngFor="let c of m.comments">
         <strong>{{ c.userName || c.firstName || ('social.unknownUser' | i18next) }}</strong>
         <span>{{ c.comment }}</span>

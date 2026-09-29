@@ -20,6 +20,8 @@ import { AppRoutingModule } from './app-routing.module';
 import { LoginComponent } from './pages/login/login.component';
 import { SocialComponent } from './pages/social/social.component';
 import { SocialMomentComponent } from './pages/social-moment/social-moment.component';
+import { ShortsStripComponent } from './pages/social-moment/shorts-strip/shorts-strip.component';
+import { MakePostComponent } from './pages/social-moment/make-post/make-post.component';
 import { SocialVideoComponent } from './pages/social-video/social-video.component';
 import { CategoryBarComponent } from './pages/social-video/components/category-bar/category-bar.component';
 import { VideoTabsComponent } from './pages/social-video/components/video-tabs/video-tabs.component';
@@ -35,6 +37,9 @@ import { PeopleSuggestModalComponent } from './pages/social-video/components/peo
 import { CreatorProfileComponent } from './pages/social-video/components/creator-profile/creator-profile.component';
 import { VideoGridComponent } from './pages/social-video/components/video-grid/video-grid.component';
 import { TokenInterceptor } from './core/auth/token.interceptor';
+import { SocialCategoryVideoComponent } from './pages/social-category-video/social-category-video.component';
+import { SocialProfileComponent } from './pages/social-profile/social-profile.component';
+import { VideoDetailPopupComponent } from './pages/social-category-video/video-detail-popup/video-detail-popup.component';
 
 export function appInit(i18next: ITranslationService) {
   return () =>
@@ -108,6 +113,12 @@ export const I18N_PROVIDERS = [
     PeopleSuggestModalComponent,
     CreatorProfileComponent,
     VideoGridComponent,
+    ShortsStripComponent,
+    MakePostComponent,
+    SocialVideoComponent,
+    SocialCategoryVideoComponent,
+    VideoDetailPopupComponent,
+    SocialProfileComponent
   ],
   imports: [
     BrowserModule,

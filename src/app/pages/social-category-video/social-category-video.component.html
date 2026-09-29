@@ -1,0 +1,60 @@
+<div class="cat-page">
+  <div class="filter-banner" *ngIf="hashTag">
+    <span class="hash-badge">#</span>
+    <strong>{{ hashTag }}</strong>
+    <button type="button" class="back-btn" (click)="clearFilter()">{{ 'social.back' | i18next }}</button>
+  </div>
+
+  <div class="search-row" *ngIf="!hashTag">
+    <i class="fa fa-search" aria-hidden="true"></i>
+    <input
+      [(ngModel)]="keyword"
+      (keyup.enter)="search()"
+      [placeholder]="'social.searchVideo' | i18next"
+      autocomplete="off" />
+    <button type="button" class="search-btn" (click)="search()">{{ 'social.search' | i18next }}</button>
+  </div>
+
+  <div class="cat-row">
+    <button type="button" [class.active]="!categoryId" (click)="selectCategory(undefined)">
+      <i class="fa fa-th-large" aria-hidden="true"></i> {{ 'social.all' | i18next }}
+    </button>
+    <button type="button" *ngFor="let c of categories" [class.active]="categoryId === c._id" (click)="selectCategory(c._id)">
+      <img *ngIf="c.icon" [src]="c.icon" alt="" /> {{ c.name }}
+    </button>
+    <button type="button" [class.active]="categoryId === '1'" (click)="selectCategory('1')">
+      <i class="fa fa-folder-o" aria-hidden="true"></i> {{ 'social.other' | i18next }}
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="state"><i class="fa fa-spinner fa-spin" aria-hidden="true"></i> {{ 'social.loading' | i18next }}</div>
+  <div *ngIf="!loading && error" class="state error">
+    {{ error | i18next }} <button type="button" (click)="loadVideos(true)">{{ 'social.retry' | i18next }}</button>
+  </div>
+  <div *ngIf="!loading && !videos.length && !error" class="state">{{ 'social.emptyVideo' | i18next }}</div>
+
+  <div class="video-grid">
+    <div class="video-card" *ngFor="let v of videos; let i = index" (click)="openDetail(v, i)">
+      <div class="thumb">
+        <video #vp preload="metadata" muted playsinline [src]="v.attachmentUrl"
+          (mouseover)="previewPlay(vp)" (mouseout)="previewStop(vp)"></video>
+      </div>
+      <div class="video-meta">
+        <strong>{{ v.description }}</strong>
+        <small class="user-link" (click)="goToProfile(v?.userResponseMoment); $event.stopPropagation()"><i class="fa fa-user-o" aria-hidden="true"></i> {{ userName(v) }}</small>
+        <small class="likes"><i class="fa fa-heart-o" aria-hidden="true"></i> {{ likeCount(v) }}</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="state" *ngIf="loadingMore"><i class="fa fa-spinner fa-spin" aria-hidden="true"></i> {{ 'social.loading' | i18next }}</div>
+</div>
+
+<app-video-detail-popup
+  *ngIf="selected"
+  [video]="selected"
+  [hasPrev]="selectedIndex > 0"
+  [hasNext]="selectedIndex < videos.length - 1"
+  (close)="closeDetail()"
+  (prev)="stepDetail(-1)"
+  (next)="stepDetail(1)"></app-video-detail-popup>

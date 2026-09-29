@@ -1,0 +1,87 @@
+<div class="composer">
+  <div class="composer-head">
+    <h5><span class="head-bar"></span>{{ 'social.makeAPost' | i18next }}</h5>
+    <div class="head-tools">
+      <i class="fa fa-info-circle info-icon" aria-hidden="true"
+        [title]="'in_order_to_receive_moment_rewards_user_must_fill_in_category_to_be_eligible' | i18next"></i>
+      <a class="tool-btn" routerLink="/social/category-video">{{ 'social.category' | i18next }}</a>
+      <div class="tool-dropdown">
+        <button type="button" class="tool-btn icon-btn" (click)="openMenu = openMenu === 'filter' ? null : 'filter'"
+          [class.active]="activeFilter !== 'all'" [attr.aria-label]="'social.filterAll' | i18next">
+          <i class="fa fa-filter" aria-hidden="true"></i>
+        </button>
+        <ul class="tool-menu" *ngIf="openMenu === 'filter'">
+          <li *ngFor="let f of filters">
+            <button type="button" [class.active]="activeFilter === f.value" (click)="selectFilter(f.value)">
+              <i class="fa {{ f.icon }}" aria-hidden="true"></i> {{ f.labelKey | i18next }}
+            </button>
+          </li>
+        </ul>
+      </div>
+      <div class="tool-dropdown">
+        <button type="button" class="tool-btn" (click)="openMenu = openMenu === 'audience' ? null : 'audience'">
+          <i class="fa {{ audienceIcon() }}" aria-hidden="true"></i> {{ audienceLabelKey() | i18next }} <i class="fa fa-caret-down" aria-hidden="true"></i>
+        </button>
+        <ul class="tool-menu" *ngIf="openMenu === 'audience'">
+          <li *ngFor="let a of audiences">
+            <button type="button" [class.active]="accessedBy === a.value" (click)="selectAudience(a.value)">
+              <i class="fa {{ a.icon }}" aria-hidden="true"></i> {{ a.labelKey | i18next }}
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="menu-backdrop" *ngIf="openMenu" (click)="openMenu = null"></div>
+  <div class="composer-collapsed" *ngIf="!expanded" (click)="expanded = true">
+    <span class="avatar clickable" (click)="goToMyProfile($event)">
+      <img *ngIf="meAvatarUrl()" [src]="meAvatarUrl()" alt="" />
+      <span *ngIf="!meAvatarUrl() && meAvatarText()">{{ meAvatarText() }}</span>
+      <i class="fa fa-user-o" *ngIf="!meAvatarUrl() && !meAvatarText()" aria-hidden="true"></i>
+    </span>
+    <span class="fake-input">{{ 'social.whatsNew' | i18next }}</span>
+  </div>
+
+  <div class="composer-open" *ngIf="expanded">
+    <textarea
+      [(ngModel)]="content"
+      rows="3"
+      maxlength="2000"
+      [placeholder]="'social.whatsNew' | i18next"></textarea>
+
+    <div class="preview-grid" *ngIf="images.length || video">
+      <div class="preview-item" *ngFor="let img of images; let i = index">
+        <img [src]="img.preview" alt="" />
+        <button type="button" class="remove-btn" (click)="removeImage(i)" aria-label="Remove">
+          <i class="fa fa-times" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="preview-item" *ngIf="video">
+        <video [src]="video.preview" preload="metadata"></video>
+        <button type="button" class="remove-btn" (click)="clearVideo()" aria-label="Remove">
+          <i class="fa fa-times" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="composer-error" *ngIf="error">{{ error | i18next }}</div>
+
+    <div class="composer-bar">
+      <div class="attach-btns">
+        <label class="attach-btn" [title]="'social.addPhotos' | i18next">
+          <i class="fa fa-picture-o" aria-hidden="true"></i>
+          <input type="file" accept="image/*" multiple hidden (change)="onPickImages($event)" />
+        </label>
+        <label class="attach-btn" *ngIf="!video" [title]="'social.addVideo' | i18next">
+          <i class="fa fa-video-camera" aria-hidden="true"></i>
+          <input type="file" accept="video/*" hidden (change)="onPickVideo($event)" />
+        </label>
+        <small class="attach-hint" *ngIf="images.length">{{ images.length }}/{{ maxImages }}</small>
+      </div>
+      <button type="button" class="post-btn" (click)="submit()" [disabled]="!canPost()">
+        <i class="fa" [ngClass]="posting ? 'fa-spinner fa-spin' : 'fa-send-o'" aria-hidden="true"></i>
+        {{ posting ? ('social.posting' | i18next) : ('social.post' | i18next) }}
+      </button>
+    </div>
+  </div>
+</div>

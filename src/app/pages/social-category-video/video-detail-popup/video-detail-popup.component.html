@@ -1,0 +1,90 @@
+<div class="vdp-backdrop" (click)="close.emit()">
+  <button type="button" class="vdp-close" (click)="close.emit(); $event.stopPropagation()" aria-label="Close">
+    <i class="fa fa-times" aria-hidden="true"></i>
+  </button>
+  <button type="button" class="vdp-edge prev" *ngIf="hasPrev" (click)="prev.emit(); $event.stopPropagation()" aria-label="Previous">
+    <i class="fa fa-chevron-left" aria-hidden="true"></i>
+  </button>
+  <button type="button" class="vdp-edge next" *ngIf="hasNext" (click)="next.emit(); $event.stopPropagation()" aria-label="Next">
+    <i class="fa fa-chevron-right" aria-hidden="true"></i>
+  </button>
+
+  <div class="vdp-panel" (click)="$event.stopPropagation()" *ngIf="video">
+    <div class="vdp-video">
+      <video controls autoplay loop [src]="video.attachmentUrl"></video>
+    </div>
+
+    <aside class="vdp-side">
+      <div class="vdp-author clickable" (click)="goToProfile($event)">
+        <img class="avatar-img" *ngIf="avatarUrl(video?.userResponseMoment)" [src]="avatarUrl(video?.userResponseMoment)" alt="" />
+        <span class="avatar" *ngIf="!avatarUrl(video?.userResponseMoment)">
+          {{ avatarText(video?.userResponseMoment) }}
+        </span>
+        <div class="author-text">
+          <strong>{{ authorName() }}<i class="fa fa-check-circle verified" *ngIf="video?.verified || video?.userResponseMoment?.verified" aria-hidden="true"></i></strong>
+          <small *ngIf="authorFullName()">{{ authorFullName() }}</small>
+        </div>
+      </div>
+
+      <p class="vdp-desc">{{ video.description }}</p>
+
+      <div class="vdp-stats">
+        <button type="button" [class.liked]="likedVideoByMe" (click)="toggleVideoLike()">
+          <i class="fa" [ngClass]="likedVideoByMe ? 'fa-heart' : 'fa-heart-o'" aria-hidden="true"></i> {{ likeCount() }}
+        </button>
+        <span class="stat"><i class="fa fa-commenting-o" aria-hidden="true"></i> {{ comments.length }}</span>
+      </div>
+
+      <div class="vdp-comments">
+        <div class="comment-row" *ngFor="let c of comments">
+          <img class="avatar-img sm" *ngIf="avatarUrl(c?.createdByFull || c)" [src]="avatarUrl(c?.createdByFull || c)" alt="" />
+          <span class="avatar sm" *ngIf="!avatarUrl(c?.createdByFull || c)">
+            {{ avatarText(c?.createdByFull || c) }}
+          </span>
+          <div class="comment-bubble">
+            <div class="comment-head">
+              <strong>{{ commentUserName(c) }}</strong>
+              <i class="fa fa-check-circle verified" *ngIf="c?.verified" aria-hidden="true"></i>
+            </div>
+            <div class="comment-text">{{ decodeText(c.comment || c.message) }}</div>
+            <small class="comment-time">{{ c.commentedAt | date: 'short' }}</small>
+
+            <div class="reply-list" *ngIf="repliesOf(c.comment_id || c._id).length">
+              <div class="reply" *ngFor="let r of repliesOf(c.comment_id || c._id)">
+                <strong>{{ commentUserName(r) }}</strong>
+                <span>{{ decodeText(r.comment || r.message) }}</span>
+              </div>
+            </div>
+
+            <div class="reply-box" *ngIf="replyTo === (c.comment_id || c._id)">
+              <input [(ngModel)]="replyMessage" maxlength="200" [placeholder]="'social.reply' | i18next"
+                (keyup.enter)="sendReply(c)" />
+              <button type="button" (click)="sendReply(c)" [disabled]="sendingReply || !replyMessage.trim()">
+                <i class="fa fa-paper-plane-o" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+          <div class="comment-actions">
+            <button type="button" [class.on]="likedComments[c.comment_id || c._id]" (click)="likeComment(c)" aria-label="Like comment">
+              <i class="fa fa-thumbs-o-up" aria-hidden="true"></i>
+              <span *ngIf="(c.expressions || []).length">{{ (c.expressions || []).length }}</span>
+            </button>
+            <button type="button" (click)="openReply(c)" aria-label="Reply">
+              <i class="fa fa-commenting-o" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+        <div class="comments-empty" *ngIf="!comments.length">{{ 'social.emptyComment' | i18next }}</div>
+      </div>
+
+      <div class="vdp-input">
+        <i class="fa fa-commenting-o" aria-hidden="true"></i>
+        <input [(ngModel)]="message" maxlength="200" [placeholder]="'social.shareComment' | i18next"
+          (keyup.enter)="sendComment()" />
+        <button type="button" (click)="sendComment()" [disabled]="sending || !message.trim()">
+          <i class="fa fa-paper-plane-o" aria-hidden="true"></i>
+        </button>
+      </div>
+    </aside>
+  </div>
+</div>
