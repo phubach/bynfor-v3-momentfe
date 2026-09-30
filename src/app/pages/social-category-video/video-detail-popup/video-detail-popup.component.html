@@ -63,8 +63,14 @@
             </div>
 
             <div class="reply-box" *ngIf="replyTo === (c.comment_id || c._id)">
-              <input [(ngModel)]="replyMessage" maxlength="200" [placeholder]="'social.reply' | i18next"
-                (keyup.enter)="sendReply(c)" />
+              <app-mention-input
+                [(text)]="replyMessage"
+                [(tags)]="replyTags"
+                [maxlength]="200"
+                [showEmoji]="true"
+                [emojiPerLine]="6"
+                [emojiSize]="22"
+                (submitted)="sendReply(c)"></app-mention-input>
               <button type="button" (click)="sendReply(c)" [disabled]="sendingReply || !replyMessage.trim()">
                 <i class="fa fa-paper-plane-o" aria-hidden="true"></i>
               </button>
@@ -85,8 +91,15 @@
 
       <div class="vdp-input">
         <i class="fa fa-commenting-o" aria-hidden="true"></i>
-        <input [(ngModel)]="message" maxlength="200" [placeholder]="'social.shareComment' | i18next"
-          (keyup.enter)="sendComment()" />
+        <app-mention-input
+          [(text)]="message"
+          [(tags)]="messageTags"
+          [maxlength]="200"
+          [showEmoji]="true"
+          [emojiPerLine]="6"
+          [emojiSize]="22"
+          [placeholder]="'social.shareComment' | i18next"
+          (submitted)="sendComment()"></app-mention-input>
         <button type="button" (click)="sendComment()" [disabled]="sending || !message.trim()">
           <i class="fa fa-paper-plane-o" aria-hidden="true"></i>
         </button>
