@@ -11865,6 +11865,17 @@
 		"loadMoreComments": "Load {{count}} More Comments.",
 		"edit": "Edit",
 		"delete": "Delete",
-		"cancel": "Cancel"
+		"cancel": "Cancel",
+		"save": "Save",
+		"confirmDelete": "Delete this post? This cannot be undone.",
+		"editMoment": "Edit Moment",
+		"noActivity": "NO FEELING/ACTIVITY",
+		"momentContent": "Moment",
+		"wordsRemaining": "words remaining.",
+		"tagSomeone": "Tag Someone",
+		"selectAudience": "Select Audience",
+		"videoUrl": "Video URL",
+		"browse": "Browse",
+		"updateMoment": "Update Moments"
 	}
 }

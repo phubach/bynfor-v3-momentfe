@@ -1,0 +1,41 @@
+<div class="mention-wrap">
+  <div class="mention-row">
+    <input
+      #boxInput
+      *ngIf="!multiline"
+      class="mention-box {{ inputClass }}"
+      [ngModel]="text"
+      (ngModelChange)="onInput($event)"
+      [placeholder]="placeholder"
+      [maxLength]="maxlength"
+      autocomplete="off"
+      (keyup.enter)="onEnter()"
+      (blur)="hideSuggest()" />
+    <textarea
+      #boxText
+      *ngIf="multiline"
+      class="mention-box {{ inputClass }}"
+      [ngModel]="text"
+      (ngModelChange)="onInput($event)"
+      [placeholder]="placeholder"
+      [maxLength]="maxlength"
+      [rows]="rows"
+      autocomplete="off"></textarea>
+    <button type="button" class="emoji-toggle" *ngIf="showEmoji" (click)="toggleEmoji()" aria-label="Emoji">😀</button>
+    <ul class="mention-list" *ngIf="showSuggest">
+      <li *ngFor="let u of suggestions" (mousedown)="select(u)">
+        <img *ngIf="avatarUrl(u)" [src]="avatarUrl(u)" alt="" />
+        <span class="mini-avatar" *ngIf="!avatarUrl(u)">{{ avatarText(u) }}</span>
+        <span class="mention-name">{{ displayName(u) }}</span>
+      </li>
+    </ul>
+  </div>
+  <div class="emoji-panel" *ngIf="showEmoji && showEmojiPanel" (mousedown)="$event.preventDefault()">
+    <emoji-mart
+      [isNative]="true"
+      [showPreview]="false"
+      [emojiSize]="emojiSize"
+      [perLine]="emojiPerLine"
+      (emojiClick)="onMartEmoji($event)"></emoji-mart>
+  </div>
+</div>

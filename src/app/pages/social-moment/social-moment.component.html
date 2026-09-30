@@ -18,6 +18,12 @@
         <button type="button" class="menu-btn" (click)="toggleMenu(m)" aria-label="More">
           <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
         </button>
+        <button type="button" class="menu-btn" *ngIf="isMine(m)" (click)="startEditPost(m)" aria-label="Edit">
+          <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="menu-btn danger" *ngIf="isMine(m)" (click)="deletePost(m)" aria-label="Delete">
+          <i class="fa fa-trash-o" aria-hidden="true"></i>
+        </button>
         <ul class="menu-list" *ngIf="openMenuId === m._id">
           <li>
             <button type="button" (click)="viewAllPosts(m)">
@@ -124,7 +130,12 @@
       </div>
 
       <div class="comment-box">
-        <input [(ngModel)]="commentDrafts[m._id]" maxlength="255" [placeholder]="'social.writeComment' | i18next" (keyup.enter)="sendComment(m)" />
+        <app-mention-input
+          [(text)]="commentDrafts[m._id]"
+          [(tags)]="commentTags[m._id]"
+          [showEmoji]="true"
+          [placeholder]="'social.writeComment' | i18next"
+          (submitted)="sendComment(m)"></app-mention-input>
         <button type="button" (click)="sendComment(m)" [disabled]="sendingComment[m._id]">
           <i class="fa fa-paper-plane-o" aria-hidden="true"></i>
         </button>
@@ -135,4 +146,10 @@
   <div class="loading-more" *ngIf="loadingMore">
     <i class="fa fa-spinner fa-spin" aria-hidden="true"></i> {{ 'social.loading' | i18next }}
   </div>
+
+  <app-edit-moment-popup
+    *ngIf="editingMoment"
+    [moment]="editingMoment"
+    (saved)="onEditSaved($event)"
+    (closed)="editingMoment = null"></app-edit-moment-popup>
 </div>

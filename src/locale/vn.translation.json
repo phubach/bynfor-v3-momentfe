@@ -11869,6 +11869,17 @@
     "loadMoreComments": "Xem thêm {{count}} bình luận.",
     "edit": "Sửa",
     "delete": "Xóa",
-    "cancel": "Hủy"
+    "cancel": "Hủy",
+    "save": "Lưu",
+    "confirmDelete": "Xóa bài viết này? Không thể hoàn tác.",
+    "editMoment": "Sửa khoảnh khắc",
+    "noActivity": "KHÔNG CẢM XÚC/HOẠT ĐỘNG",
+    "momentContent": "Khoảnh khắc",
+    "wordsRemaining": "từ còn lại.",
+    "tagSomeone": "Gắn thẻ ai đó",
+    "selectAudience": "Chọn đối tượng",
+    "videoUrl": "Đường dẫn video",
+    "browse": "Duyệt",
+    "updateMoment": "Cập nhật"
   }
 }

@@ -1,0 +1,106 @@
+<div class="emp-backdrop" (click)="close()">
+  <div class="emp-panel" (click)="$event.stopPropagation()" *ngIf="moment">
+    <div class="emp-head">
+      <h5><span class="head-bar"></span>{{ 'social.editMoment' | i18next }}</h5>
+      <button type="button" class="emp-x" (click)="close()" aria-label="Close">
+        <i class="fa fa-times" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <div class="emp-body">
+      <div class="act-row">
+        <select [(ngModel)]="selectedActivity" (ngModelChange)="onActivityChange()" aria-label="Activity">
+          <option *ngFor="let a of activities" [ngValue]="a">{{ a.name | uppercase }}</option>
+        </select>
+        <select [(ngModel)]="selectedSubActivity" [disabled]="!(selectedActivity?.subActivities || []).length" aria-label="Sub activity">
+          <option value="">{{ 'social.noActivity' | i18next }}</option>
+          <option *ngFor="let sub of (selectedActivity?.subActivities || [])" [value]="sub.text">{{ sub.text | uppercase }}</option>
+        </select>
+      </div>
+
+      <label class="emp-label">{{ 'choose_name_to_display' | i18next }}<span class="req">*</span></label>
+      <div class="name-radio">
+        <label>
+          <input type="radio" name="nameDisplayGift" [value]="fullName" [(ngModel)]="nameDisplayGift" />
+          <span class="dot" [class.on]="nameDisplayGift === fullName"></span> {{ fullName }}
+        </label>
+        <label *ngIf="storeName">
+          <input type="radio" name="nameDisplayGift" [value]="storeName" [(ngModel)]="nameDisplayGift" />
+          <span class="dot" [class.on]="nameDisplayGift === storeName"></span> {{ storeName }}
+        </label>
+      </div>
+
+      <label class="emp-label">{{ 'social.momentContent' | i18next }}<span class="req">*</span></label>
+      <app-mention-input
+        #contentBox
+        [(text)]="content"
+        [(tags)]="tags"
+        [multiline]="true"
+        [showEmoji]="true"
+        [rows]="4"
+        [maxlength]="2000"></app-mention-input>
+      <small class="words-left">{{ wordsLeft() }} {{ 'social.wordsRemaining' | i18next }}</small>
+
+      <button type="button" class="tag-btn" (click)="tagSomeone()">
+        <i class="fa fa-user-plus" aria-hidden="true"></i> {{ 'social.tagSomeone' | i18next }}
+      </button>
+
+      <label class="emp-label">{{ 'social.selectAudience' | i18next }}<span class="req">*</span></label>
+      <div class="audience-row">
+        <i class="fa fa-eye-slash" aria-hidden="true"></i>
+        <select [(ngModel)]="accessedBy">
+          <option *ngFor="let a of audiences" [value]="a.value">{{ a.labelKey | i18next }}</option>
+        </select>
+      </div>
+
+      <div class="kept-grid" *ngIf="keptAttachments.length">
+        <div class="kept-item" *ngFor="let a of keptAttachments; let i = index">
+          <img *ngIf="!isVideoAttachment(a)" [src]="a.attachmentUrl" alt="" />
+          <video *ngIf="isVideoAttachment(a)" [src]="a.attachmentUrl" preload="metadata" muted playsinline></video>
+          <button type="button" class="remove-btn" (click)="removeKept(i)" aria-label="Remove">
+            <i class="fa fa-times" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+
+      <label class="browse-btn">
+        {{ 'social.uploadMedia' | i18next }}
+        <span class="browse-tag">{{ 'social.browse' | i18next }}</span>
+        <input type="file" accept="image/*,video/*" multiple hidden (change)="onPickMixed($event)" />
+      </label>
+      <div class="kept-grid" *ngIf="newImages.length || newVideo">
+        <div class="kept-item" *ngFor="let img of newImages; let i = index">
+          <img [src]="img.preview" alt="" />
+          <button type="button" class="remove-btn" (click)="removeNewImage(i)" aria-label="Remove">
+            <i class="fa fa-times" aria-hidden="true"></i>
+          </button>
+        </div>
+        <div class="kept-item" *ngIf="newVideo">
+          <video [src]="newVideo.preview" preload="metadata" muted playsinline></video>
+          <button type="button" class="remove-btn" (click)="clearNewVideo()" aria-label="Remove">
+            <i class="fa fa-times" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+
+      <label class="emp-label">{{ 'social.videoUrl' | i18next }}</label>
+      <div class="url-row">
+        <input [(ngModel)]="videoUrl" [placeholder]="'social.videoUrl' | i18next" />
+        <button type="button" class="add-btn" (click)="addVideoUrl()" [disabled]="!videoUrl.trim()">
+          <i class="fa fa-plus" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div class="emp-error" *ngIf="error">{{ 'social.postFailed' | i18next }}<span> ({{ error }})</span></div>
+    </div>
+
+    <div class="emp-foot">
+      <button type="button" class="cancel-btn" (click)="close()">
+        <i class="fa fa-times" aria-hidden="true"></i> {{ 'social.cancel' | i18next }}
+      </button>
+      <button type="button" class="save-btn" (click)="save()" [disabled]="!canSave()">
+        <i class="fa" [ngClass]="saving ? 'fa-spinner fa-spin' : 'fa-check'" aria-hidden="true"></i> {{ 'social.updateMoment' | i18next }}
+      </button>
+    </div>
+  </div>
+</div>

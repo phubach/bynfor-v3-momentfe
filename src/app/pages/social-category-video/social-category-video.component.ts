@@ -108,6 +108,26 @@ export class SocialCategoryVideoComponent implements OnInit, OnDestroy {
     return u.userName || [u.firstName, u.lastName].filter(Boolean).join(' ') || '';
   }
 
+  avatarUrl(v: any): string {
+    const url = (v?.userResponseMoment?.profilePictureUrl || '').trim();
+    return url && url !== 'null' ? url : '';
+  }
+
+  avatarText(v: any): string {
+    const u = v?.userResponseMoment || {};
+    const first = (u.firstName || '').trim();
+    const last = (u.lastName || '').trim();
+    if (first) return (first.charAt(0) + (last ? last.charAt(0) : '')).toUpperCase();
+    const full = (u.fullName || u.name || '').trim().replace(/\s+/g, ' ');
+    if (full) {
+      const parts = full.split(' ');
+      if (parts.length >= 2) return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+      return full.replace(/\s+/g, '').slice(0, 2).toUpperCase();
+    }
+    const name = (u.userName || '').trim();
+    return name ? name.replace(/\s+/g, '').slice(0, 2).toUpperCase() : '?';
+  }
+
   likeCount(v: any): number {
     return v?.momentLikes?.length || 0;
   }

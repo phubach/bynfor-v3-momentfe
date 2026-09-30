@@ -15,11 +15,13 @@ import {
 } from 'angular-i18next';
 import XHR from 'i18next-http-backend';
 import LanguageDetector from 'i18next-browser-languagedetector';
+import { PickerModule } from '@ctrl/ngx-emoji-mart';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { LoginComponent } from './pages/login/login.component';
 import { SocialComponent } from './pages/social/social.component';
 import { SocialMomentComponent } from './pages/social-moment/social-moment.component';
+import { EditMomentPopupComponent } from './pages/social-moment/edit-moment-popup/edit-moment-popup.component';
 import { CameraCaptureComponent } from './pages/social-moment/make-post/camera-capture/camera-capture.component';
 import { ShortsStripComponent } from './pages/social-moment/shorts-strip/shorts-strip.component';
 import { MakePostComponent } from './pages/social-moment/make-post/make-post.component';
@@ -40,6 +42,7 @@ import { VideoGridComponent } from './pages/social-video/components/video-grid/v
 import { TokenInterceptor } from './core/auth/token.interceptor';
 import { SocialCategoryVideoComponent } from './pages/social-category-video/social-category-video.component';
 import { SocialProfileComponent } from './pages/social-profile/social-profile.component';
+import { MentionInputComponent } from './shared/mention-input/mention-input.component';
 import { VideoDetailPopupComponent } from './pages/social-category-video/video-detail-popup/video-detail-popup.component';
 
 export function appInit(i18next: ITranslationService) {
@@ -100,6 +103,7 @@ export const I18N_PROVIDERS = [
     LoginComponent,
     SocialComponent,
     SocialMomentComponent,
+    EditMomentPopupComponent,
     CameraCaptureComponent,
     SocialVideoComponent,
     CategoryBarComponent,
@@ -120,7 +124,8 @@ export const I18N_PROVIDERS = [
     SocialVideoComponent,
     SocialCategoryVideoComponent,
     VideoDetailPopupComponent,
-    SocialProfileComponent
+    SocialProfileComponent,
+    MentionInputComponent
   ],
   imports: [
     BrowserModule,
@@ -129,6 +134,7 @@ export const I18N_PROVIDERS = [
     ReactiveFormsModule,
     HttpClientModule,
     I18NextModule.forRoot(),
+    PickerModule,
     AppRoutingModule,
   ],
   providers: [

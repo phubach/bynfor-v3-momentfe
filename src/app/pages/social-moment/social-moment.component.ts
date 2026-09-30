@@ -1,6 +1,7 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { I18NEXT_SERVICE, ITranslationService } from 'angular-i18next';
 import { MomentService } from '../../services/moment.service';
 import { RelationsService } from '../../services/relations.service';
 import { UserService } from '../../services/user.service';
@@ -20,6 +21,7 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
   error = '';
   expandedComments: { [id: string]: boolean } = {};
   commentDrafts: { [id: string]: string } = {};
+  commentTags: { [id: string]: string[] } = {};
   sendingComment: { [id: string]: boolean } = {};
   myPost = false;
   friendPost = false;
@@ -38,7 +40,16 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private router: Router,
     private route: ActivatedRoute,
+    @Inject(I18NEXT_SERVICE) private i18n: ITranslationService,
   ) {}
+
+  private confirmDeleteText(): string {
+    try {
+      return this.i18n.t('social.confirmDelete');
+    } catch {
+      return 'Delete this post?';
+    }
+  }
 
   /** Avatar/tên -> trang profile của user đó (giống customerfe). */
   goToProfile(m: any): void {
@@ -135,14 +146,12 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
     return name ? name.replace(/\s+/g, '').slice(0, 2).toUpperCase() : '';
   }
 
-  /** Tên hiển thị: first+last, rồi fullName/name, rồi userName. */
   private displayName(u: any): string {
     const full = [u?.firstName, u?.lastName].filter(Boolean).join(' ');
     if (full) return full;
     return (u?.fullName || u?.name || u?.userName || '').trim();
   }
 
-  /** Người đăng: ưu tiên createdByFull như customerfe, rồi tới userResponseMoment. */
   poster(m: any): any {
     return m?.createdByFull || m?.userResponseMoment || {};
   }
@@ -161,7 +170,6 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
     return this.abbrev(u.firstName, u.lastName, u.fullName || u.name, u.userName) || '?';
   }
 
-  /** Giải mã nội dung giống customerfe (decodeUtf8): hết ký tự %... */
   decodeText(s: any): string {
     const str = (s ?? '').toString();
     if (!str) return '';
@@ -215,10 +223,12 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
     const text = (this.commentDrafts[m._id] || '').trim();
     if (!text || this.sendingComment[m._id]) return;
     this.sendingComment[m._id] = true;
-    this.momentService.addComment(m._id, text).subscribe({
+    const tags = this.commentTags[m._id] || [];
+    this.momentService.addComment(m._id, text, undefined, tags).subscribe({
       next: (res: any) => {
         m.comments = [...(m.comments || []), res?.data || { comment: text, commentedAt: new Date().toISOString() }];
         this.commentDrafts[m._id] = '';
+        this.commentTags[m._id] = [];
         this.sendingComment[m._id] = false;
       },
       error: () => {
@@ -235,7 +245,61 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
   savingEdit = false;
   likedComments: { [id: string]: boolean } = {};
 
-  /** "Abir, MT liked" từ 2 expression đầu (giống firstCustomerLike). */
+  editingPostId: string | null = null;
+  editPostDraft = '';
+  savingPost = false;
+  deletingPostId: string | null = null;
+
+  // ---------- sửa bài qua popup Edit Moment ----------
+  editingMoment: any = null;
+
+  startEditPost(m: any): void {
+    this.editingMoment = m;
+    this.openMenuId = null;
+  }
+
+  onEditSaved(updated: any): void {
+    if (updated && this.editingMoment) {
+      Object.assign(this.editingMoment, updated);
+    }
+    this.editingMoment = null;
+  }
+
+  cancelEditPost(): void {
+    this.editingPostId = null;
+    this.editPostDraft = '';
+  }
+
+  saveEditPost(m: any): void {
+    const text = (this.editPostDraft || '').trim();
+    if (!text || this.savingPost) return;
+    this.savingPost = true;
+    this.momentService.updateMoment({ ...m, content: text, description: text }).subscribe({
+      next: (res: any) => {
+        const updated = res?.data || {};
+        m.content = updated.content ?? text;
+        m.description = updated.description ?? text;
+        this.savingPost = false;
+        this.cancelEditPost();
+      },
+      error: () => (this.savingPost = false),
+    });
+  }
+
+  deletePost(m: any): void {
+    if (this.deletingPostId) return;
+    if (!window.confirm(this.confirmDeleteText())) return;
+    this.deletingPostId = m._id;
+    this.openMenuId = null;
+    this.momentService.deleteMoment(m._id).subscribe({
+      next: () => {
+        this.moments = this.moments.filter((x) => x._id !== m._id);
+        this.deletingPostId = null;
+      },
+      error: () => (this.deletingPostId = null),
+    });
+  }
+
   likeSummary(m: any): string {
     const names = (m?.expressions || [])
       .filter((e: any) => e?.firstName || e?.userName)

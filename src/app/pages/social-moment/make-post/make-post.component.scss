@@ -172,18 +172,10 @@
       &.clickable { cursor: pointer; }
     }
 
-    .pill-input {
+    .pill-mention {
       flex: 1;
-      background: #eef2f7;
-      border: 0;
-      border-radius: 20px;
-      padding: 10px 14px;
-      outline: 0;
-      resize: none;
-      font: inherit;
-      font-size: 14px;
-      color: #0f1f4a;
-      min-height: 40px;
+      display: flex;
+      min-width: 0;
     }
   }
 

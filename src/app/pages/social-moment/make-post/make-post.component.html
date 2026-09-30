@@ -54,12 +54,16 @@
         <span *ngIf="!meAvatarUrl() && meAvatarText()">{{ meAvatarText() }}</span>
         <i class="fa fa-user-o" *ngIf="!meAvatarUrl() && !meAvatarText()" aria-hidden="true"></i>
       </span>
-      <textarea
-        class="pill-input"
-        [(ngModel)]="content"
-        rows="1"
-        maxlength="2000"
-        [placeholder]="'social.whatsNew' | i18next"></textarea>
+      <app-mention-input
+        class="pill-mention"
+        [(text)]="content"
+        [(tags)]="postTags"
+        [multiline]="true"
+        [showEmoji]="false"
+        [rows]="1"
+        [maxlength]="2000"
+        inputClass="pill-input"
+        [placeholder]="'social.whatsNew' | i18next"></app-mention-input>
     </div>
 
     <div class="preview-grid" *ngIf="images.length || video">

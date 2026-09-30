@@ -19,11 +19,19 @@ export class MomentService {
     return this.http.get<any>(`${this.base}/moment/${id}`);
   }
 
-  createMoment(body: { content: string; attachments: any[]; accessedBy?: string }) {
+  updateMoment(moment: any) {
+    return this.http.put<any>(`${this.base}/moment`, moment);
+  }
+
+  deleteMoment(id: string) {
+    return this.http.delete<any>(`${this.base}/moment/${id}`);
+  }
+
+  createMoment(body: { content: string; attachments: any[]; accessedBy?: string; tags?: string[] }) {
     const payload: any = {
       accessedBy: body.accessedBy || 'IS_PUBLIC',
       tagUsers: [],
-      tags: [],
+      tags: body.tags || [],
       activity: 'No Feeling/Activity',
       subActivity: '',
       attachments: body.attachments || [],
@@ -36,12 +44,10 @@ export class MomentService {
     return this.http.post<any>(`${this.base}/moment`, payload);
   }
 
-  /** Upload ảnh (giống CreateMomentComponent): trả về [{origin, small}]. */
   uploadImages(formData: FormData) {
     return this.http.post<any>(`${this.base}/products/resized/images/list`, formData);
   }
 
-  /** Upload video (giống CreateMomentComponent): trả về [url]. */
   uploadVideos(formData: FormData) {
     return this.http.post<any>(`${this.base}/chat-video/upload/list?isMoment=true`, formData);
   }
@@ -52,22 +58,20 @@ export class MomentService {
     });
   }
 
-  /** BE giữ nguyên (customerfe: endorse(m, operation) -> GET /endorse-moment/:id). */
   endorse(momentId: string, operation: 'ADD' | 'REMOVE') {
     return this.http.get<any>(`${this.base}/endorse-moment/${momentId}`, {
       params: <any>{ operation },
     });
   }
 
-  /** BE giữ nguyên: POST /moment-comment/expression/:momentId/:commentId */
   expressComment(momentId: string, commentId: string, expression: any = '👍') {
     return this.http.post<any>(`${this.base}/moment-comment/expression/${momentId}/${commentId}`, expression);
   }
 
-  addComment(momentId: string, comment: string, parentId?: string | null) {
+  addComment(momentId: string, comment: string, parentId?: string | null, tags: any[] = []) {
     return this.http.post<any>(`${this.base}/moment-comment/${momentId}`, {
       comment,
-      tags: [],
+      tags,
       parent_id: parentId || null,
     });
   }
@@ -80,18 +84,15 @@ export class MomentService {
     return this.http.post<any>(`${this.base}/moment-comment/delete/${momentId}`, data);
   }
 
-  /** BE giữ nguyên: POST /moment-report/:id */
   reportMoment(momentId: string, reason: string) {
     return this.http.post<any>(`${this.base}/moment-report/${momentId}`, { reason });
   }
 
-  /** BE giữ nguyên: GET customerLikeOrDisLike (popup xem ai đã like). */
   getCustomerLikeOrDisLike(momentId: string, page = 1, pageSize = 10, expression = 'LIKE', expressedContent = '') {
     const params = ['page=' + page, '&size=' + pageSize, '&expression=' + expression, expressedContent ? '&expressedContent=' + expressedContent : ''].join('');
     return this.http.get<any>(`${this.base}/moment-expression/customerLikeOrDisLike/${momentId}?${params}`);
   }
 
-  /** BE giữ nguyên: ai đã like 1 comment (tab Comment trong modal likes). */
   getCustomerCommentLikeOrDisLike(momentId: string, commentId: string, page = 1, pageSize = 10, expressedContent = '') {
     const params = ['page=' + page, '&size=' + pageSize, '&expressedContent=' + (expressedContent || '')].join('');
     return this.http.get<any>(`${this.base}/moment-comment/customerLikeOrDisLike/${momentId}/${commentId}?${params}`);
@@ -107,7 +108,6 @@ export class MomentService {
     return this.http.post<any>(url, { keyword: keyword || '' });
   }
 
-  /** BE giữ nguyên signature customerfe: getVideos(page, size, isFollowing, categoryId, keyword, userId, viewed). */
   getVideos(page = 1, pageSize = 6, isFollowing = false, categoryId?: string | null, keyword = '', userId?: string | null, viewed = false) {
     let url =
       `${this.base}/new-videos?page=${page}&size=${pageSize}` +
@@ -121,11 +121,15 @@ export class MomentService {
     return this.http.get<any>(`${this.base}/video-category`);
   }
 
+  /** Danh sách feeling/activity cho popup Edit (giống getListOfActivities của customerfe). */
+  getListOfActivities() {
+    return this.http.get<any>(`${this.base}/activity`);
+  }
+
   getVideo(id: string) {
     return this.http.get<any>(`${this.base}/video/${id}`);
   }
 
-  /** BE giữ nguyên: POST /report-video { momentId, id, reported } */
   reportVideo(data: { momentId: string; id: string; reported: boolean }) {
     return this.http.post<any>(`${this.base}/report-video`, data);
   }

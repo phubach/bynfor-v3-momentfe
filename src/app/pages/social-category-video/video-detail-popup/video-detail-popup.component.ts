@@ -24,9 +24,11 @@ export class VideoDetailPopupComponent implements OnChanges {
 
   comments: any[] = [];
   message = '';
+  messageTags: string[] = [];
   sending = false;
   replyTo: string | null = null;
   replyMessage = '';
+  replyTags: string[] = [];
   sendingReply = false;
   likingVideo = false;
   likedVideoByMe = false;
@@ -56,8 +58,10 @@ export class VideoDetailPopupComponent implements OnChanges {
           this.repliesOfCache[pid] = [...(this.repliesOfCache[pid] || []), r];
         });
       this.message = '';
+      this.messageTags = [];
       this.replyTo = null;
       this.replyMessage = '';
+      this.replyTags = [];
       this.likedVideoByMe = false;
       this.likedComments = {};
     }
@@ -157,6 +161,7 @@ export class VideoDetailPopupComponent implements OnChanges {
     const id = c.comment_id || c._id;
     this.replyTo = this.replyTo === id ? null : id;
     this.replyMessage = '';
+    this.replyTags = [];
   }
 
   sendReply(c: any): void {
@@ -164,11 +169,12 @@ export class VideoDetailPopupComponent implements OnChanges {
     const text = (this.replyMessage || '').trim();
     if (!this.video?.momentId || !id || !text || this.sendingReply) return;
     this.sendingReply = true;
-    this.momentService.addComment(this.video.momentId, text, id).subscribe({
+    this.momentService.addComment(this.video.momentId, text, id, this.replyTags).subscribe({
       next: (res: any) => {
         const posted = res?.data || { comment: text, commentedAt: new Date().toISOString(), parent_id: id };
         this.repliesOfCache[id] = [...(this.repliesOfCache[id] || []), posted];
         this.replyMessage = '';
+        this.replyTags = [];
         this.replyTo = null;
         this.sendingReply = false;
       },
@@ -180,11 +186,12 @@ export class VideoDetailPopupComponent implements OnChanges {
     const text = (this.message || '').trim();
     if (!this.video?.momentId || !text || this.sending) return;
     this.sending = true;
-    this.momentService.addComment(this.video.momentId, text).subscribe({
+    this.momentService.addComment(this.video.momentId, text, undefined, this.messageTags).subscribe({
       next: (res: any) => {
         const posted = res?.data || { comment: text, commentedAt: new Date().toISOString() };
         this.comments = [...this.comments, posted];
         this.message = '';
+        this.messageTags = [];
         this.sending = false;
       },
       error: () => (this.sending = false),

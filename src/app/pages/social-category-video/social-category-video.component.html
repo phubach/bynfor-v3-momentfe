@@ -41,7 +41,11 @@
       </div>
       <div class="video-meta">
         <strong>{{ v.description }}</strong>
-        <small class="user-link" (click)="goToProfile(v?.userResponseMoment); $event.stopPropagation()"><i class="fa fa-user-o" aria-hidden="true"></i> {{ userName(v) }}</small>
+        <div class="meta-user" (click)="goToProfile(v?.userResponseMoment); $event.stopPropagation()">
+          <img *ngIf="avatarUrl(v) && !v.authorImgBroken" [src]="avatarUrl(v)" alt="" (error)="v.authorImgBroken = true" />
+          <span class="mini-avatar" *ngIf="!avatarUrl(v) || v.authorImgBroken">{{ avatarText(v) }}</span>
+          <span class="user-name">{{ userName(v) }}</span>
+        </div>
         <small class="likes"><i class="fa fa-heart-o" aria-hidden="true"></i> {{ likeCount(v) }}</small>
       </div>
     </div>

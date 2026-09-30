@@ -25,6 +25,7 @@ export class MakePostComponent implements OnInit {
   me: any = null;
 
   content = '';
+  postTags: string[] = [];
   images: PendingImage[] = [];
   video: PendingVideo | null = null;
   expanded = false;
@@ -33,7 +34,6 @@ export class MakePostComponent implements OnInit {
   serverError = '';
   readonly maxImages = 6;
 
-  /** Audience của bài đăng (giống dropdown Public của customerfe). */
   accessedBy = 'IS_PUBLIC';
   audiences = [
     { value: 'IS_PUBLIC', icon: 'fa-globe', labelKey: 'social.audPublic' },
@@ -42,7 +42,6 @@ export class MakePostComponent implements OnInit {
     { value: 'ALL_FRIENDS_AND_FOLLOWERS', icon: 'fa-user-plus', labelKey: 'social.audFriendsFollowers' },
   ];
 
-  /** Filter của feed (giống nút phễu của customerfe). */
   activeFilter: 'all' | 'friends' | 'mine' = 'all';
   filters = [
     { value: 'all', icon: 'fa-clock-o', labelKey: 'social.filterAll' },
@@ -192,7 +191,7 @@ export class MakePostComponent implements OnInit {
         attachments.push({ attachmentType: 'VIDEO', attachmentUrl: uploaded[0] });
       }
       const res: any = await this.momentService
-        .createMoment({ content: this.content.trim(), attachments, accessedBy: this.accessedBy })
+        .createMoment({ content: this.content.trim(), attachments, accessedBy: this.accessedBy, tags: this.postTags })
         .toPromise();
       if (res?.data) {
         const me = this.me || (await this.userService.getCurrentUser().toPromise().catch(() => null));
@@ -221,6 +220,7 @@ export class MakePostComponent implements OnInit {
     this.images = [];
     this.clearVideo();
     this.content = '';
+    this.postTags = [];
     this.expanded = false;
   }
 }
