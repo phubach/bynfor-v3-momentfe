@@ -1,13 +1,20 @@
 <div class="friends">
   <div class="loading" *ngIf="loading">{{ 'header.Loading' | i18next }}</div>
+  <div class="load-error" *ngIf="!loading && error">
+    <p>{{ error | i18next }}</p>
+    <button type="button" (click)="retry.emit()">{{ 'social.retry' | i18next }}</button>
+  </div>
+  <ng-container *ngIf="!loading && !error">
   <div class="row" *ngFor="let f of friends">
     <div class="ava">
-      <img *ngIf="f.profilePictureUrl && f.profilePictureUrl !== 'null'" [src]="f.profilePictureUrl" alt="" />
-      <span *ngIf="!f.profilePictureUrl || f.profilePictureUrl === 'null'">{{ avatar(f) }}</span>
+      <img *ngIf="avatarUrl(f)" [src]="avatarUrl(f)" alt="" (error)="onAvatarError(f)" />
+      <span *ngIf="!avatarUrl(f)">{{ avatar(f) }}</span>
     </div>
-    <div class="name">{{ label(f) }}</div>
-    <button type="button" *ngIf="!f.following" (click)="follow.emit(f)">{{ 'common.follow' | i18next }}</button>
-    <button type="button" class="off" *ngIf="f.following" (click)="unfollow.emit(f)">{{ 'campaigns_modal.unfollow' | i18next }}</button>
+    <div class="name">{{ label(f) }} <i *ngIf="f.verified" class="fa fa-check-circle verified" aria-label="Verified"></i></div>
+    <button type="button" *ngIf="!f.following" [disabled]="f.followBusy" (click)="follow.emit(f)">{{ 'common.follow' | i18next }}</button>
+    <button type="button" *ngIf="f.following" [disabled]="f.followBusy" (click)="unfollow.emit(f)">{{ 'campaigns_modal.unfollow' | i18next }}</button>
+    <small class="action-error" *ngIf="f.actionError">{{ f.actionError | i18next }}</small>
   </div>
-  <div class="empty" *ngIf="!loading && !friends.length">{{ 'no_video_available' | i18next }}</div>
+  <div class="empty" *ngIf="!friends.length">{{ 'social.emptyFriends' | i18next }}</div>
+  </ng-container>
 </div>

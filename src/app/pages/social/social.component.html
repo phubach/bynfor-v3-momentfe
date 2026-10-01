@@ -1,13 +1,33 @@
 <div class="social-shell">
-  <nav class="social-nav">
+  <div class="social-chrome">
+    <header class="byn-workspace-topbar" aria-label="Bynfor">
+      <a class="byn-brand" routerLink="/social/moment" aria-label="Bynfor home">
+        <img src="images/bynfor-auctions-logo-small.png" alt="Bynfor" />
+      </a>
+      <a class="byn-account" [routerLink]="profileLink" [attr.title]="displayName">
+        <span class="byn-account-avatar">
+          <img *ngIf="avatarUrl" [src]="avatarUrl" alt="" (error)="onAvatarError()" />
+          <span *ngIf="!avatarUrl" class="byn-account-initial">{{ initials }}</span>
+          <span class="byn-presence" [class.online]="connected && profile"></span>
+        </span>
+        <span class="byn-account-copy">
+          <b>{{ displayName }}</b>
+          <small>{{ (profile ? (connected ? 'social.online' : 'social.offline') : 'header.Loading') | i18next }}</small>
+        </span>
+      </a>
+      <button type="button" class="byn-topbar-logout" (click)="logout()">
+        <i class="fa fa-sign-out" aria-hidden="true"></i> {{ 'social.logout' | i18next }}
+      </button>
+    </header>
+    <nav class="social-nav" aria-label="Social">
     <div class="nav-tabs">
       <a routerLink="/social/moment" routerLinkActive="active"><i class="fa fa-clock-o" aria-hidden="true"></i> {{ 'social.momentTab' | i18next }}</a>
       <a routerLink="/social/video" routerLinkActive="active"><i class="fa fa-play-circle-o" aria-hidden="true"></i> {{ 'social.videoTab' | i18next }}</a>
       <a routerLink="/social/category-video" routerLinkActive="active"><i class="fa fa-th-large" aria-hidden="true"></i> {{ 'social.categoryTab' | i18next }}</a>
     </div>
-    <button type="button" class="logout-btn" (click)="logout()"><i class="fa fa-sign-out" aria-hidden="true"></i> {{ 'social.logout' | i18next }}</button>
-  </nav>
-  <div class="social-body">
-    <router-outlet></router-outlet>
+    </nav>
   </div>
+  <main class="social-body">
+    <router-outlet></router-outlet>
+  </main>
 </div>

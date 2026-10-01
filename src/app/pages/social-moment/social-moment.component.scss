@@ -1,3 +1,5 @@
+@use '../../../theme' as theme;
+
 .feed {
   display: flex;
   flex-direction: column;
@@ -413,3 +415,5 @@
   padding: 16px 0;
   color: #5e6f93;
 }
+
+.moment-card { @include theme.surface; border-radius: 20px; }

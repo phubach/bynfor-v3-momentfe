@@ -11795,7 +11795,9 @@
 		}
 	},
 	"social": {
-		"momentTab": "Moments",
+		"online": "オンライン",
+    "offline": "オフライン",
+    "momentTab": "Moments",
 		"videoTab": "Videos",
 		"logout": "Sign out",
 		"loading": "Loading...",

@@ -40,6 +40,7 @@ import { PeopleSuggestModalComponent } from './pages/social-video/components/peo
 import { CreatorProfileComponent } from './pages/social-video/components/creator-profile/creator-profile.component';
 import { VideoGridComponent } from './pages/social-video/components/video-grid/video-grid.component';
 import { TokenInterceptor } from './core/auth/token.interceptor';
+import { SignatureInterceptor } from './core/auth/signature.interceptor';
 import { SocialCategoryVideoComponent } from './pages/social-category-video/social-category-video.component';
 import { SocialProfileComponent } from './pages/social-profile/social-profile.component';
 import { MentionInputComponent } from './shared/mention-input/mention-input.component';
@@ -142,6 +143,7 @@ export const I18N_PROVIDERS = [
     provideI18Next(),
     CookieService,
     { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true },
+    { provide: HTTP_INTERCEPTORS, useClass: SignatureInterceptor, multi: true },
   ],
   bootstrap: [AppComponent],
 })

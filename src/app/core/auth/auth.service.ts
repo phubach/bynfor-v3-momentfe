@@ -5,12 +5,14 @@ import { CookieService } from 'ngx-cookie-service';
 import { Observable, catchError, map, of } from 'rxjs';
 import * as CryptoJS from 'crypto-js';
 import { environment } from '../../../environments/environment';
+import { UserService } from '../../services/user.service';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   constructor(
     private http: HttpClient,
     private cookies: CookieService,
     private router: Router,
+    private users: UserService,
   ) {}
   getToken(): string {
     const fromCookie = this.cookies.get('access_token');
@@ -81,6 +83,7 @@ export class AuthService {
 
   private saveSession(resp: any, expiresInSec: number): void {
     if (!resp?.access_token) return;
+    this.users.resetSessionCache();
     let expiry: Date | undefined;
     if (expiresInSec > 0) expiry = new Date(Date.now() + expiresInSec * 1000);
     this.cookies.set('access_token', resp.access_token, expiry as any, '/');
@@ -89,6 +92,7 @@ export class AuthService {
   }
 
   logout(returnToLogin = true): void {
+    this.users.resetSessionCache();
     this.cookies.delete('access_token', '/');
     this.cookies.delete('refresh_token', '/');
     this.cookies.delete('expires_in', '/');

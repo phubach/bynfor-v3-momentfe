@@ -9,6 +9,7 @@ import { VideoTab } from '../../social-video.model';
   styleUrls: ['./video-tabs.component.scss'],
 })
 export class VideoTabsComponent {
+  @Input() light = false;
   @Input() active: VideoTab = 'FOR_YOU';
   @Output() change = new EventEmitter<VideoTab>();
 }

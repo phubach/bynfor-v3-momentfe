@@ -1,3 +1,5 @@
+@use '../../../../../theme' as theme;
+
 .overlay {
   position: absolute;
   inset: 0;
@@ -45,3 +47,6 @@
   .name { font-size: 14px; font-weight: 600; } }
 
 .loading, .empty { text-align: center; color: #5e6f93; padding: 14px 0; }
+
+.card { @include theme.surface; }
+.card { border-radius: 20px; }

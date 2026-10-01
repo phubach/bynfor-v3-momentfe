@@ -11799,6 +11799,8 @@
     }
   },
   "social": {
+    "online": "Trực tuyến",
+    "offline": "Ngoại tuyến",
     "momentTab": "Khoảnh khắc",
     "videoTab": "Video",
     "logout": "Đăng xuất",
@@ -11808,6 +11810,7 @@
     "retry": "Thử lại",
     "emptyMoment": "Chưa có khoảnh khắc nào.",
     "emptyVideo": "Không tìm thấy video nào.",
+    "emptyFriends": "Không tìm thấy bạn bè nào.",
     "unknownUser": "Người dùng ẩn danh",
     "writeComment": "Viết bình luận...",
     "searchVideo": "Tìm kiếm video...",

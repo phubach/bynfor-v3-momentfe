@@ -48,6 +48,8 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
 
   friends: any[] = [];
   loadingFriends = false;
+  friendsError = '';
+  private friendsRequestId = 0;
 
   // ---------- Modal "People who you may know" (gốc: getPeople/noShowPeople/#idModalPeople) ----------
   suggestPeople: any[] = [];
@@ -122,6 +124,8 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
       const raw = localStorage.getItem('bynfor_profile');
       this.myUserId = raw ? JSON.parse(raw)?.id ?? null : null;
     } catch { this.myUserId = null; }
+    // The shell normally loads the profile for the header. Load it here too so a
+    // direct refresh on /social/video cannot skip auth/user before the shell is ready.
     this.userService.getCurrentUser().subscribe({
       next: (me: any) => {
         if (me?.id != null || me?.userId != null) this.myUserId = me.id ?? me.userId;
@@ -129,16 +133,19 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
       error: () => {},
     });
     this.getVideoCategories();
-    this.getVideos();
     this.getSuggestPeople(true);
     const vid = this.route.snapshot.queryParams['videoId'];
     if (vid) this.openVideoById(vid);
+    else this.getVideos();
     const tag = this.route.snapshot.queryParams['tag'];
     if (tag) this.openGrid('browse', '#' + String(tag).replace(/^#/, ''));
   }
 
   ngOnDestroy(): void {
     this.timers.forEach((t) => clearTimeout(t));
+    clearTimeout(this.hashTagTimer);
+    this.requestId++;
+    this.friendsRequestId++;
     this.pauseAll();
   }
 
@@ -152,6 +159,7 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
 
   selectCategory(id: string | null): void {
     this.categoryId = id;
+    this.viewed = false;
     this.showGrid = false;
     this.getVideos();
   }
@@ -164,6 +172,10 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
   switchTab(tab: VideoTab): void {
     if (this.tab === tab) return;
     this.tab = tab;
+    this.requestId++;
+    this.showGrid = false;
+    this.loadingFirst = false;
+    this.isLoadingVideos = false;
     this.viewed = false;
     if (tab === 'FRIEND') {
       this.pauseAll();
@@ -173,7 +185,7 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
     this.getVideos();
   }
 
-  // ---------- Feed (gốc: getVideos, giữ fallback FOLLOWING + viewed) ----------
+  // ---------- Feed: keep the selected tab; fall back only to viewed videos in that feed. ----------
   getVideos(isUpdate = false): void {
     const req = ++this.requestId;
     const wantCategory = this.categoryId;
@@ -193,30 +205,39 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (res: any) => {
           if (req !== this.requestId || wantCategory !== this.categoryId || wantTab !== this.tab) return;
-          let list: ReelVideo[] = (res?.data || []).map((v: any) => ({
+          if (!this.validVideoResponse(res)) {
+            this.isLoadingVideos = false;
+            this.loadingFirst = false;
+            this.error = 'social.loadFailed';
+            return;
+          }
+          const list: ReelVideo[] = res.data.map((v: any) => ({
             ...v,
             momentComments: [...(v?.momentComments || v?.comments || [])].sort(this.byCreated),
           }));
-          if (wantTab === 'FOLLOWING' && this.pageVideos === 1 && !list.length && !this.viewed) {
-            // Hết follow mới -> fallback sang For You (logic gốc: isPageFollow -> getVideos()).
-            this.tab = 'FOR_YOU';
-            this.getVideos();
-            return;
-          }
           if (!this.viewed && list.length < this.sizeVideos) {
             this.viewed = true;
             this.momentService
-              .getVideos(this.pageVideos, this.sizeVideos, this.tab === 'FOLLOWING', this.categoryId, '', null, true)
+              .getVideos(this.pageVideos, this.sizeVideos, following, wantCategory, '', null, true)
               .subscribe({
                 next: (r2: any) => {
                   if (req !== this.requestId) return;
-                  const extra: ReelVideo[] = (r2?.data || []).map((v: any) => ({
+                  if (!this.validVideoResponse(r2)) {
+                    this.applyVideos(list, isUpdate);
+                    if (!list.length) this.error = 'social.loadFailed';
+                    return;
+                  }
+                  const extra: ReelVideo[] = r2.data.map((v: any) => ({
                     ...v,
                     momentComments: [...(v?.momentComments || [])].sort(this.byCreated),
                   }));
                   this.applyVideos(list.concat(extra), isUpdate);
                 },
-                error: () => this.applyVideos(list, isUpdate),
+                error: () => {
+                  if (req !== this.requestId) return;
+                  this.applyVideos(list, isUpdate);
+                  if (!list.length) this.error = 'social.loadFailed';
+                },
               });
             return;
           }
@@ -231,25 +252,41 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
       });
   }
 
+  private validVideoResponse(response: any): boolean {
+    return (response?.status == null || Number(response.status) === 200) && Array.isArray(response?.data);
+  }
+
   private applyVideos(list: ReelVideo[], isUpdate: boolean): void {
-    this.videos = isUpdate ? [...this.videos, ...list] : list;
+    const combined = isUpdate ? [...this.videos, ...list] : list;
+    const seen = new Set<string>();
+    this.videos = combined.filter(video => !seen.has(video.id) && !!seen.add(video.id));
     this.pageVideos++;
     this.isLoadingVideos = false;
     this.loadingFirst = false;
-    this.afterSelect();
+    if (!isUpdate) this.afterSelect();
   }
 
   private openVideoById(id: string): void {
+    const req = ++this.requestId;
+    this.isLoadingVideos = false;
+    this.loadingFirst = true;
+    this.error = '';
     this.momentService.getVideo(id).subscribe({
       next: (res: any) => {
+        if (req !== this.requestId) return;
+        this.loadingFirst = false;
         const v = res?.data;
-        if (!v) return;
+        if (!v) { this.error = 'social.loadFailed'; return; }
         this.videos = this.videos.filter((x) => x.id !== v.id);
         this.videos.unshift({ ...v, momentComments: [...(v?.momentComments || [])].sort(this.byCreated) });
         this.selectedIndex = 0;
         this.afterSelect();
       },
-      error: () => {},
+      error: () => {
+        if (req !== this.requestId) return;
+        this.loadingFirst = false;
+        this.error = 'social.loadFailed';
+      },
     });
   }
 
@@ -281,7 +318,7 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
   }
 
   onWheel(e: WheelEvent): void {
-    if (!this.videos.length || this.showComments || this.tab === 'FRIEND') return;
+    if (!this.videos.length || this.overlayOpen() || this.tab === 'FRIEND') return;
     const t = e.target as HTMLElement;
     if (t?.closest('.sheet, .overlay, input, textarea')) return;
     e.preventDefault();
@@ -307,7 +344,7 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
     const t = e.changedTouches[0];
     const dy = t.pageY - this.touchStart.y;
     const dt = e.timeStamp - this.touchStart.time;
-    if (dt < 500 && Math.abs(dy) > 60 && !this.showComments && this.tab !== 'FRIEND') {
+    if (dt < 500 && Math.abs(dy) > 60 && !this.overlayOpen() && this.tab !== 'FRIEND') {
       if (dy > 0) this.prevVideo();
       else this.nextVideo();
     }
@@ -315,8 +352,13 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
 
   @HostListener('window:keydown', ['$event'])
   onKey(e: KeyboardEvent): void {
-    if (e.key === 'ArrowDown') this.nextVideo();
-    if (e.key === 'ArrowUp') this.prevVideo();
+    const target = e.target as HTMLElement;
+    if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+    if (!this.overlayOpen() && this.tab !== 'FRIEND' && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+      e.preventDefault();
+      if (e.key === 'ArrowDown') this.nextVideo();
+      else this.prevVideo();
+    }
     if (e.key === 'Escape') {
       this.showComments = false;
       this.showReport = false;
@@ -325,6 +367,11 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
       this.showDescription = false;
       this.showProfile = false;
     }
+  }
+
+  private overlayOpen(): boolean {
+    return this.showGrid || this.showComments || this.showReport || this.showShare
+      || this.showLikes || this.showDescription || this.showProfile || this.showPeopleModal;
   }
 
   private afterSelect(): void {
@@ -680,25 +727,67 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
 
   // ---------- Friend pane (gốc: video-friend) ----------
   getFriends(): void {
+    const requestId = ++this.friendsRequestId;
     this.loadingFriends = true;
+    this.friendsError = '';
     this.relations.getFriendsWithFollowing().subscribe({
       next: (res: any) => {
-        this.friends = res?.data?.list || res?.data || [];
+        if (requestId !== this.friendsRequestId) return;
+        // The original friends-new endpoint returns { data: UserLimitedInfoResponse[] }.
+        const data = res?.data;
+        const list = Array.isArray(data) ? data : Array.isArray(data?.list) ? data.list : null;
+        if ((res?.status != null && Number(res.status) !== 200) || !list) {
+          this.friends = [];
+          this.friendsError = 'social.loadFailed';
+        } else {
+          this.friends = list.map((friend: any) => ({
+            ...friend,
+            following: friend.following === true || friend.following === 'true',
+          }));
+        }
         this.loadingFriends = false;
       },
       error: () => {
+        if (requestId !== this.friendsRequestId) return;
         this.friends = [];
+        this.friendsError = 'social.loadFailed';
         this.loadingFriends = false;
       },
     });
   }
 
   followFriend(f: any): void {
-    this.relations.followSeller(f.id).subscribe({ next: () => (f.following = true), error: () => {} });
+    this.setFriendFollowing(f, true);
   }
 
   unfollowFriend(f: any): void {
-    this.relations.unfollowSeller(f.id).subscribe({ next: () => (f.following = false), error: () => {} });
+    this.setFriendFollowing(f, false);
+  }
+
+  private setFriendFollowing(friend: any, following: boolean): void {
+    if (friend.followBusy || friend.id == null) return;
+    friend.followBusy = true;
+    friend.actionError = '';
+    const request = following
+      ? this.relations.followSeller(friend.id)
+      : this.relations.unfollowSeller(friend.id);
+    request.subscribe({
+      next: (res: any) => {
+        friend.followBusy = false;
+        if (res?.status != null && Number(res.status) !== 200) {
+          friend.actionError = res?.message || 'toastr.error.request_failed';
+          return;
+        }
+        friend.following = following;
+      },
+      error: (error: any) => {
+        friend.followBusy = false;
+        const message = error?.error?.message;
+        friend.actionError = typeof message === 'string' && message.includes('You have collect monetary gift as the follower')
+          ? 'you_have_collect_monetary_gift_as_the_follower_or_friend'
+          : message || 'toastr.error.request_failed';
+      },
+    });
   }
 
   // ---------- "People who you may know" (gốc: getPeople/hideModalPeople/noShowPeople) ----------
@@ -835,11 +924,18 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
     const text = (this.commentDraft || '').trim();
     if (!v?.momentId || !text || this.sendingComment) return;
     this.sendingComment = true;
-    this.momentService.addComment(v.momentId, text, this.replyTo?.comment_id || null).subscribe({
+    const parentId = this.replyTo?.comment_id || null;
+    this.momentService.addComment(v.momentId, text, parentId).subscribe({
       next: (res: any) => {
-        const posted: ReelComment = res?.data || { comment: text, commentedAt: new Date().toISOString() };
-        if (!posted.parent_id && this.replyTo?.comment_id) posted.parent_id = this.replyTo.comment_id;
-        v.momentComments = [...(v.momentComments || []), posted].sort(this.byCreated);
+        const data = res?.data;
+        if (Array.isArray(data?.comments)) {
+          // customerfe's addCommentToMoment returns the updated moment, not a single comment.
+          v.momentComments = [...data.comments].sort(this.byCreated);
+        } else {
+          const posted: ReelComment = data || { comment: text, commentedAt: new Date().toISOString() };
+          if (!posted.parent_id && parentId) posted.parent_id = parentId;
+          v.momentComments = [...(v.momentComments || []), posted].sort(this.byCreated);
+        }
         this.commentDraft = '';
         this.replyTo = null;
         this.hashTags = [];
@@ -943,7 +1039,7 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
   // ---------- Share (gốc: shareToFacebook/Twitter/copyLinkUrlVideo) ----------
   videoLink(): string {
     const v = this.current();
-    return v ? `${location.origin}/video/${v.id}` : location.origin;
+    return v ? `${location.origin}/social/video?videoId=${encodeURIComponent(v.id)}` : location.origin;
   }
 
   copyLink(): void {
@@ -1126,6 +1222,7 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
   }
 
   openGrid(mode: 'browse' | 'history', keyword: string): void {
+    this.pauseAll();
     this.showGrid = true;
     this.gridMode = mode;
     this.gridKeyword = keyword;
@@ -1136,6 +1233,7 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
 
   closeGrid(): void {
     this.showGrid = false;
+    if (this.current() && this.tab !== 'FRIEND') this.playCurrent();
   }
 
   gridModeChange(mode: 'browse' | 'history'): void {

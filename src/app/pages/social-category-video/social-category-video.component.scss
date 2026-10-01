@@ -1,3 +1,5 @@
+@use '../../../theme' as theme;
+
 .cat-page {
   display: flex;
   flex-direction: column;
@@ -200,3 +202,5 @@
     .likes { color: #1769ff; }
   }
 }
+
+.search-row, .filter-banner { @include theme.surface; border-radius: 20px; }

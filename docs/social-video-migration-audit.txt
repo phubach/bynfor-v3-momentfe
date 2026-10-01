@@ -1,0 +1,158 @@
+ĐỐI CHIẾU SOCIAL/VIDEO VÀ GIAO DIỆN BYNFOR — 01/10/2026
+
+1. KẾT LUẬN VÀ PHẠM VI
+
+Social/video của momentfe đã có phần lớn luồng xem và tương tác cơ bản, nhưng CHƯA tương đương toàn bộ customerfe. Có component/API tương ứng không có nghĩa là đã xác nhận chạy đúng với backend thật.
+
+Chỉ đọc customerfe và chatfe. Chỉ sửa momentfe. Không thay đổi backend, không gửi bài/bình luận/follow/report thật, không deploy. package-lock.json của momentfe đã có thay đổi trước khi bắt đầu và được giữ nguyên.
+
+Phạm vi đọc: cấu hình/dependencies/routes của ba frontend; module tiktok và các component con của customerfe; category-video/video-history và các service liên quan; toàn bộ component/service của social-video trong momentfe, các trang moment/category/profile dùng chung shell; workspace topbar, chat shell, palette workspace và stylesheet/theme của chatfe. Không coi việc đọc các phần này là audit toàn bộ nghiệp vụ thương mại/calling/payment của ba ứng dụng.
+
+Message/live chat, chuyển tiếp video vào chat, gửi tin nhắn tới người dùng, danh sách hội thoại cá nhân/nhóm không nằm trong đối chiếu chức năng cần chuyển.
+
+Cả ba frontend khai báo Angular 19.2 và TypeScript 5.8. Momentfe đã tách giao diện video thành nhiều component thay cho một TiktokComponent lớn dùng jQuery/Bootstrap của customerfe. Việc tách này hợp lý, nhưng cần giữ nguyên hợp đồng dữ liệu và các điều kiện nghiệp vụ.
+
+2. CÁC LUỒNG ĐÃ CÓ CODE TƯƠNG ỨNG
+
+Nguồn chính:
+  customerfe/src/app/social-live-chat/tiktok/tiktok.component.ts và .html
+  customerfe/src/app/social-live-chat/tiktok/video-friend/
+  customerfe/src/app/services/moment.service.ts
+Đích chính:
+  momentfe/src/app/pages/social-video/social-video.component.ts và .html
+  momentfe/src/app/pages/social-video/components/
+  momentfe/src/app/services/moment.service.ts, relations.service.ts, user.service.ts
+
+01. Feed For you/Following: có getVideos và GET /new-videos với page, size, viewed, isFollowing, categoryId. Có fallback khi hết Following/video chưa xem. Đã sửa reset viewed khi đổi danh mục và bỏ video trùng khi nối trang.
+02. Tab Friend: có friend-pane, lấy friends-new, follow/unfollow. Đã sửa màu tab trên nền sáng để chữ không bị chìm.
+03. Danh mục: có category-bar, icon, All/Other, cuộn ngang và nút chuyển danh mục. Tuy nhiên còn khác biệt lọc phía client, xem mục 3.
+04. Reels: có phát/dừng, bật/tắt tiếng, thời gian, kéo seek, poster, loading, retry khi video lỗi.
+05. Điều hướng: có trước/sau, wheel, swipe và phím mũi tên. Đã chặn chuyển video khi đang gõ hoặc mở popup/lịch sử.
+06. Double tap: có doubleTapLike và hiệu ứng tim.
+07. Like: có moment-expression ADD/REMOVE, đếm like, danh sách người like và tab emoji. Đã sửa hiển thị số 0 thay vì 1 khi chưa có like.
+08. Endorse: có endorse-moment, đếm và trạng thái người dùng; có hoàn tác hiển thị khi request thất bại. Thiếu các điều kiện/quota ở giao diện gốc, xem mục 3.
+09. Bình luận: có đọc, gửi, reply, sửa/xóa và emoji reaction. Đã sửa xử lý response gửi bình luận: API gốc trả IMoment có comments, phải lấy comments thay vì nối IMoment như một comment.
+10. Quyền sửa/xóa bình luận: có kiểm tra chủ sở hữu trên giao diện. Đã chuẩn hóa so sánh ID số/chuỗi và lấy ID từ createdByFull khi cần. Quyền cuối cùng vẫn cần backend xác nhận.
+11. Hashtag: có searchHashTag, gợi ý khi gõ và mở lưới tìm kiếm theo hashtag; có render link/hashtag trong bình luận.
+12. Creator: có avatar, tên, follow/unfollow và popup profile.
+13. Quan hệ: có gửi/hủy/nhận lời kết bạn, bỏ bạn, follow/unfollow trong profile; danh sách gợi ý người dùng có cả reject request.
+14. People you may know: có phân trang, không hiển thị lại, API /user/no-show-people và các thao tác quan hệ.
+15. Share: có Facebook/Twitter/copy, Instagram/WeChat và mô tả. Đã đổi link sang /social/video?videoId=... vì momentfe không có route /video/:id. Các hành vi chia sẻ trên ứng dụng bên ngoài chưa được kiểm thử.
+16. Mở video từ link: có getVideo(id). Đã bỏ request feed mặc định chạy cạnh tranh với request video được chia sẻ và bỏ response detail cũ khi đã đổi feed.
+17. Mô tả: có popup description, creator và product text. Chưa tương đương toàn bộ cách render nội dung của gốc.
+18. Lịch sử: có POST/GET /video-history và lưới history. Đã làm history mở được từ tab Friend và cuộn history không điều hướng reels.
+19. Duyệt/tìm video: có video-grid trong reels và trang social-category-video riêng, dùng POST /new-videos. Đã nới lưới history/browse trên desktop để không bị bó trong khung video 430px.
+20. Report: đã có UI lý do/Other và reportVideo, nhưng luồng API khác customerfe; không đánh dấu tương đương hoàn toàn.
+
+3. PHẦN CÒN THIẾU HOẶC KHÁC — CẦN XỬ LÝ TRƯỚC KHI KẾT LUẬN ĐỦ 100%
+
+A. Feedback video riêng — chưa chuyển.
+  Gốc có showFeedbackModel/sendFeedback, feedback cho creator, trả lời feedback, hai tab MAIN/TARGET và push notification.
+  Service gốc gọi POST /feedback và GET /feedback trên API_ENDPOINT_SOCKET_IO.
+  Momentfe không có service/component tương ứng. Đây là feedback gắn với video, không phải chức năng nhắn tin live chat được loại trừ.
+
+B. Report video — khác hợp đồng dữ liệu và nơi lưu.
+  Gốc showModalVideoReport lấy thông tin report đã lưu bằng socketService.getVideo; report() gọi socketService.report với reportedBy/message/isOthers rồi POST /report-video.
+  Momentfe submitReport gọi reportMoment(momentId, reason) rồi reportVideo; không đọc lại report cũ và bỏ qua lỗi của request reportVideo thứ hai.
+  Hai luồng này không được coi là tương đương chỉ vì đều có nút lá cờ. Cần quyết định backend report video nào là nguồn dữ liệu chính và kiểm thử việc lưu/lấy lại lý do report.
+
+C. Điều kiện tài khoản/profile — chuyển chưa đủ.
+  Gốc handleComment kiểm tra MUTE_MOMENT; like/handleComment kiểm tra stateId và hướng người dùng hoàn thiện hồ sơ bằng fillMePage('SOCIAL').
+  Momentfe mới có authGuard kiểm tra có token; sendComment/toggleLike không có các điều kiện UI tương ứng. Cần xử lý trạng thái bị hạn chế và thông báo lỗi từ backend rõ ràng.
+
+D. Verified và quota endorse — chuyển một phần.
+  Gốc getValidAndVerified đọc trạng thái VERIFIED/VERIFIED_WITH_PURCHASED/UNVERIFIED và validEndorCntThirty/Twenty/Ten, updateEndorseCnt quản lý số lượt.
+  Momentfe có endorse và rollback lỗi, nhưng không tải/hiển thị quota, không có UI hướng dẫn điều kiện xác minh như gốc. Badge verified mới có ở danh sách like, chưa đầy đủ ở bình luận/creator.
+
+E. Popup profile/QR — chuyển một phần.
+  Gốc có app-live-chat-profile với QR profile, tải QR và gửi yêu cầu kết bạn qua QR, phóng to avatar, nhiều trường địa lý/status của profile.
+  creator-profile trong momentfe mới có thông tin cơ bản và nút quan hệ; chưa có QR/download, country-name lookup tương ứng hay avatar enlargement.
+  Gốc còn định nghĩa unblockUserGroup, nhưng không thấy template tiktok hiện tại gọi nó. Không đánh dấu đây là tính năng UI đang hoạt động chắc chắn; cần xác nhận nghiệp vụ trước khi đưa vào danh sách bắt buộc chuyển.
+
+F. Realtime và đồng bộ moment — chưa thấy tương đương ở momentfe.
+  Gốc định nghĩa registerWithServerVideo (videoReceived), registerWithServerMomentWall và phát changeMomentFormVideo để đồng bộ với container.
+  Momentfe không có socket service/event output tương ứng, chủ yếu cập nhật từ response request.
+  Lưu ý: tìm kiếm trong src/app của customerfe chỉ thấy định nghĩa hai hàm register trên, chưa thấy nơi gọi chúng. Vì vậy đây là chênh lệch code, chưa đủ bằng chứng để khẳng định realtime của màn hình gốc hiện đang hoạt động. Muốn yêu cầu realtime parity cần xác nhận lúc chạy trước.
+
+G. Lọc category phía client — thiếu lớp bảo vệ của gốc.
+  Gốc getVideoCategoryId đọc nhiều shape categoryId/category/attachmentInfo/attachments rồi lọc lại kết quả theo category đang chọn.
+  Momentfe chuyển categoryId lên API nhưng không lọc lại response phía client. Nếu API trả dữ liệu khác category hoặc shape không nhất quán, kết quả có thể khác gốc.
+
+H. Các phần cần kiểm thử thêm, không thể xác nhận chỉ bằng build.
+  Tab Comment của danh sách like đang lọc những người có comment trong trang người-like vừa tải, không lấy toàn bộ người-comment; totalRows vẫn theo danh sách like nên số trang có thể sai.
+  Một số request bình luận/profile/grid có cập nhật lạc quan nhưng không hoàn tác hoặc không báo lỗi đầy đủ; cần kiểm thử API lỗi và chuyển video/danh mục nhanh.
+  Instagram/WeChat có code mở URL nhưng chưa xác nhận hành vi chia sẻ thực tế; không coi việc mở URL là đã gửi/chia sẻ thành công.
+  Các API likeVideo/commentVideo/disLike legacy trong customerfe không tự động được tính là tính năng thiếu: một số nhánh cũ bị comment và luồng tương tác đang dùng moment-expression/moment-comment.
+
+4. ĐỐI CHIẾU CHATFE VÀ THAY ĐỔI GIAO DIỆN MOMENTFE
+
+Nguồn tham chiếu:
+  chatfe/src/app/social-live-chat/sum-live-chat/components/shell/workspace-topbar/
+  chatfe/src/app/layout/chat/chat-shell.component.ts
+  chatfe/src/app/social-live-chat/sum-live-chat/sum-live-chat.component.scss
+  chatfe/src/styles.scss, src/_variables.scss, angular.json
+  Hình 2 do người dùng cung cấp.
+
+Chatfe có nhiều lớp CSS: biến legacy #57b9dc trong _variables.scss, palette workspace mới #1769ff/#f8fbff/#d9e5f5/#14213d, và override component. Không sao chép toàn bộ styles.scss/Bootstrap vì nhiều selector dành riêng cho live chat sẽ gây ảnh hưởng không mong muốn.
+
+Topbar source hiện có gradient xanh đậm, trong khi Hình 2 có topbar xanh nhạt. Momentfe theo bố cục và sắc độ sáng của Hình 2, đồng thời dùng palette workspace mới trong code chatfe.
+
+Đã thêm src/_theme.scss với surface mixin dùng chung; src/styles.scss có biến màu primary, text, muted, border, surface và primary-gradient. Surface là trắng/xanh nhạt với viền trắng, bóng xanh nhẹ và highlight bên trong.
+
+Đã cập nhật shell, navigation tabs, vùng video, category bar, lưới, Friend pane, comment/share/report/like/profile/people popup, moment card/composer, search/banner category và profile header. Nền video/player vẫn giữ đen để nội dung video và nút điều khiển có tương phản.
+
+Header mới:
+  - Logo Bynfor được copy từ ảnh có sẵn của chatfe vào momentfe/src/images.
+  - Logo mở Moments; tài khoản mở profile của người đang đăng nhập.
+  - Tên/avatar lấy UserService.getCurrentUser; thiếu/hỏng avatar dùng initials.
+  - Hiển thị trạng thái kết nối và nút đăng xuất dùng AuthService hiện có.
+  - Responsive: giảm kích thước/logo/khoảng cách và ẩn phần tên dài ở màn hình hẹp.
+  - Online/Offline được dịch cho 10 locale. Trạng thái này dựa trên navigator.onLine và profile đã tải, KHÔNG phải presence realtime từ socket.
+  - Xóa cache profile/gợi ý khi nhận phiên mới hoặc logout để tránh hiển thị tài khoản cũ sau khi đổi người dùng.
+
+5. LỖI ĐÃ SỬA VÀ KIỂM CHỨNG
+
+Đã sửa link share sai route; race giữa shared video/feed; stale detail/fallback response; reset viewed; video trùng và replay khi tải thêm; điều hướng phím/wheel/swipe trong popup/ô nhập; history ở Friend; tab mất khi feed rỗng; màu tab Friend; comment ownership ID; response gửi comment; số like 0; cache tài khoản; timeout hashtag khi component bị hủy.
+
+File ru.translation.json có lỗi cú pháp cũ tại upload_images_max6 bị ghép sai thành upload_glb_only. Đã sửa để JSON parse hợp lệ, giữ upload_glb_only riêng.
+
+Kiểm tra:
+  - Build production Angular: thành công. Có hai cảnh báo environment.customerfe-dev.ts và environment.customerfe-prod.ts không được dùng trong chương trình; không có lỗi build.
+  - 14 regression checks trong scripts/verify-video-migration.cjs: thành công. Có thể chạy npm run verify:video.
+  - Tests nạp source component thật, mock framework/API/DOM và kiểm tra logic; không phải kiểm thử backend hay layout trong browser.
+  - Tất cả 10 file locale parse được và có label kết nối.
+  - Diff check các source/package.json thay đổi: không có lỗi whitespace sau chuẩn hóa cuối file.
+
+Chưa kiểm chứng:
+  - Browser tool bị từ chối quyền mở http://localhost:4200. Không có screenshot sau sửa và chưa xác nhận layout desktop/mobile bằng trình duyệt.
+  - Chưa kiểm thử end-to-end với backend thật, report/feedback/quota/realtime hoặc chia sẻ qua dịch vụ bên ngoài.
+  - Không build hoặc chạy sửa customerfe/chatfe vì hai project đó chỉ là nguồn tham chiếu.
+
+Ưu tiên tiếp theo để hoàn tất migration: chốt report contract; thêm feedback video; khôi phục account-state/quota UI; hoàn thiện QR/profile; kiểm tra category/response/error handling; xác nhận nhu cầu realtime và kiểm thử browser với phiên đăng nhập hợp lệ.
+
+6. ĐỐI CHIẾU REQUEST NGÀY 01/10/2026 — CHƯA KIỂM CHỨNG RUNTIME
+
+Log người dùng gửi xác nhận npm start sử dụng serve:development và dev-gateway-api.
+Các cảnh báo environment không dùng là cảnh báo biên dịch, không chứng minh nguyên nhân dữ liệu rỗng.
+Request Following của customerfe do người dùng gửi là GET /inventory/new-videos với
+page=1, size=6, viewed=false, isFollowing=true, keyword rỗng và hai tham số chữ ký.
+Response status 200 chứa sáu video. Request video-history trả 201 với data null là hợp lệ.
+
+Đã bổ sung SignatureInterceptor vào momentfe, dùng cùng thuật toán HMAC-SHA512,
+Base64, timestamp giây và quy tắc encode hai bước của customerfe. Chỉ áp dụng cho
+origin gateway đang cấu hình; không sửa request ảnh, locale hoặc API bên ngoài.
+Các endpoint /auth/user, /customer/customers/friends-new và /inventory/new-videos
+đều đi qua interceptor này; giữ nguyên endpoint, token và tham số Following.
+
+Đã phân biệt response feed sai contract/status với danh sách data rỗng hợp lệ;
+lỗi khi tải video đã xem không còn bị biểu diễn thành không có video nếu không
+có dữ liệu để giữ lại. Lỗi tải profile không còn cache null suốt phiên đăng nhập.
+Friend rỗng hiển thị thông báo bạn bè, thay vì thông báo không có video.
+
+Giới hạn bằng chứng: SignatureFilter chỉ bắt buộc chữ ký khi enabled=true.
+Cấu hình backend trong checkout đang enabled=false; chưa biết cấu hình server dev
+đang triển khai. Thiếu chữ ký là khác biệt đã xác nhận, chưa phải bằng chứng đủ
+để kết luận nguyên nhân duy nhất của ba vấn đề người dùng báo.
+Chưa có response /auth/user, friends-new và Following từ localhost để đối chiếu
+ID tài khoản, profilePictureUrl, lỗi HTTP và danh sách dữ liệu với customerfe.
+Không chạy ứng dụng, test hoặc build cho lần sửa này theo yêu cầu người dùng.

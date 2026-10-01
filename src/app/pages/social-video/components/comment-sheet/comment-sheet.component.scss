@@ -1,3 +1,5 @@
+@use '../../../../../theme' as theme;
+
 .sheet {
   position: absolute;
   inset: 0;
@@ -81,3 +83,5 @@
   button { border: 0; border-radius: 8px; background: #1769ff; color: #fff; padding: 0 14px; cursor: pointer; }
   button.ghost { background: transparent; font-size: 19px; padding: 0 4px; }
 }
+
+.body { @include theme.surface; }

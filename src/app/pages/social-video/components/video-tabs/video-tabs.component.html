@@ -1,4 +1,4 @@
-<div class="vtabs">
+<div class="vtabs" [class.light]="light">
   <button type="button" [class.active]="active === 'FRIEND'" (click)="change.emit('FRIEND')">{{ 'common.friend' | i18next }}</button>
   <button type="button" [class.active]="active === 'FOR_YOU'" (click)="change.emit('FOR_YOU')">{{ 'for_you' | i18next }}</button>
   <button type="button" [class.active]="active === 'FOLLOWING'" (click)="change.emit('FOLLOWING')">{{ 'common.following' | i18next }}</button>

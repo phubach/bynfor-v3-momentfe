@@ -22,27 +22,29 @@
     (unfollow)="peopleUnfollow($event)"></app-people-suggest-modal>
 
   <div class="sv-body" (wheel)="onWheel($event)">
-    <div *ngIf="loadingFirst" class="sv-state">⏳ {{ 'header.Loading' | i18next }}</div>
-    <div *ngIf="!loadingFirst && error" class="sv-state error">
-      {{ error | i18next }} <button type="button" (click)="getVideos()">{{ 'social.retry' | i18next }}</button>
-    </div>
-    <div *ngIf="!loadingFirst && !error && tab !== 'FRIEND' && !videos.length && !showGrid" class="sv-state">
-      {{ 'social.emptyVideo' | i18next }}
-    </div>
 
     <!-- Tab bạn bè: giữ nguyên tính năng video-friend -->
-    <div class="reel-stage" *ngIf="tab === 'FRIEND' && !showGrid">
-      <app-video-tabs [active]="tab" (change)="switchTab($event)"></app-video-tabs>
+    <div class="reel-stage friend-stage" *ngIf="tab === 'FRIEND' && !showGrid">
+      <app-video-tabs [active]="tab" [light]="true" (change)="switchTab($event)"></app-video-tabs>
       <app-friend-pane
         [friends]="friends"
         [loading]="loadingFriends"
+        [error]="friendsError"
+        (retry)="getFriends()"
         (follow)="followFriend($event)"
         (unfollow)="unfollowFriend($event)"></app-friend-pane>
     </div>
 
     <!-- Reels: 1 video active + rail + info -->
-    <div class="reel-stage" *ngIf="tab !== 'FRIEND' && (videos.length || showGrid)">
+    <div class="reel-stage" [class.grid-stage]="showGrid" *ngIf="tab !== 'FRIEND' || showGrid">
       <app-video-tabs *ngIf="!showGrid" [active]="tab" (change)="switchTab($event)"></app-video-tabs>
+      <div *ngIf="loadingFirst && !showGrid" class="sv-state">⏳ {{ 'header.Loading' | i18next }}</div>
+      <div *ngIf="!loadingFirst && error && !showGrid" class="sv-state error">
+        {{ error | i18next }} <button type="button" (click)="getVideos()">{{ 'social.retry' | i18next }}</button>
+      </div>
+      <div *ngIf="!loadingFirst && !error && !videos.length && !showGrid" class="sv-state">
+        {{ 'social.emptyVideo' | i18next }}
+      </div>
 
       <app-video-grid
         *ngIf="showGrid"

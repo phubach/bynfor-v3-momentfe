@@ -11796,7 +11796,9 @@
 		}
 	},
 	"social": {
-		"momentTab": "Moments",
+		"online": "온라인",
+    "offline": "오프라인",
+    "momentTab": "Moments",
 		"videoTab": "Videos",
 		"logout": "Sign out",
 		"loading": "Loading...",

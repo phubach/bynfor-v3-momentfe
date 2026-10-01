@@ -1,3 +1,5 @@
+@use '../../../../../theme' as theme;
+
 .overlay {
   position: absolute;
   inset: 0;
@@ -30,3 +32,5 @@
     &.ghost { text-align: center; color: #5e6f93; }
   }
 }
+
+.menu { @include theme.surface; }

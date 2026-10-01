@@ -103,7 +103,7 @@ export class CommentSheetComponent {
   }
 
   mine(c: ReelComment): boolean {
-    return this.myUserId != null && (c.from === this.myUserId || c.createdBy === this.myUserId);
+    return this.myUserId != null && String(c.from ?? c.createdBy ?? c.createdByFull?.id) === String(this.myUserId);
   }
 
   likeCount(c: ReelComment): number {

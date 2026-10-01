@@ -485,7 +485,7 @@
         "red_packet_wallet_amount_max": "Сумма для разделения должна быть меньше суммы на вашем счете {{amount}}.",
         "red_packet_wallet_points_max": "Сумма для разделения должна быть меньше суммы на вашем счете {{amount}}.",
         "upload_images_max10": "Вы можете загрузить не более 10 изображений.",
-        "upload_glb_only": " Only GLB files are allowed for 3D model uploads",: "Вы можете загрузить не более 6 изображений.",
+        "upload_images_max6": "Вы можете загрузить не более 6 изображений.",
         "upload_glb_only": " Only GLB files are allowed for 3D model uploads",
         "upload_images_max1": "Вы можете загрузить только 1 изображение.",
         "state_is_required": "Требуется указать штат, пожалуйста, выберите штат.",
@@ -11797,6 +11797,8 @@
     }
   },
   "social": {
+    "online": "В сети",
+    "offline": "Не в сети",
     "momentTab": "Moments",
     "videoTab": "Videos",
     "logout": "Sign out",

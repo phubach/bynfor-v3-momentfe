@@ -11810,7 +11810,9 @@
 		}
 	},
 	"social": {
-		"momentTab": "Moments",
+		"online": "En línea",
+    "offline": "Sin conexión",
+    "momentTab": "Moments",
 		"videoTab": "Videos",
 		"logout": "Sign out",
 		"loading": "Loading...",

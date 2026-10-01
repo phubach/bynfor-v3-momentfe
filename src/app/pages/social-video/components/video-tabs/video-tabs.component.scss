@@ -23,3 +23,26 @@
     }
   }
 }
+
+.vtabs.light button {
+  color: #5e6f93;
+  &.active { color: #1769ff; border-color: #1769ff; }
+}
+
+.vtabs.light {
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+  width: 100%;
+  justify-content: center;
+  padding: 12px 14px;
+  background: #f8fbff;
+  border-bottom: 1px solid #d9e5f5;
+  flex-shrink: 0;
+
+  button {
+    white-space: nowrap;
+    &:hover { color: #1769ff; }
+  }
+}

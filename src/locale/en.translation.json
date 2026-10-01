@@ -11816,6 +11816,8 @@
     }
   },
   "social": {
+    "online": "Online",
+    "offline": "Offline",
     "momentTab": "Moments",
     "videoTab": "Videos",
     "logout": "Sign out",
@@ -11825,6 +11827,7 @@
     "retry": "Retry",
     "emptyMoment": "No moments yet.",
     "emptyVideo": "No videos found.",
+    "emptyFriends": "No friends found.",
     "unknownUser": "Unknown user",
     "writeComment": "Write a comment...",
     "searchVideo": "Search videos...",

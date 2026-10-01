@@ -1,3 +1,5 @@
+@use '../../../../../theme' as theme;
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -117,3 +119,6 @@
     cursor: pointer;
   }
 }
+
+.card { @include theme.surface; }
+.card { border-radius: 20px; }

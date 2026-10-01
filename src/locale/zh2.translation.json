@@ -11797,6 +11797,8 @@
     }
   },
   "social": {
+    "online": "在線",
+    "offline": "離線",
     "momentTab": "Moments",
     "videoTab": "Videos",
     "logout": "Sign out",

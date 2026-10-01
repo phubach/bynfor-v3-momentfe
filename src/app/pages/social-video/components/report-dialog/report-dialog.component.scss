@@ -1,3 +1,5 @@
+@use '../../../../../theme' as theme;
+
 .overlay {
   position: absolute;
   inset: 0;
@@ -25,3 +27,6 @@
     button.ghost { background: #e8edf5; color: #0f1f4a; }
   }
 }
+
+.card { @include theme.surface; }
+.card { border-radius: 20px; }

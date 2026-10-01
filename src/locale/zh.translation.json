@@ -11802,6 +11802,8 @@
     }
   },
   "social": {
+    "online": "在线",
+    "offline": "离线",
     "momentTab": "Moments",
     "videoTab": "Videos",
     "logout": "Sign out",

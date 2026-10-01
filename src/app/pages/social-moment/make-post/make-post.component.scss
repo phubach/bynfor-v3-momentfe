@@ -1,3 +1,5 @@
+@use '../../../../theme' as theme;
+
 .composer {
   background: #fff;
   border: 1px solid #d7e3f4;
@@ -318,3 +320,5 @@
     }
   }
 }
+
+.composer { @include theme.surface; border-radius: 20px; }

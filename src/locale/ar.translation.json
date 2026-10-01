@@ -11744,7 +11744,9 @@
 		}
 	},
 	"social": {
-		"momentTab": "Moments",
+		"online": "متصل",
+    "offline": "غير متصل",
+    "momentTab": "Moments",
 		"videoTab": "Videos",
 		"logout": "Sign out",
 		"loading": "Loading...",

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, forkJoin, of } from 'rxjs';
-import { catchError, map, shareReplay } from 'rxjs/operators';
+import { catchError, map, retry, shareReplay } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface TagUser {
@@ -21,11 +21,29 @@ export class UserService {
 
   constructor(private http: HttpClient) {}
 
+  resetSessionCache(): void {
+    this.me$ = null;
+    this.tagRelatives$ = null;
+  }
+
   getCurrentUser(): Observable<any> {
     if (!this.me$) {
       this.me$ = this.http.get<any>(`${environment.AUTH_API_ENDPOINT}/user`).pipe(
-        map((res: any) => res?.data || res),
-        catchError(() => of(null)),
+        map((res: any) => {
+          const profile = res?.data || res;
+          if ((res?.status != null && Number(res.status) !== 200) || !UserService.profileId(profile)) {
+            throw new Error('Invalid current-user response');
+          }
+          return profile;
+        }),
+        // A direct refresh can race cookie/local-storage restoration by a few
+        // milliseconds. Retry once before exposing the empty-profile fallback.
+        retry({ count: 1, delay: 250 }),
+        catchError(() => {
+          // A failed request must not cache an empty profile for the whole session.
+          this.me$ = null;
+          return of(null);
+        }),
         shareReplay(1),
       );
     }
@@ -46,6 +64,21 @@ export class UserService {
     if (!u) return '';
     const id = u.id ?? u.userId ?? u.customerId ?? u.customerID;
     return id != null ? String(id) : '';
+  }
+
+  /** Same thumbnail convention as customerfe's UtilsService.getImageThumbnails. */
+  static avatarUrl(user: any, original = false): string {
+    // auth/user and friends-new expose the ready-to-use thumbnail separately.
+    // Prefer it so we do not manufacture a URL for older socket/chat images.
+    const raw = original
+      ? (user?.profilePictureUrl || user?.profileSmallPictureUrl)
+      : (user?.profileSmallPictureUrl || user?.profilePictureUrl);
+    if (typeof raw !== 'string') return '';
+    const url = raw.trim();
+    if (!url || url === 'null' || url === 'undefined') return '';
+    return !original && url.includes('_original_') && !url.includes('.gif')
+      ? url.replace(/original/g, 'thumbnail')
+      : url;
   }
 
   /** Store của user (để chọn tên hiển thị, giống create-moment của customerfe). */

@@ -1,3 +1,5 @@
+@use '../../../../../theme' as theme;
+
 .grid-page {
   position: absolute;
   inset: 0;
@@ -33,3 +35,5 @@
 .loading, .empty { text-align: center; color: #5e6f93; padding: 24px 0; }
 .more { text-align: center; padding: 12px 0;
   button { border: 1px solid #1769ff; background: #fff; color: #1769ff; border-radius: 8px; padding: 8px 18px; font: inherit; cursor: pointer; } }
+
+.grid-page { @include theme.surface; }

@@ -11793,6 +11793,8 @@
     }
   },
   "social": {
+    "online": "ऑनलाइन",
+    "offline": "ऑफ़लाइन",
     "momentTab": "Moments",
     "videoTab": "Videos",
     "logout": "Sign out",

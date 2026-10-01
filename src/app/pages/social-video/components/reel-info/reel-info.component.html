@@ -2,10 +2,10 @@
   <div class="creator">
     <button type="button" class="avatar" (click)="openProfile.emit()">
       <img
-        *ngIf="video.userResponseMoment?.profilePictureUrl && video.userResponseMoment.profilePictureUrl !== 'null'"
-        [src]="video.userResponseMoment.profilePictureUrl"
+        *ngIf="video.userResponseMoment?.profileSmallPictureUrl || (video.userResponseMoment?.profilePictureUrl && video.userResponseMoment.profilePictureUrl !== 'null')"
+        [src]="video.userResponseMoment.profileSmallPictureUrl || video.userResponseMoment.profilePictureUrl"
         alt="" />
-      <span *ngIf="!video.userResponseMoment?.profilePictureUrl || video.userResponseMoment.profilePictureUrl === 'null'">{{ avatarText() }}</span>
+      <span *ngIf="!(video.userResponseMoment?.profileSmallPictureUrl || (video.userResponseMoment?.profilePictureUrl && video.userResponseMoment.profilePictureUrl !== 'null'))">{{ avatarText() }}</span>
     </button>
     <button type="button" class="name" (click)="openProfile.emit()">{{ displayName() }}</button>
     <button

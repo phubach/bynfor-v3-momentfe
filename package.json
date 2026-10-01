@@ -8,7 +8,8 @@
     "start:4200": "ng serve --port 4200",
     "build": "ng build --configuration production",
     "build:prod": "ng build --configuration production",
-    "build:dev": "ng build --configuration development"
+    "build:dev": "ng build --configuration development",
+    "verify:video": "node --test scripts/verify-video-migration.cjs"
   },
   "dependencies": {
     "@angular/animations": "^19.2.15",

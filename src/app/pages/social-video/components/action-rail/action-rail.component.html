@@ -13,7 +13,7 @@
       <span class="ic">{{ liked ? '❤️' : '🤍' }}</span>
     </button>
     <button type="button" class="num link" *ngIf="likeCount > 0" (click)="openLikes.emit()">{{ likeCount }}</button>
-    <span class="num" *ngIf="!likeCount">1</span>
+    <span class="num" *ngIf="!likeCount">0</span>
   </div>
 
   <button type="button" *ngIf="canReport" (click)="report.emit()" [attr.aria-label]="'report'">
