@@ -52,6 +52,18 @@
   box-shadow: 0 8px 28px rgba(15, 31, 74, 0.22);
 }
 
+// Dải tối trên đỉnh video: tabs trắng luôn nổi trên mọi nền sáng/tối.
+.reel-scrim-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 92px;
+  z-index: 5;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0));
+}
+
 .reel {
   position: absolute;
   inset: 0;

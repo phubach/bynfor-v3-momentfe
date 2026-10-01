@@ -4,7 +4,8 @@
       <img
         *ngIf="video.userResponseMoment?.profileSmallPictureUrl || (video.userResponseMoment?.profilePictureUrl && video.userResponseMoment.profilePictureUrl !== 'null')"
         [src]="video.userResponseMoment.profileSmallPictureUrl || video.userResponseMoment.profilePictureUrl"
-        alt="" />
+        alt=""
+        referrerpolicy="no-referrer" />
       <span *ngIf="!(video.userResponseMoment?.profileSmallPictureUrl || (video.userResponseMoment?.profilePictureUrl && video.userResponseMoment.profilePictureUrl !== 'null'))">{{ avatarText() }}</span>
     </button>
     <button type="button" class="name" (click)="openProfile.emit()">{{ displayName() }}</button>

@@ -22,7 +22,7 @@
 
     <div class="row" *ngFor="let u of users">
       <div class="ava">
-        <img *ngIf="u.profilePictureUrl && u.profilePictureUrl !== 'null'" [src]="u.profilePictureUrl" alt="" />
+        <img *ngIf="u.profilePictureUrl && u.profilePictureUrl !== 'null'" [src]="u.profilePictureUrl" alt="" referrerpolicy="no-referrer" />
         <span *ngIf="!u.profilePictureUrl || u.profilePictureUrl === 'null'">{{ (label(u).charAt(0) || '?').toUpperCase() }}</span>
       </div>
       <div class="who">

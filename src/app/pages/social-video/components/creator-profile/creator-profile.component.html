@@ -6,7 +6,7 @@
     </div>
     <div class="body">
       <div class="ava">
-        <img *ngIf="profile.profilePictureUrl" [src]="profile.profilePictureUrl" alt="" />
+        <img *ngIf="profile.profilePictureUrl" [src]="profile.profilePictureUrl" alt="" referrerpolicy="no-referrer" />
         <span *ngIf="!profile.profilePictureUrl">{{ avatarText() }}</span>
       </div>
       <h3>{{ fullName() }}</h3>

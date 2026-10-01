@@ -18,6 +18,7 @@
     class="poster"
     [src]="poster"
     alt=""
+    referrerpolicy="no-referrer"
     (error)="posterFailed = true" />
 
   <div class="big-play" *ngIf="paused && !failed">▶</div>

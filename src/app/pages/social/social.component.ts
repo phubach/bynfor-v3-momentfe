@@ -34,7 +34,11 @@ export class SocialComponent implements OnInit {
   }
 
   get avatarUrl(): string {
-    return this.avatarFailed ? '' : UserService.avatarUrl(this.profile, this.avatarOriginalFallback);
+    if (!this.profile) return '';
+    // Hết ảnh thật (giống chatfe dùng default-user.jpg) thì hiện ảnh mặc định,
+    // chỉ còn initials khi chưa load xong profile.
+    if (this.avatarFailed) return UserService.DEFAULT_AVATAR;
+    return UserService.avatarUrl(this.profile, this.avatarOriginalFallback) || UserService.DEFAULT_AVATAR;
   }
 
   onAvatarError(): void {
@@ -53,7 +57,13 @@ export class SocialComponent implements OnInit {
   @HostListener('window:online')
   @HostListener('window:offline')
   updateConnection(): void {
+    const was = this.connected;
     this.connected = navigator.onLine;
+    // Mạng rớt làm ảnh lỗi rồi dính initials vĩnh viễn -> online lại thì thử tải lại ảnh.
+    if (!was && this.connected) {
+      this.avatarFailed = false;
+      this.avatarOriginalFallback = false;
+    }
   }
 
   logout(): void {

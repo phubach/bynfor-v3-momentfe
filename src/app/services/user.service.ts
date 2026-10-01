@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, map, retry, shareReplay } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { RelationsService } from './relations.service';
 
 export interface TagUser {
   id: string;
@@ -19,7 +20,20 @@ export class UserService {
   private readonly user = '/user';
   private me$: Observable<any> | null = null;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private relations: RelationsService) {}
+
+  /**
+   * Gọi ngay sau đăng nhập thành công: nạp sẵn profile (GET /auth/user, có cache)
+   * và danh sách bạn (GET friends-new) để vào trang là có dữ liệu, không chờ tới
+   * lúc mở từng tab. Lỗi ở đây không chặn điều hướng.
+   */
+  warmSession(): void {
+    this.getCurrentUser().subscribe({ error: () => {} });
+    this.relations.getFriendsWithFollowing().subscribe({
+      next: () => {},
+      error: (e: any) => console.warn('[warmSession] friends preload failed', e?.status),
+    });
+  }
 
   resetSessionCache(): void {
     this.me$ = null;
@@ -70,6 +84,7 @@ export class UserService {
   static avatarUrl(user: any, original = false): string {
     // auth/user and friends-new expose the ready-to-use thumbnail separately.
     // Prefer it so we do not manufacture a URL for older socket/chat images.
+    // Prefer it so we do not manufacture a URL for older socket/chat images.
     const raw = original
       ? (user?.profilePictureUrl || user?.profileSmallPictureUrl)
       : (user?.profileSmallPictureUrl || user?.profilePictureUrl);
@@ -80,6 +95,20 @@ export class UserService {
       ? url.replace(/original/g, 'thumbnail')
       : url;
   }
+
+  /**
+   * Ảnh mặc định chèn sẵn (gốc/chatfe dùng /images/default-user.jpg).
+   * Dùng khi user không có ảnh hoặc ảnh lỗi — luôn hiện hình thay vì initials.
+   */
+  static readonly DEFAULT_AVATAR =
+    'data:image/svg+xml;utf8,' +
+    encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">` +
+        `<circle cx="32" cy="32" r="32" fill="#dbe6f7"/>` +
+        `<circle cx="32" cy="24" r="11" fill="#8ea0c2"/>` +
+        `<path d="M10 56c3-12 12-18 22-18s19 6 22 18" fill="#8ea0c2"/>` +
+        `</svg>`,
+    );
 
   /** Store của user (để chọn tên hiển thị, giống create-moment của customerfe). */
   getStoreByOwner(userId: string | number) {

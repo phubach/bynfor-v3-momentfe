@@ -31,6 +31,8 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
   pageVideos = 1;
   readonly sizeVideos = 6;
   viewed = false;
+  /** Gốc: isPageFollow — FOLLOWING trang 1 rỗng thì load nội dung For You đè lên tab Following. */
+  isPageFollow = false;
   isLoadingVideos = false;
   loadingFirst = false;
   error = '';
@@ -134,6 +136,9 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
     });
     this.getVideoCategories();
     this.getSuggestPeople(true);
+    // Gốc: video-friend khởi tạo cùng trang nên gọi API ngay từ đầu.
+    // Prefetch để tab Friend mở là có dữ liệu, không phụ thuộc lần bấm đầu.
+    this.getFriends();
     const vid = this.route.snapshot.queryParams['videoId'];
     if (vid) this.openVideoById(vid);
     else this.getVideos();
@@ -185,11 +190,13 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
     this.getVideos();
   }
 
-  // ---------- Feed: keep the selected tab; fall back only to viewed videos in that feed. ----------
+  // ---------- Feed: giữ tab đã chọn; FOLLOWING rỗng thì fallback For You (gốc: isPageFollow). ----------
   getVideos(isUpdate = false): void {
     const req = ++this.requestId;
     const wantCategory = this.categoryId;
     const wantTab = this.tab;
+    // Gốc: rời tab FOLLOWING thì reset cờ fallback.
+    if (wantTab !== 'FOLLOWING') this.isPageFollow = false;
     if (!isUpdate) {
       this.pageVideos = 1;
       this.selectedIndex = 0;
@@ -200,8 +207,10 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
     }
     this.isLoadingVideos = true;
     const following = wantTab === 'FOLLOWING';
+    // Gốc: param isFollowing = (tab FOLLOWING && !isPageFollow).
+    const effectiveFollowing = following && !this.isPageFollow;
     this.momentService
-      .getVideos(this.pageVideos, this.sizeVideos, following, wantCategory, '', null, this.viewed)
+      .getVideos(this.pageVideos, this.sizeVideos, effectiveFollowing, wantCategory, '', null, this.viewed)
       .subscribe({
         next: (res: any) => {
           if (req !== this.requestId || wantCategory !== this.categoryId || wantTab !== this.tab) return;
@@ -215,10 +224,18 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
             ...v,
             momentComments: [...(v?.momentComments || v?.comments || [])].sort(this.byCreated),
           }));
+          // Gốc (tiktok getVideos): FOLLOWING trang 1 rỗng -> isPageFollow=true,
+          // gọi lại lấy nội dung For You đè lên tab Following (tab vẫn giữ Following).
+          if (wantTab === 'FOLLOWING' && !isUpdate && !this.isPageFollow && this.pageVideos === 1 && !list.length) {
+            this.isPageFollow = true;
+            this.getVideos();
+            return;
+          }
           if (!this.viewed && list.length < this.sizeVideos) {
             this.viewed = true;
+            const retryFollowing = following && !this.isPageFollow;
             this.momentService
-              .getVideos(this.pageVideos, this.sizeVideos, following, wantCategory, '', null, true)
+              .getVideos(this.pageVideos, this.sizeVideos, retryFollowing, wantCategory, '', null, true)
               .subscribe({
                 next: (r2: any) => {
                   if (req !== this.requestId) return;

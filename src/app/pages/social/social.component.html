@@ -6,7 +6,7 @@
       </a>
       <a class="byn-account" [routerLink]="profileLink" [attr.title]="displayName">
         <span class="byn-account-avatar">
-          <img *ngIf="avatarUrl" [src]="avatarUrl" alt="" (error)="onAvatarError()" />
+          <img *ngIf="avatarUrl" [src]="avatarUrl" alt="" referrerpolicy="no-referrer" (error)="onAvatarError()" />
           <span *ngIf="!avatarUrl" class="byn-account-initial">{{ initials }}</span>
           <span class="byn-presence" [class.online]="connected && profile"></span>
         </span>

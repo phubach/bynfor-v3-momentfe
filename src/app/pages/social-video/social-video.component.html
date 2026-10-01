@@ -38,6 +38,8 @@
     <!-- Reels: 1 video active + rail + info -->
     <div class="reel-stage" [class.grid-stage]="showGrid" *ngIf="tab !== 'FRIEND' || showGrid">
       <app-video-tabs *ngIf="!showGrid" [active]="tab" (change)="switchTab($event)"></app-video-tabs>
+      <!-- Lớp tối trên cùng để chữ tabs luôn đọc được trên video sáng -->
+      <div class="reel-scrim-top" *ngIf="!showGrid && tab !== 'FRIEND'"></div>
       <div *ngIf="loadingFirst && !showGrid" class="sv-state">⏳ {{ 'header.Loading' | i18next }}</div>
       <div *ngIf="!loadingFirst && error && !showGrid" class="sv-state error">
         {{ error | i18next }} <button type="button" (click)="getVideos()">{{ 'social.retry' | i18next }}</button>

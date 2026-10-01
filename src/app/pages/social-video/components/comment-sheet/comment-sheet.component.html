@@ -9,7 +9,7 @@
       <ng-container *ngFor="let c of roots()">
         <div class="row">
           <div class="ava" (click)="openProfile.emit(c.createdByFull)">
-            <img *ngIf="c.createdByFull?.profilePictureUrl && c.createdByFull.profilePictureUrl !== 'null'" [src]="c.createdByFull.profilePictureUrl" alt="" />
+            <img *ngIf="c.createdByFull?.profilePictureUrl && c.createdByFull.profilePictureUrl !== 'null'" [src]="c.createdByFull.profilePictureUrl" alt="" referrerpolicy="no-referrer" />
             <span *ngIf="!c.createdByFull?.profilePictureUrl || c.createdByFull.profilePictureUrl === 'null'">{{ (name(c).charAt(0) || '?').toUpperCase() }}</span>
           </div>
           <div class="bubble">
@@ -50,7 +50,7 @@
 
         <div class="row sub" *ngFor="let r of repliesOf(c.comment_id)">
           <div class="ava sm" (click)="openProfile.emit(r.createdByFull)">
-            <img *ngIf="r.createdByFull?.profilePictureUrl && r.createdByFull.profilePictureUrl !== 'null'" [src]="r.createdByFull.profilePictureUrl" alt="" />
+            <img *ngIf="r.createdByFull?.profilePictureUrl && r.createdByFull.profilePictureUrl !== 'null'" [src]="r.createdByFull.profilePictureUrl" alt="" referrerpolicy="no-referrer" />
             <span *ngIf="!r.createdByFull?.profilePictureUrl || r.createdByFull.profilePictureUrl === 'null'">{{ (name(r).charAt(0) || '?').toUpperCase() }}</span>
           </div>
           <div class="bubble">
