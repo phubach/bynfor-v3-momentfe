@@ -255,6 +255,7 @@
       display: flex;
       gap: 4px;
       margin-top: 6px;
+      align-items: flex-start;
 
       input {
         flex: 1;
@@ -272,8 +273,9 @@
         border-radius: 6px;
         background: #1769ff;
         color: #fff;
-        padding: 0 10px;
+        padding: 7px 10px;
         cursor: pointer;
+        flex-shrink: 0;
       }
     }
   }
@@ -309,7 +311,7 @@
 
 .vdp-input {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
   padding: 10px 12px;
   border-top: 1px solid #eef2f7;
@@ -333,6 +335,7 @@
     color: #0f1f4a;
     padding: 9px 14px;
     cursor: pointer;
+    flex-shrink: 0;
 
     &:disabled { opacity: 0.6; }
   }
