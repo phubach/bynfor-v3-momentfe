@@ -1,13 +1,11 @@
-@use '../../../../../theme' as theme;
-
 .catbar {
   position: sticky;
-  top: var(--byn-chrome-height);
+  top: 70px;
   z-index: 8;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 18px;
+  padding: 12px 18px 8px;
   margin-bottom: 16px;
   background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(14px);
@@ -19,21 +17,14 @@
 
 .catbar-back {
   flex: none;
-  border: 1px solid #d4e0f5;
-  background: linear-gradient(180deg, #ffffff, #eef4ff);
+  border: 1px solid #d7e3f4;
+  background: #fff;
   color: #0f1f4a;
-  border-radius: 12px;
-  padding: 9px 16px;
+  border-radius: 20px;
+  padding: 6px 14px;
   font: inherit;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 14px;
   cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 14px rgba(23, 105, 255, 0.22);
-  }
 }
 
 .catbar-history {
@@ -41,44 +32,17 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border: 0;
-  background: var(--byn-primary-gradient);
+  border: 1px solid #0f1f4a;
+  background: #0f1f4a;
   color: #fff;
-  border-radius: 12px;
-  padding: 9px 16px;
+  border-radius: 20px;
+  padding: 6px 14px;
   font: inherit;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 14px;
   cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 14px rgba(15, 31, 74, 0.35);
-  }
 }
 
-.catbar-arrow {
-  flex: none;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px solid #d4e0f5;
-  background: #fff;
-  color: #1769ff;
-  font-size: 18px;
-  font-weight: 800;
-  line-height: 1;
-  cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
-
-  &:hover {
-    background: #1769ff;
-    color: #fff;
-    box-shadow: 0 6px 14px rgba(23, 105, 255, 0.35);
-  }
-}
-
+// Scrollbar native hiện luôn, đồng bộ với .cat-row trang Categories.
 .catbar-scroll {
   flex: 1;
   min-width: 0;
@@ -86,46 +50,56 @@
   gap: 8px;
   overflow-x: auto;
   white-space: nowrap;
-  padding: 2px;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  padding: 2px 2px 8px;
+  scrollbar-width: thin;
+  scrollbar-color: #9db4d8 #e9eef6;
 
   &::-webkit-scrollbar {
-    display: none;
+    height: 10px;
   }
 
-  // Chỉ mờ đúng cạnh còn cuộn được — pill luôn nét, không bị phủ trắng oan.
-  &.can-left {
-    -webkit-mask-image: linear-gradient(90deg, transparent, #000 20px);
-    mask-image: linear-gradient(90deg, transparent, #000 20px);
+  &::-webkit-scrollbar-track {
+    background: #e9eef6;
+    border-radius: 6px;
   }
 
-  &.can-right {
-    -webkit-mask-image: linear-gradient(270deg, transparent, #000 20px);
-    mask-image: linear-gradient(270deg, transparent, #000 20px);
+  &::-webkit-scrollbar-thumb {
+    background: #9db4d8;
+    border-radius: 6px;
+    border: 2px solid #e9eef6;
   }
 
-  &.can-left.can-right {
-    -webkit-mask-image: linear-gradient(90deg, transparent, #000 20px, #000 calc(100% - 20px), transparent);
-    mask-image: linear-gradient(90deg, transparent, #000 20px, #000 calc(100% - 20px), transparent);
+  &::-webkit-scrollbar-button:single-button {
+    display: block;
+    width: 12px;
+    border-style: solid;
+  }
+
+  &::-webkit-scrollbar-button:single-button:horizontal:decrement {
+    border-width: 5px 7px 5px 0;
+    border-color: transparent #5e6f93 transparent transparent;
+  }
+
+  &::-webkit-scrollbar-button:single-button:horizontal:increment {
+    border-width: 5px 0 5px 7px;
+    border-color: transparent transparent transparent #5e6f93;
   }
 }
 
+// Pills phẳng, đồng bộ .cat-row trang Categories.
 .cat-pill {
   flex: none;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  border: 1.5px solid #e3e9f4;
-  background: #f5f8fd;
-  color: #33415e;
-  border-radius: 999px;
-  padding: 10px 18px;
+  gap: 6px;
+  border: 1px solid #d7e3f4;
+  border-radius: 20px;
+  background: #fff;
+  padding: 6px 14px;
+  cursor: pointer;
   font: inherit;
   font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  color: #0f1f4a;
 
   img {
     width: 20px;
@@ -134,40 +108,25 @@
   }
 
   .cat-emoji {
-    font-size: 16px;
-  }
-
-  &:hover {
-    transform: translateY(-2px);
-    border-color: #1769ff;
-    box-shadow: 0 6px 14px rgba(23, 105, 255, 0.18);
+    font-size: 18px;
   }
 
   &.active {
-    background: var(--byn-primary-gradient);
-    border-color: transparent;
+    background: #1769ff;
+    border-color: #1769ff;
     color: #fff;
   }
 }
 
 @media (max-width: 640px) {
   .catbar {
-    top: var(--byn-chrome-height);
-    padding: 10px 12px;
+    top: 64px;
+    padding: 10px 12px 6px;
     gap: 8px;
     border-radius: 16px;
-  }
-
-  .cat-pill {
-    padding: 8px 14px;
-    font-size: 13px;
   }
 
   .catbar-history span {
     display: none;
   }
 }
-
-.catbar { @include theme.surface; }
-
-@media (max-width: 480px) { .catbar { gap: 5px; padding: 8px; } .catbar-back, .catbar-history { padding: 8px; } .catbar-arrow { width: 26px; height: 30px; } .cat-pill { padding: 8px 12px; } }

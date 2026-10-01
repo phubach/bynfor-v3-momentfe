@@ -1,13 +1,7 @@
 <div class="catbar">
   <button type="button" class="catbar-back" (click)="back.emit()">‹ {{ 'common.back' | i18next }}</button>
 
-  <button type="button" class="catbar-arrow" (click)="scrollBy(-1)" aria-label="Scroll left">‹</button>
-  <div
-    class="catbar-scroll"
-    #scroller
-    [class.can-left]="canLeft"
-    [class.can-right]="canRight"
-    (scroll)="onScroll()">
+  <div class="catbar-scroll" #scroller>
     <button
       type="button"
       class="cat-pill"
@@ -32,7 +26,6 @@
       <span class="cat-emoji">❄️</span><span>{{ 'common.other' | i18next }}</span>
     </button>
   </div>
-  <button type="button" class="catbar-arrow" (click)="scrollBy(1)" aria-label="Scroll right">›</button>
 
   <button type="button" class="catbar-history" (click)="history.emit()" title="History">🕘 <span>History</span></button>
 </div>
