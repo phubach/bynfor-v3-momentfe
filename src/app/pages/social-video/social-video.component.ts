@@ -1,5 +1,6 @@
-import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, Inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { I18NEXT_SERVICE, ITranslationService } from 'angular-i18next';
 import { MomentService } from '../../services/moment.service';
 import { RelationsService } from '../../services/relations.service';
 import { UserService } from '../../services/user.service';
@@ -116,6 +117,7 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private router: Router,
     private route: ActivatedRoute,
+    @Inject(I18NEXT_SERVICE) private i18n: ITranslationService,
   ) {}
 
   ngOnInit(): void {
@@ -451,6 +453,10 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
     const v = this.current();
     const el = v && (document.getElementById(this.videoDomId(v, this.selectedIndex)) as HTMLVideoElement);
     if (el) el.muted = this.muted;
+    this.showToast(
+      this.muted ? this.tr('social.muted', 'Muted.') : this.tr('social.unmuted', 'Sound on.'),
+      'info',
+    );
   }
 
   onLoaded(i: number): void {
@@ -519,10 +525,17 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
       next: (res: any) => {
         if (res?.data?.expressions) v.momentLikes = res.data.expressions;
         v.likedByMe = operation === 'ADD';
+        this.showToast(
+          operation === 'ADD'
+            ? this.tr('toastr.success.product_liked', 'You liked this video.')
+            : this.tr('toastr.success.product_unliked', 'You unliked this video.'),
+          operation === 'ADD' ? 'success' : 'info',
+        );
       },
-      error: () => {
+      error: (err: any) => {
         v.likedByMe = operation !== 'ADD';
         this.refreshLikes(v);
+        this.showToast(this.errMsg(err), 'error');
       },
     });
   }
@@ -615,15 +628,27 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
 
   likeAddFriend(u: any): void {
     this.relations.addToFriends(u.id).subscribe({
-      next: () => (u.relation = ERelationStatus.FRIEND_REQUEST),
-      error: () => {},
+      next: () => {
+        u.relation = ERelationStatus.FRIEND_REQUEST;
+        this.showToast(this.tr('toastr.success.friend_request_sent', 'Friend request sent successfully.'), 'success');
+      },
+      error: (err: any) => this.showToast(this.errMsg(err), 'error'),
     });
   }
 
   likeCancelFriend(u: any): void {
+    if (this.myUserId == null) return;
     this.relations.removeFromFriends(u.id, this.myUserId as any).subscribe({
-      next: () => (u.relation = ERelationStatus.UNFOLLOWED),
-      error: () => {},
+      next: () => {
+        u.relation = ERelationStatus.UNFOLLOWED;
+        this.showToast(
+          this.tr('toastr.success.friend_removed', '{{userName}} was successfully removed from your friend list.', {
+            userName: this.personName(u) || 'User',
+          }),
+          'success',
+        );
+      },
+      error: (err: any) => this.showToast(this.errMsg(err), 'error'),
     });
   }
 
@@ -632,8 +657,12 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
       next: () => {
         u.relation =
           u.relation === ERelationStatus.FRIEND ? ERelationStatus.FRIEND_AND_FOLLOW : ERelationStatus.FOLLOW;
+        this.showToast(
+          this.tr('toastr.success.you_are_following', 'You followed {{name}}', { name: this.personName(u) || 'user' }),
+          'success',
+        );
       },
-      error: () => {},
+      error: (err: any) => this.showToast(this.errMsg(err), 'error'),
     });
   }
 
@@ -642,8 +671,12 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
       next: () => {
         u.relation =
           u.relation === ERelationStatus.FRIEND_AND_FOLLOW ? ERelationStatus.FRIEND : ERelationStatus.UNFOLLOWED;
+        this.showToast(
+          this.tr('toastr.success.you_are_not_following', 'You unfollowed {{name}}', { name: this.personName(u) || 'user' }),
+          'success',
+        );
       },
-      error: () => {},
+      error: (err: any) => this.showToast(this.errMsg(err), 'error'),
     });
   }
 
@@ -682,26 +715,71 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
           v.endorsements = res.data.endorsements || v.endorsements;
           v.endorsementCount = res.data.endorsementCount ?? this.endorseCount(v);
         }
+        this.showToast(
+          operation === 'ADD'
+            ? this.tr('toastr.success.endorsed', 'Endorsed with credit.')
+            : this.tr('toastr.success.endorse_removed', 'Endorsement removed.'),
+          operation === 'ADD' ? 'success' : 'info',
+        );
       },
       error: (err: any) => {
         v.endorsements = prev;
         v.endorsementCount = prevCount;
         // Gốc hiện alertService.errorTop — bản mới toast để không fail trong im lặng.
-        this.showToast(err?.error?.message || 'Endorse failed');
+        this.showToast(this.errMsg(err), 'error');
       },
     });
   }
 
-  // ---------- Toast lỗi nhẹ (thay alertService/toastr của gốc) ----------
+  // ---------- Toast (thay alertService/toastr của gốc, dùng chung i18n keys) ----------
   toast = '';
+  toastKind: 'success' | 'error' | 'info' = 'info';
 
-  showToast(msg: string): void {
+  showToast(msg: string, kind: 'success' | 'error' | 'info' = 'info'): void {
     this.toast = msg;
+    this.toastKind = kind;
     this.timers.push(
       setTimeout(() => {
         this.toast = '';
-      }, 3200),
+      }, 5000),
     );
+  }
+
+  /** Dịch key i18n, rớt về text EN khi thiếu key (giống alertService gốc). */
+  private tr(key: string, fallback: string, params?: any): string {
+    try {
+      const v = this.i18n.t(key, params as any);
+      return typeof v === 'string' && v !== key ? v : this.fill(fallback, params);
+    } catch {
+      return this.fill(fallback, params);
+    }
+  }
+
+  private fill(template: string, params?: any): string {
+    let out = template;
+    Object.keys(params || {}).forEach((k) => {
+      out = out.split('{{' + k + '}}').join(String((params as any)[k] ?? ''));
+    });
+    return out;
+  }
+
+  /** Message lỗi BE (gốc: error.error.message + request_failed fallback). */
+  private errMsg(err: any, fallbackKey = 'toastr.error.request_failed', fallbackText = 'Request failed.'): string {
+    const server = err?.error?.message;
+    if (typeof server === 'string' && server.trim()) {
+      if (server.includes('You have collect monetary gift as the follower')) {
+        return this.tr(
+          'you_have_collect_monetary_gift_as_the_follower_or_friend',
+          'You have collected a monetary gift as a follower/friend and cannot unfollow.',
+        );
+      }
+      return server;
+    }
+    return this.tr(fallbackKey, fallbackText);
+  }
+
+  private personName(u: any): string {
+    return (u?.firstName && u?.lastName ? u.firstName + ' ' + u.lastName : u?.userName) || '';
   }
 
   // ---------- Follow / friend creator (gốc: follow/unfollow/syncCreatorFollowState) ----------
@@ -725,8 +803,17 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
       next: () => {
         this.isCreatorFollowed = true;
         this.followBusy = false;
+        this.showToast(
+          this.tr('toastr.success.you_are_following', 'You followed {{name}}', {
+            name: this.personName(this.creator) || 'user',
+          }),
+          'success',
+        );
       },
-      error: () => (this.followBusy = false),
+      error: (err: any) => {
+        this.followBusy = false;
+        this.showToast(this.errMsg(err), 'error');
+      },
     });
   }
 
@@ -737,8 +824,17 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
       next: () => {
         this.isCreatorFollowed = false;
         this.followBusy = false;
+        this.showToast(
+          this.tr('toastr.success.you_are_not_following', 'You unfollowed {{name}}', {
+            name: this.personName(this.creator) || 'user',
+          }),
+          'success',
+        );
       },
-      error: () => (this.followBusy = false),
+      error: (err: any) => {
+        this.followBusy = false;
+        this.showToast(this.errMsg(err), 'error');
+      },
     });
   }
 
@@ -792,17 +888,25 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
       next: (res: any) => {
         friend.followBusy = false;
         if (res?.status != null && Number(res.status) !== 200) {
-          friend.actionError = res?.message || 'toastr.error.request_failed';
+          const msg = res?.message || 'toastr.error.request_failed';
+          friend.actionError = msg;
+          this.showToast(this.tr(msg, 'Request failed.'), 'error');
           return;
         }
         friend.following = following;
+        // Gốc video-friend: success you_are_following / you_are_not_following + tên.
+        this.showToast(
+          following
+            ? this.tr('toastr.success.you_are_following', 'You followed {{name}}', { name: this.personName(friend) || 'user' })
+            : this.tr('toastr.success.you_are_not_following', 'You unfollowed {{name}}', { name: this.personName(friend) || 'user' }),
+          'success',
+        );
       },
       error: (error: any) => {
         friend.followBusy = false;
         const message = error?.error?.message;
-        friend.actionError = typeof message === 'string' && message.includes('You have collect monetary gift as the follower')
-          ? 'you_have_collect_monetary_gift_as_the_follower_or_friend'
-          : message || 'toastr.error.request_failed';
+        friend.actionError = this.errMsg(error);
+        this.showToast(friend.actionError, 'error');
       },
     });
   }
@@ -849,8 +953,12 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
         item.isLoadAction = false;
         item.relationStatus = ERelationStatus.FRIEND_REQUEST;
         item.relationStatusText = 'Friend request sent';
+        this.showToast(this.tr('toastr.success.friend_request_sent', 'Friend request sent successfully.'), 'success');
       },
-      error: () => (item.isLoadAction = false),
+      error: (err: any) => {
+        item.isLoadAction = false;
+        this.showToast(this.errMsg(err), 'error');
+      },
     });
   }
 
@@ -862,20 +970,45 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
         item.isLoadAction = false;
         item.relationStatus = ERelationStatus.UNFOLLOWED;
         item.relationStatusText = '';
+        this.showToast(
+          this.tr('toastr.success.friend_removed', '{{userName}} was successfully removed from your friend list.', {
+            userName: this.personName(item) || 'User',
+          }),
+          'success',
+        );
       },
-      error: () => (item.isLoadAction = false),
+      error: (err: any) => {
+        item.isLoadAction = false;
+        this.showToast(this.errMsg(err), 'error');
+      },
     });
   }
 
   peopleCancelRequest(item: any): void {
+    // Gốc: đang nhận lời mời của người ta thì không được hủy chiều này.
+    if (
+      (item.relationStatus === ERelationStatus.FRIEND_REQUEST && item.relationStatusText === 'Friend request received') ||
+      (item.relationStatus === ERelationStatus.FRIEND_AND_FOLLOW_REQUEST &&
+        item.relationStatusText === 'You are being followed and received friend request')
+    ) {
+      this.showToast(
+        this.tr('toastr.error.you_are_being_received_friend_request', 'You are being received friend request.'),
+        'error',
+      );
+      return;
+    }
     item.isLoadAction = true;
     this.relations.cancelFriendRequest(item.id).subscribe({
       next: () => {
         item.isLoadAction = false;
         item.relationStatus = ERelationStatus.UNFOLLOWED;
         item.relationStatusText = '';
+        this.showToast(this.tr('toastr.success.friend_request_cancelled', 'Friend request canceled successfully.'), 'success');
       },
-      error: () => (item.isLoadAction = false),
+      error: (err: any) => {
+        item.isLoadAction = false;
+        this.showToast(this.errMsg(err), 'error');
+      },
     });
   }
 
@@ -886,8 +1019,12 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
         item.isLoadAction = false;
         item.relationStatus = ERelationStatus.FRIEND;
         item.relationStatusText = '';
+        this.showToast(this.tr('toastr.success.friend_request_accepted', 'Friend request was successfully accepted.'), 'success');
       },
-      error: () => (item.isLoadAction = false),
+      error: (err: any) => {
+        item.isLoadAction = false;
+        this.showToast(this.errMsg(err), 'error');
+      },
     });
   }
 
@@ -898,8 +1035,12 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
         item.isLoadAction = false;
         item.relationStatus = ERelationStatus.UNFOLLOWED;
         item.relationStatusText = '';
+        this.showToast(this.tr('toastr.success.friend_request_rejected', 'Friend request rejected successfully.'), 'success');
       },
-      error: () => (item.isLoadAction = false),
+      error: (err: any) => {
+        item.isLoadAction = false;
+        this.showToast(this.errMsg(err), 'error');
+      },
     });
   }
 
@@ -910,8 +1051,15 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
         item.isLoadAction = false;
         item.relationStatus =
           item.relationStatus === ERelationStatus.FRIEND ? ERelationStatus.FRIEND_AND_FOLLOW : ERelationStatus.FOLLOW;
+        this.showToast(
+          this.tr('toastr.success.you_are_following', 'You followed {{name}}', { name: this.personName(item) || 'user' }),
+          'success',
+        );
       },
-      error: () => (item.isLoadAction = false),
+      error: (err: any) => {
+        item.isLoadAction = false;
+        this.showToast(this.errMsg(err), 'error');
+      },
     });
   }
 
@@ -922,8 +1070,15 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
         item.isLoadAction = false;
         item.relationStatus =
           item.relationStatus === ERelationStatus.FRIEND_AND_FOLLOW ? ERelationStatus.FRIEND : ERelationStatus.UNFOLLOWED;
+        this.showToast(
+          this.tr('toastr.success.you_are_not_following', 'You unfollowed {{name}}', { name: this.personName(item) || 'user' }),
+          'success',
+        );
       },
-      error: () => (item.isLoadAction = false),
+      error: (err: any) => {
+        item.isLoadAction = false;
+        this.showToast(this.errMsg(err), 'error');
+      },
     });
   }
 
@@ -957,8 +1112,12 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
         this.replyTo = null;
         this.hashTags = [];
         this.sendingComment = false;
+        this.showToast(this.tr('toastr.success.comment_saved_success', 'Comment saved successfully.'), 'success');
       },
-      error: () => (this.sendingComment = false),
+      error: (err: any) => {
+        this.sendingComment = false;
+        this.showToast(this.errMsg(err, 'toastr.error.post_comment_fail', 'Failed to post comment.'), 'error');
+      },
     });
   }
 
@@ -974,16 +1133,34 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
     this.editingId = null;
     this.momentService
       .editComment(v.momentId, { comment_id: e.c.comment_id, comment: text, commentedAt: e.c.commentedAt || '' })
-      .subscribe({ next: () => {}, error: () => (e.c.comment = prev) });
+      .subscribe({
+        next: () =>
+          this.showToast(this.tr('toastr.success.comment_saved_success', 'Comment saved successfully.'), 'success'),
+        error: (err: any) => {
+          e.c.comment = prev;
+          this.showToast(this.errMsg(err), 'error');
+        },
+      });
   }
 
   removeComment(c: ReelComment): void {
     const v = this.current();
     if (!v?.momentId || !c.comment_id) return;
-    v.momentComments = (v.momentComments || []).filter((x) => x.comment_id !== c.comment_id);
+    const prev = [...(v.momentComments || [])];
+    v.momentComments = prev.filter((x) => x.comment_id !== c.comment_id);
     this.momentService
       .deleteComment(v.momentId, { comment_id: c.comment_id, comment: c.comment || '', commentedAt: c.commentedAt || '' })
-      .subscribe({ next: () => {}, error: () => {} });
+      .subscribe({
+        next: () =>
+          this.showToast(this.tr('activity.sum_act_wall.comment_deleted', 'Comment successfully deleted.'), 'success'),
+        error: (err: any) => {
+          v.momentComments = prev;
+          this.showToast(
+            this.errMsg(err, 'activity.sum_act_wall.delete_comment_fail', 'Failed to delete comment.'),
+            'error',
+          );
+        },
+      });
   }
 
   likeComment(e: { c: ReelComment; emoji: string }): void {
@@ -1004,7 +1181,10 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
       expr = { ...mine, expressedContent: content };
       c.expressions = c.expressions.map((x) => (String(x.expressedBy) === String(this.myUserId) ? expr : x));
     }
-    this.momentService.expressComment(v.momentId, c.comment_id, expr).subscribe({ next: () => {}, error: () => {} });
+    this.momentService.expressComment(v.momentId, c.comment_id, expr).subscribe({
+      next: () => {},
+      error: (err: any) => this.showToast(this.errMsg(err), 'error'),
+    });
   }
 
   /** Gợi ý hashtag khi gõ comment (gốc: onSearchHashTag, debounce 1s). */
@@ -1048,8 +1228,12 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
         this.momentService.reportVideo({ momentId: v.momentId, id: v.id, reported: true }).subscribe({ next: () => {}, error: () => {} });
         this.reportBusy = false;
         this.showReport = false;
+        this.showToast(this.tr('toastr.success.report_success', 'Your report is submitted successfully.'), 'success');
       },
-      error: () => (this.reportBusy = false),
+      error: (err: any) => {
+        this.reportBusy = false;
+        this.showToast(this.errMsg(err), 'error');
+      },
     });
   }
 
@@ -1061,7 +1245,14 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
 
   copyLink(): void {
     const link = this.videoLink();
-    if (navigator.clipboard) navigator.clipboard.writeText(link).catch(() => {});
+    if (navigator.clipboard) {
+      navigator.clipboard
+        .writeText(link)
+        .then(() => this.showToast(this.tr('copied_to_clipboard', 'Copied to clipboard.'), 'success'))
+        .catch(() => this.showToast(this.tr('toastr.error.request_failed', 'Request failed.'), 'error'));
+    } else {
+      this.showToast(this.tr('copied_to_clipboard', 'Copied to clipboard.'), 'success');
+    }
     this.showShare = false;
   }
 
@@ -1165,8 +1356,9 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
     this.relations.addToFriends(this.memberProfile.id).subscribe({
       next: () => {
         this.relationUser = { ...(this.relationUser || {}), relationStatus: 'FRIEND_REQUEST', relationStatusText: 'Friend request sent' };
+        this.showToast(this.tr('toastr.success.friend_request_sent', 'Friend request sent successfully.'), 'success');
       },
-      error: () => {},
+      error: (err: any) => this.showToast(this.errMsg(err), 'error'),
     });
   }
 
@@ -1175,8 +1367,9 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
     this.relations.cancelFriendRequest(this.memberProfile.id).subscribe({
       next: () => {
         this.relationUser = { ...(this.relationUser || {}), relationStatus: 'UNFOLLOWED', relationStatusText: '' };
+        this.showToast(this.tr('toastr.success.friend_request_cancelled', 'Friend request canceled successfully.'), 'success');
       },
-      error: () => {},
+      error: (err: any) => this.showToast(this.errMsg(err), 'error'),
     });
   }
 
@@ -1185,8 +1378,9 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
     this.relations.acceptFriendRequest(this.memberProfile.id).subscribe({
       next: () => {
         this.relationUser = { ...(this.relationUser || {}), relationStatus: 'FRIEND', relationStatusText: '' };
+        this.showToast(this.tr('toastr.success.friend_request_accepted', 'Friend request was successfully accepted.'), 'success');
       },
-      error: () => {},
+      error: (err: any) => this.showToast(this.errMsg(err), 'error'),
     });
   }
 
@@ -1196,8 +1390,9 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
     this.relations.removeFromFriends(this.memberProfile.id, this.myUserId as any).subscribe({
       next: () => {
         this.relationUser = { ...(this.relationUser || {}), relationStatus: 'UNFOLLOWED', relationStatusText: '' };
+        this.showToast(this.tr('cancel_friend_successfully', 'Friend removed successfully.'), 'success');
       },
-      error: () => {},
+      error: (err: any) => this.showToast(this.errMsg(err), 'error'),
     });
   }
 
@@ -1212,8 +1407,14 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
           relationStatusText: 'You are following',
         };
         if (this.creator && String(this.creator.id) === String(this.memberProfile.id)) this.isCreatorFollowed = true;
+        this.showToast(
+          this.tr('toastr.success.you_are_following', 'You followed {{name}}', {
+            name: this.personName(this.memberProfile) || 'user',
+          }),
+          'success',
+        );
       },
-      error: () => {},
+      error: (err: any) => this.showToast(this.errMsg(err), 'error'),
     });
   }
 
@@ -1228,8 +1429,14 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
           relationStatusText: '',
         };
         if (this.creator && String(this.creator.id) === String(this.memberProfile.id)) this.isCreatorFollowed = false;
+        this.showToast(
+          this.tr('toastr.success.you_are_not_following', 'You unfollowed {{name}}', {
+            name: this.personName(this.memberProfile) || 'user',
+          }),
+          'success',
+        );
       },
-      error: () => {},
+      error: (err: any) => this.showToast(this.errMsg(err), 'error'),
     });
   }
 

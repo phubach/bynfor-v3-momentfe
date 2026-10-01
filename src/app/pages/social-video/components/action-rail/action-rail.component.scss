@@ -7,6 +7,52 @@
   flex-direction: column;
   gap: 12px;
 
+  // Tooltip thuần CSS: hover nút nào hiện tên tính năng nút đó,
+  // nằm ngoài mép phải video để không che nội dung.
+  > button,
+  .like-group {
+    position: relative;
+
+    &::after {
+      content: attr(data-tip);
+      position: absolute;
+      left: calc(100% + 10px);
+      top: 0;
+      white-space: nowrap;
+      background: rgba(15, 31, 74, 0.92);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 999px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+      opacity: 0;
+      transform: translateX(-6px);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      pointer-events: none;
+    }
+
+    &:hover::after {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  // Màn hình nhỏ: khung video gần full màn hình, tooltip đổi về bên trái.
+  @media (max-width: 700px) {
+    > button::after,
+    .like-group::after {
+      left: auto;
+      right: calc(100% + 10px);
+      transform: translateX(6px);
+    }
+
+    > button:hover::after,
+    .like-group:hover::after {
+      transform: translateX(0);
+    }
+  }
+
   .like-group {
     display: flex;
     flex-direction: column;

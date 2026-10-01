@@ -48,7 +48,9 @@
   min-height: 400px;
   background: #000;
   border-radius: 16px;
-  overflow: hidden;
+  // Để tooltip rail tràn ra ngoài mép phải (không che video).
+  // Các lớp con bên trong tự bo góc + cắt tràn riêng.
+  overflow: visible;
   box-shadow: 0 8px 28px rgba(15, 31, 74, 0.22);
 }
 
@@ -62,6 +64,7 @@
   z-index: 5;
   pointer-events: none;
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0));
+  border-radius: 16px 16px 0 0;
 }
 
 .reel {
@@ -102,6 +105,7 @@
   display: grid;
   place-items: center;
   padding: 16px;
+  border-radius: 16px;
 }
 
 .desc-card {
@@ -120,19 +124,76 @@
 }
 
 .sv-toast {
-  position: absolute;
-  left: 50%;
-  bottom: 88px;
-  transform: translateX(-50%);
-  z-index: 30;
-  max-width: 86%;
-  background: rgba(15, 31, 74, 0.92);
-  color: #fff;
-  font-size: 13px;
-  padding: 10px 16px;
-  border-radius: 999px;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
-  text-align: center;
+  position: fixed;
+  right: 20px;
+  bottom: 24px;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(360px, calc(100vw - 40px));
+  padding: 13px 14px;
+  border-radius: 14px;
+  font-size: 14px;
+  box-shadow: 0 12px 32px rgba(15, 31, 74, 0.22);
+  background: #d9edf7;
+  color: #31708f;
+  border: 1px solid #bce8f1;
+  animation: sv-toast-in 0.28s ease;
+
+  &.is-success {
+    background: #e6f6ec;
+    color: #1c7a45;
+    border-color: #bfe6cd;
+  }
+
+  &.is-error {
+    background: #fdecec;
+    color: #b3261e;
+    border-color: #f5c6c2;
+  }
+
+  .sv-toast-icon {
+    flex: none;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+    font-weight: 800;
+    background: rgba(255, 255, 255, 0.7);
+  }
+
+  .sv-toast-msg {
+    flex: 1;
+    line-height: 1.45;
+  }
+
+  .sv-toast-close {
+    flex: none;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    opacity: 0.6;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
+
+@keyframes sv-toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .reel-stage.grid-stage { width: min(940px, 100%); background: var(--byn-surface); }

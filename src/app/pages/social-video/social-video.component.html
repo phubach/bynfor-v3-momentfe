@@ -1,4 +1,10 @@
 <div class="sv-page">
+  <!-- Banner toast kiểu gốc (toast-top-full-width): nằm ngoài mọi tab/modal nên action nào cũng thấy -->
+  <div class="sv-toast" [ngClass]="'is-' + toastKind" *ngIf="toast" role="alert">
+    <span class="sv-toast-icon">{{ toastKind === 'success' ? '✓' : toastKind === 'error' ? '⚠' : 'ℹ' }}</span>
+    <span class="sv-toast-msg">{{ toast }}</span>
+    <button type="button" class="sv-toast-close" (click)="toast = ''" aria-label="Close">✕</button>
+  </div>
   <app-category-bar
     [categories]="categories"
     [selectedId]="categoryId"
@@ -203,8 +209,6 @@
             <div class="desc-likes">❤️ {{ likeCount(current()) }}</div>
           </div>
         </div>
-
-        <div class="sv-toast" *ngIf="toast">{{ toast }}</div>
       </ng-container>
     </div>
   </div>
