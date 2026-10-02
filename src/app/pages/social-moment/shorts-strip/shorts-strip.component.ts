@@ -1,10 +1,7 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import { MomentService } from '../../../services/moment.service';
 
-/**
- * Dải Shorts ngang trong feed moment (gọn theo sum-act-wall của customerfe):
- * video mới nhất, cuộn ngang, bấm mở popup chi tiết.
- */
 @Component({
   selector: 'app-shorts-strip',
   standalone: false,
@@ -18,7 +15,7 @@ export class ShortsStripComponent implements OnInit {
   selectedIndex = -1;
   @ViewChild('track', { static: false }) track?: ElementRef<HTMLDivElement>;
 
-  constructor(private momentService: MomentService) {}
+  constructor(private momentService: MomentService, private router: Router) {}
 
   ngOnInit(): void {
     this.loading = true;
@@ -71,6 +68,10 @@ export class ShortsStripComponent implements OnInit {
       el.pause();
       el.currentTime = 0;
     } catch {}
+  }
+
+  handleGetVideos(videoId) {
+    this.router.navigate(['/social/video'], { queryParams: { videoId: videoId} });
   }
 
   openDetail(v: any, index: number): void {

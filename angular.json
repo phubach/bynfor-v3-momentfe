@@ -17,7 +17,7 @@
             "polyfills": "src/polyfills.ts",
             "tsConfig": "tsconfig.json",
             "assets": ["src/favicon.ico", "src/assets", "src/locale", "src/images", "src/plugins"],
-            "styles": ["src/plugins/font-awesome-4.7.0/css/font-awesome.min.css", "src/styles.scss"],
+            "styles": ["node_modules/@ctrl/ngx-emoji-mart/picker.css", "src/plugins/font-awesome-4.7.0/css/font-awesome.min.css", "src/styles.scss"],
             "scripts": [],
             "allowedCommonJsDependencies": ["crypto-js"]
           },

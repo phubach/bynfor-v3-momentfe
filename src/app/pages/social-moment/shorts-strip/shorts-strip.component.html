@@ -8,7 +8,7 @@
       <i class="fa fa-chevron-left" aria-hidden="true"></i>
     </button>
     <div class="shorts-track" #track>
-      <div class="short-card" *ngFor="let v of videos; let i = index" (click)="openDetail(v, i)">
+      <div class="short-card" *ngFor="let v of videos; let i = index" (click)="handleGetVideos(v.id)">
         <div class="short-thumb">
           <video #vp preload="metadata" muted playsinline [src]="v.attachmentUrl"
             (mouseover)="previewPlay(vp)" (mouseout)="previewStop(vp)"></video>
