@@ -9,7 +9,9 @@
     "build": "ng build --configuration production",
     "build:prod": "ng build --configuration production",
     "build:dev": "ng build --configuration development",
-    "verify:video": "node --test scripts/verify-video-migration.cjs"
+    "verify:video": "node --test scripts/verify-video-migration.cjs",
+    "verify:moment": "node --test scripts/verify-moment-migration.cjs",
+    "verify:templates": "node scripts/check-moment-templates.mjs"
   },
   "dependencies": {
     "@angular/animations": "^19.2.15",

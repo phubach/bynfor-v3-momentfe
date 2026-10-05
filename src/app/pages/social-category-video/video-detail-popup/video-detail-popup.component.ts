@@ -33,6 +33,8 @@ export class VideoDetailPopupComponent implements OnChanges {
   likingVideo = false;
   likedVideoByMe = false;
   likedComments: { [id: string]: boolean } = {};
+  error = '';
+  private selectionVersion = 0;
 
   constructor(private momentService: MomentService, private router: Router) {}
 
@@ -47,6 +49,11 @@ export class VideoDetailPopupComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['video']) {
+      this.selectionVersion++;
+      this.sending = false;
+      this.sendingReply = false;
+      this.likingVideo = false;
+      this.error = '';
       const v = this.video || {};
       const all = v?.momentComments || v?.comments || [];
       this.comments = all.filter((c: any) => !c.parent_id && !c.parentId);
@@ -68,6 +75,16 @@ export class VideoDetailPopupComponent implements OnChanges {
   }
 
   private repliesOfCache: { [id: string]: any[] } = {};
+
+  private applyComments(all: any[]): void {
+    this.comments = all.filter(c => !c.parent_id && !c.parentId);
+    this.repliesOfCache = {};
+    all.filter(c => c.parent_id || c.parentId).forEach(c => {
+      const parent = c.parent_id || c.parentId;
+      this.repliesOfCache[parent] = [...(this.repliesOfCache[parent] || []), c];
+    });
+    if (this.video) this.video.momentComments = all;
+  }
 
   repliesOf(commentId: string): any[] {
     return this.repliesOfCache[commentId] || [];
@@ -128,15 +145,17 @@ export class VideoDetailPopupComponent implements OnChanges {
     if (!v?.momentId || this.likingVideo) return;
     const operation = this.likedVideoByMe ? 'REMOVE' : 'ADD';
     this.likingVideo = true;
+    const version = this.selectionVersion;
     this.momentService.express(v.momentId, operation as any, 'LIKE', operation === 'ADD' ? '👍' : '').subscribe({
       next: (res: any) => {
+        if (version !== this.selectionVersion) return;
         const updated = res?.data || {};
         if (updated.expressions) v.momentLikes = updated.expressions;
         if (updated.likeCount != null) v.likeCount = updated.likeCount;
         this.likedVideoByMe = operation === 'ADD';
         this.likingVideo = false;
       },
-      error: () => (this.likingVideo = false),
+      error: e => { if (version === this.selectionVersion) { this.likingVideo = false; this.error = e?.error?.message || 'social.actionFailed'; } },
     });
   }
 
@@ -149,7 +168,7 @@ export class VideoDetailPopupComponent implements OnChanges {
     if (!this.video?.momentId || !id || this.likedComments[id]) return;
     this.likedComments[id] = true;
     c.expressions = [...(c.expressions || []), '👍'];
-    this.momentService.expressComment(this.video.momentId, id, null).subscribe({
+    this.momentService.expressComment(this.video.momentId, id, '👍').subscribe({
       error: () => {
         delete this.likedComments[id];
         c.expressions = (c.expressions || []).slice(0, -1);
@@ -169,16 +188,20 @@ export class VideoDetailPopupComponent implements OnChanges {
     const text = (this.replyMessage || '').trim();
     if (!this.video?.momentId || !id || !text || this.sendingReply) return;
     this.sendingReply = true;
+    const version = this.selectionVersion;
+    this.error = '';
     this.momentService.addComment(this.video.momentId, text, id, this.replyTags).subscribe({
       next: (res: any) => {
-        const posted = res?.data || { comment: text, commentedAt: new Date().toISOString(), parent_id: id };
-        this.repliesOfCache[id] = [...(this.repliesOfCache[id] || []), posted];
+        if (version !== this.selectionVersion) return;
+        if (Array.isArray(res?.data?.comments)) this.applyComments(res.data.comments);
+        else if (res?.data?.comment_id) this.repliesOfCache[id] = [...(this.repliesOfCache[id] || []), res.data];
+        else { this.sendingReply = false; this.error = 'social.actionFailed'; return; }
         this.replyMessage = '';
         this.replyTags = [];
         this.replyTo = null;
         this.sendingReply = false;
       },
-      error: () => (this.sendingReply = false),
+      error: e => { if (version === this.selectionVersion) { this.sendingReply = false; this.error = e?.error?.message || 'social.actionFailed'; } },
     });
   }
 
@@ -186,15 +209,19 @@ export class VideoDetailPopupComponent implements OnChanges {
     const text = (this.message || '').trim();
     if (!this.video?.momentId || !text || this.sending) return;
     this.sending = true;
+    const version = this.selectionVersion;
+    this.error = '';
     this.momentService.addComment(this.video.momentId, text, undefined, this.messageTags).subscribe({
       next: (res: any) => {
-        const posted = res?.data || { comment: text, commentedAt: new Date().toISOString() };
-        this.comments = [...this.comments, posted];
+        if (version !== this.selectionVersion) return;
+        if (Array.isArray(res?.data?.comments)) this.applyComments(res.data.comments);
+        else if (res?.data?.comment_id) this.comments = [...this.comments, res.data];
+        else { this.sending = false; this.error = 'social.actionFailed'; return; }
         this.message = '';
         this.messageTags = [];
         this.sending = false;
       },
-      error: () => (this.sending = false),
+      error: e => { if (version === this.selectionVersion) { this.sending = false; this.error = e?.error?.message || 'social.actionFailed'; } },
     });
   }
 }

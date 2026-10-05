@@ -1,12 +1,15 @@
 <div class="feed">
+  <app-toast></app-toast>
   <div class="menu-backdrop" *ngIf="openMenuId" (click)="openMenuId = null"></div>
   <app-make-post (posted)="onPosted($event)" (filterChange)="onFilterChange($event)"></app-make-post>
+  <div *ngIf="actionError" class="state error" role="alert">{{ actionError | i18next }} <button type="button" (click)="actionError = ''">×</button></div>
+  <p class="state" role="status" *ngIf="actionSuccess">{{ 'social.rewardReceived' | i18next }}: {{ actionSuccess | i18next }}</p>
   <app-shorts-strip></app-shorts-strip>
   <div *ngIf="loading" class="state"><i class="fa fa-spinner fa-spin" aria-hidden="true"></i> {{ 'social.loading' | i18next }}</div>
   <div *ngIf="!loading && error" class="state error">{{ error | i18next }} <button type="button" (click)="loadFeed(true)">{{ 'social.retry' | i18next }}</button></div>
   <div *ngIf="!loading && !moments.length && !error" class="state">{{ 'social.emptyMoment' | i18next }}</div>
 
-  <article class="moment-card" *ngFor="let m of moments">
+  <article class="moment-card" *ngFor="let m of moments" [attr.id]="'moment-' + m._id">
     <header class="moment-head">
       <img class="avatar-img clickable" *ngIf="posterAvatar(m) && !m.imgBroken" [src]="posterAvatar(m)" alt="" (error)="m.imgBroken = true" (click)="goToProfile(m)" />
       <span class="avatar clickable" *ngIf="!posterAvatar(m) || m.imgBroken" (click)="goToProfile(m)">{{ posterText(m) }}</span>
@@ -18,29 +21,35 @@
         <button type="button" class="menu-btn" (click)="toggleMenu(m)" aria-label="More">
           <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
         </button>
-        <button type="button" class="menu-btn" *ngIf="isMine(m)" (click)="startEditPost(m)" aria-label="Edit">
+        <button type="button" class="menu-btn" *ngIf="isMine(m) && !m.redPacketShare" (click)="startEditPost(m)" aria-label="Edit">
           <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
         </button>
-        <button type="button" class="menu-btn danger" *ngIf="isMine(m)" (click)="deletePost(m)" aria-label="Delete">
+        <button type="button" class="menu-btn danger" *ngIf="isMine(m) && !m.redPacketShare" (click)="deletePost(m)" aria-label="Delete">
           <i class="fa fa-trash-o" aria-hidden="true"></i>
         </button>
         <ul class="menu-list" *ngIf="openMenuId === m._id">
-          <li>
+          <li *ngIf="!isMine(m)">
             <button type="button" (click)="viewAllPosts(m)">
               <i class="fa fa-archive" aria-hidden="true"></i> {{ 'social.viewAllPosts' | i18next }}
             </button>
           </li>
-          <li *ngIf="!isMine(m) && !m.friended && !m.friendRequested">
+          <li *ngIf="!isMine(m) && !m.redPacketShare && showReportMoment(m)">
+            <button type="button" (click)="reportTarget = m; openMenuId = null">
+              <i class="fa fa-flag-o" aria-hidden="true"></i> {{ 'social.reportMenu' | i18next }}
+            </button>
+          </li>
+          <li *ngIf="!isMine(m)">
             <button type="button" (click)="addFriend(m)">
-              <i class="fa fa-user-plus" aria-hidden="true"></i> {{ 'social.addFriend' | i18next }}
-              <span class="muted" *ngIf="m.mutualFriendNo">({{ m.mutualFriendNo }} {{ 'social.mutual' | i18next }})</span>
+              <i class="fa" [ngClass]="m.friended ? 'fa-user' : m.friendRequested ? 'fa-hourglass-start' : 'fa-user-plus'" aria-hidden="true"></i>
+              {{ (m.friended ? 'social.friends' : m.friendRequested ? 'social.friendRequested' : 'social.addFriend') | i18next }}
+              <span class="muted">({{ m.mutualFriendNo || 0 }} {{ 'social.mutual' | i18next }})</span>
             </button>
           </li>
           <li *ngIf="!isMine(m)">
             <button type="button" (click)="toggleFollow(m)">
               <i class="fa" [ngClass]="m.followed ? 'fa-check' : 'fa-thumb-tack'" aria-hidden="true"></i>
               {{ (m.followed ? 'social.following' : 'social.follow') | i18next }}
-              <span class="muted" *ngIf="m.mutualFollowerNo">({{ m.mutualFollowerNo }} {{ 'social.mutual' | i18next }})</span>
+              <span class="muted">({{ m.mutualFollowerNo || 0 }} {{ 'social.mutual' | i18next }})</span>
             </button>
           </li>
           <li>
@@ -50,7 +59,7 @@
             </button>
           </li>
           <li>
-            <button type="button" (click)="shareMoment(m)">
+            <button type="button" (click)="openForward(m)">
               <i class="fa fa-share" aria-hidden="true"></i> {{ 'social.shareMoment' | i18next }}
             </button>
           </li>
@@ -58,22 +67,50 @@
       </div>
     </header>
 
-    <p class="moment-content" *ngIf="m.content || m.description">{{ decodeText(m.content || m.description) }}</p>
+    <div class="moment-context" *ngIf="taggedPeople(m).length || (m.activity && m.activity !== 'No Feeling/Activity')">
+      <span *ngIf="m.activity && m.activity !== 'No Feeling/Activity'">{{ m.activity }} {{ m.subActivity }}</span>
+      <button type="button" *ngFor="let user of taggedPeople(m)" (click)="tagProfile(user)">&#64;{{ user.name || user.fullName || user.userName || user.firstName }}</button>
+    </div>
+    <section class="monetary-gift" *ngIf="m.redPacketShare">
+      <button type="button" class="gift-visual" (click)="openPacketGrab(m)" [title]="redpacketTip(m) | i18next" aria-label="Gift">
+        <img *ngIf="redpacketClass(m) !== 'red-packet-img2'" src="images/red-packet-coins.png" [class.dim]="redpacketClass(m) === 'red-packet-img3'" alt="" />
+        <img *ngIf="redpacketClass(m) === 'red-packet-img2'" src="images/red-packet-coins-empty.png" alt="" />
+      </button>
+      <div><strong>{{ m.bynforTitle || ('social.monetaryGift' | i18next) }}</strong><p>{{ 'social.availableGift' | i18next }}: {{ m.availableMoney | number:'1.2-2' }}<span *ngIf="m.quantityWallet"> · {{ (m.redPacketGrabbedUsers || []).length }}/{{ m.quantityWallet }}</span></p></div>
+      <button type="button" class="view-rewards" (click)="openPacketDetails(m)"><i class="fa fa-gift" aria-hidden="true"></i> {{ 'social.viewRewards' | i18next }}</button>
+    </section>
+    <p class="moment-content" *ngIf="m.content || m.description"><app-moment-text [text]="decodeText(m.content || m.description)"></app-moment-text></p>
+    <div class="moment-product" *ngIf="m.productIdFull || (m.productIdFulls || []).length">
+      <i class="fa fa-shopping-bag" aria-hidden="true"></i>
+      <span>{{ (m.productIdFull || m.productIdFulls[0])?.name || (m.productIdFull || m.productIdFulls[0])?.title || ('social.attachedProduct' | i18next) }}</span>
+      <small *ngIf="(m.productIdFull || m.productIdFulls[0])?.time_left_str">{{ (m.productIdFull || m.productIdFulls[0]).time_left_str }}</small>
+    </div>
+    <div class="moment-links" *ngIf="m.link || m.linkSocial">
+      <a [href]="m.link || m.linkSocial" target="_blank" rel="noopener noreferrer"><i class="fa fa-qrcode" aria-hidden="true"></i> {{ 'social.sharedLink' | i18next }}</a>
+    </div>
 
-    <div class="moment-media" *ngIf="images(m).length">
-      <img *ngFor="let att of images(m).slice(0, 4)" [src]="att.attachmentUrl" alt="" loading="lazy" />
+    <div class="moment-media" [class.single]="images(m).length === 1" *ngIf="images(m).length">
+      <img tabindex="0" role="button" (click)="gallery = images(m); galleryIndex = i" (keydown.enter)="gallery = images(m); galleryIndex = i" *ngFor="let att of images(m); let i = index" [src]="att.attachmentUrl" alt="" loading="lazy" />
     </div>
     <div class="moment-media" *ngIf="videos(m).length">
-      <video *ngFor="let att of videos(m).slice(0, 2)" controls preload="metadata" [src]="att.attachmentUrl"></video>
+      <video *ngFor="let att of videos(m)" controls preload="metadata" [src]="att.attachmentUrl"></video>
     </div>
 
+    <div class="moment-files" *ngIf="files(m).length"><a *ngFor="let file of files(m)" [href]="file.attachmentUrl" target="_blank" rel="noopener noreferrer"><i class="fa fa-file-o" aria-hidden="true"></i> {{ file.name || file.fileName || ('social.attachment' | i18next) }}</a></div>
+    <button type="button" class="reply-button" *ngIf="m.likeCount" (click)="reactionsTarget = m">{{ 'social.viewReactions' | i18next }} · {{ m.likeCount }}</button>
+    <button type="button" class="reply-button" *ngIf="reportedFeed" (click)="revokeReport(m)" [disabled]="m.revoking">{{ 'social.revokeReport' | i18next }}</button>
     <footer class="moment-actions">
-      <button type="button" [class.liked]="m.likedByMe" (click)="toggleLike(m)">
+      <button type="button" [class.liked]="m.likedByMe" (click)="react(m, reaction(m))" [disabled]="m.liking">
         <i class="fa" [ngClass]="m.likedByMe ? 'fa-heart' : 'fa-heart-o'" aria-hidden="true"></i> {{ m.likeCount || 0 }}
       </button>
+      <button type="button" (click)="toggleDislike(m)" [disabled]="m.disliking" [title]="'social.dislike' | i18next"><i class="fa fa-thumbs-o-down" aria-hidden="true"></i> {{ dislikeCount(m) }}</button>
+      <div class="reaction-picker"><button type="button" (click)="reactionMenuId = reactionMenuId === m._id ? null : m._id" [attr.aria-expanded]="reactionMenuId === m._id" [attr.aria-label]="'social.reactions' | i18next">{{ reaction(m) }} ▾</button><div class="reaction-options" *ngIf="reactionMenuId === m._id"><button type="button" *ngFor="let emoji of reactions" (click)="react(m, emoji)">{{ emoji }}</button></div></div>
+      <button type="button" [class.liked]="m.isEndorsedByMe" (click)="endorse(m)" [disabled]="isMine(m) || m.endorsing" [title]="'social.endorse' | i18next"><i class="fa fa-certificate" aria-hidden="true"></i> {{ m.endorsementCount || 0 }}</button>
       <button type="button" (click)="toggleComments(m)">
         <i class="fa fa-comment-o" aria-hidden="true"></i> {{ (m.comments || []).length }}
       </button>
+      <button type="button" (click)="shareMoment(m)" [title]="'social.shareMoment' | i18next"><i class="fa fa-share" aria-hidden="true"></i></button>
+      <button type="button" *ngIf="!isMine(m)" (click)="reportTarget = m" [title]="'social.reportMoment' | i18next"><i class="fa fa-flag-o" aria-hidden="true"></i></button>
     </footer>
 
     <div class="comments" *ngIf="expandedComments[m._id]">
@@ -96,7 +133,7 @@
             <strong (click)="goToProfile(c)">{{ commentUserName(c) || ('social.unknownUser' | i18next) }}</strong>
             <i class="fa fa-check-circle verified" *ngIf="c?.verified" aria-hidden="true"></i>
           </div>
-          <div class="comment-text" *ngIf="editingCommentId !== commentId(c)">{{ decodeText(c.comment || c.message) }}</div>
+          <div class="comment-text" *ngIf="editingCommentId !== commentId(c)"><app-moment-text [text]="decodeText(c.comment || c.message)"></app-moment-text></div>
           <div class="comment-edit" *ngIf="editingCommentId === commentId(c)">
             <input [(ngModel)]="editDraft" maxlength="200" (keyup.enter)="saveEditComment(m, c)" />
             <button type="button" (click)="saveEditComment(m, c)" [disabled]="savingEdit || !editDraft.trim()">
@@ -104,10 +141,12 @@
             </button>
             <button type="button" class="cancel" (click)="cancelEditComment()">{{ 'social.cancel' | i18next }}</button>
           </div>
+          <button type="button" class="reply-button" (click)="reply(m, c)">{{ 'social.reply' | i18next }}</button>
+          <div class="reply-preview" *ngFor="let r of replies(m, c)"><strong>{{ commentUserName(r) }}</strong><p><app-moment-text [text]="decodeText(r.comment || r.message)"></app-moment-text></p><button type="button" (click)="reply(m, c)">{{ 'social.reply' | i18next }}</button></div>
           <small class="comment-time">{{ c.commentedAt | date: 'short' }}</small>
         </div>
         <div class="comment-actions">
-          <button type="button" [class.on]="likedComments[commentId(c)]" (click)="likeFeedComment(m, c)" aria-label="Like">
+          <button type="button" [class.on]="isLikedComment(c)" (click)="likeFeedComment(m, c)" aria-label="Like">
             <i class="fa fa-thumbs-o-up" aria-hidden="true"></i>
             <span *ngIf="(c.expressions || []).length">{{ (c.expressions || []).length }}</span>
           </button>
@@ -129,6 +168,7 @@
         </button>
       </div>
 
+      <div class="reply-target" *ngIf="replyTargets[m._id]">{{ 'social.replyingTo' | i18next }} {{ commentUserName(replyTargets[m._id]) }} <button type="button" (click)="replyTargets[m._id] = null">×</button></div>
       <div class="comment-box">
         <app-mention-input
           [(text)]="commentDrafts[m._id]"
@@ -147,6 +187,55 @@
     <i class="fa fa-spinner fa-spin" aria-hidden="true"></i> {{ 'social.loading' | i18next }}
   </div>
 
+  <div class="gallery-overlay" *ngIf="gallery.length" role="dialog" aria-modal="true" (click)="gallery = []"><button type="button" class="gallery-close" (click)="gallery = []">×</button><button type="button" (click)="galleryIndex = galleryIndex - 1; $event.stopPropagation()" [disabled]="galleryIndex === 0">‹</button><img [src]="gallery[galleryIndex].attachmentUrl" alt="" (click)="$event.stopPropagation()" /><button type="button" (click)="galleryIndex = galleryIndex + 1; $event.stopPropagation()" [disabled]="galleryIndex >= gallery.length - 1">›</button></div>
+  <div class="forward-overlay" *ngIf="forwardTarget" role="dialog" aria-modal="true" (click)="forwardTarget = null">
+    <div class="forward-panel" (click)="$event.stopPropagation()">
+      <div class="forward-head">
+        <h5><i class="fa fa-forward" aria-hidden="true"></i> {{ 'social.shareToLiveChat' | i18next }}</h5>
+        <button type="button" class="forward-done" (click)="forwardTarget = null">{{ 'social.done' | i18next }}</button>
+      </div>
+      <div class="forward-search">
+        <label>{{ 'social.search' | i18next }}:</label>
+        <input [(ngModel)]="forwardKeyword" [placeholder]="'social.search' | i18next" maxlength="200" />
+      </div>
+      <div class="forward-cols">
+        <div class="forward-col">
+          <h3>{{ 'social.individuals' | i18next }}</h3>
+          <div class="forward-list">
+            <p class="state" *ngIf="forwardLoading">{{ 'social.loading' | i18next }}</p>
+            <label class="forward-row" *ngFor="let u of filteredForwardIndividuals()">
+              <span class="fw-check"><input type="checkbox" [checked]="isForwardSelected(u.id)" (change)="toggleForwardUser(u.id)" /><span></span></span>
+              <img *ngIf="fwAvatar(u)" [src]="fwAvatar(u)" alt="" (error)="onFwAvatarError(u)" />
+              <span *ngIf="!fwAvatar(u)" class="fw-initial">{{ fwInitials(u) }}</span>
+              <span class="forward-name">{{ forwardName(u) }}</span>
+            </label>
+            <p class="state" *ngIf="!forwardLoading && !filteredForwardIndividuals().length">{{ 'social.noFound' | i18next }}</p>
+          </div>
+        </div>
+        <div class="forward-col">
+          <h3>{{ 'social.groups' | i18next }}</h3>
+          <div class="forward-list">
+            <p class="state" *ngIf="forwardLoading">{{ 'social.loading' | i18next }}</p>
+            <label class="forward-row" *ngFor="let g of filteredForwardGroups()">
+              <span class="fw-check"><input type="checkbox" [checked]="isForwardSelected(g.id)" (change)="toggleForwardUser(g.id)" /><span></span></span>
+              <img *ngIf="fwAvatar(g)" [src]="fwAvatar(g)" alt="" (error)="onFwAvatarError(g)" />
+              <span *ngIf="!fwAvatar(g)" class="fw-initial">{{ fwInitials(g) }}</span>
+              <span class="forward-name">{{ forwardName(g) }}</span>
+            </label>
+            <p class="state" *ngIf="!forwardLoading && !filteredForwardGroups().length">{{ 'social.noFound' | i18next }}</p>
+          </div>
+        </div>
+      </div>
+      <input class="forward-msg" [(ngModel)]="forwardMsg" [placeholder]="'social.writeComment' | i18next" />
+      <p class="state" *ngIf="forwardDone">{{ forwardDone | i18next }}</p>
+      <div class="forward-foot" *ngIf="hasForwards()">
+        <button type="button" (click)="confirmForward()">{{ 'social.forward' | i18next }}</button>
+      </div>
+    </div>
+  </div>
+  <app-moment-reactions *ngIf="reactionsTarget" [moment]="reactionsTarget" [meId]="meId" (close)="reactionsTarget = null"></app-moment-reactions>
+  <app-red-packet *ngIf="packetTarget" [moment]="packetTarget.moment" [meId]="meId" [view]="packetTarget.view" [luckyNext]="packetTarget.luckyNext" (closed)="packetTarget = null" (updated)="onPacketUpdated($event)"></app-red-packet>
+  <app-report-dialog *ngIf="reportTarget" [open]="true" [detailed]="true" [busy]="reporting" (cancel)="reportTarget = null" (submit)="report($event)"></app-report-dialog>
   <app-edit-moment-popup
     *ngIf="editingMoment"
     [moment]="editingMoment"

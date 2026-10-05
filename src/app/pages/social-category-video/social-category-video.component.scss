@@ -204,3 +204,9 @@
 }
 
 .search-row, .filter-banner { @include theme.surface; border-radius: 20px; }
+
+
+.cat-page { padding: 20px; background: #f8fbff; border: 1px solid #dce6f3; border-radius: 22px; gap: 18px; box-shadow: 0 5px 22px rgba(24,58,112,.045); }
+.video-grid { gap: 18px; }.video-card { border-radius: 16px; transition: box-shadow .2s, transform .2s; &:hover { transform: translateY(-3px); box-shadow: 0 10px 28px #183a701a; } .thumb video { height: auto; aspect-ratio: 4/5; background: #101b31; } .video-meta { padding: 12px; gap: 7px; } }
+.search-row { height: 52px; input { min-width: 0; } }.cat-row { scrollbar-width: thin; scrollbar-color: #c2d3ec transparent; padding-bottom: 8px; button { padding: 9px 16px; } }
+@media(max-width:640px){.cat-page{padding:12px;border-radius:18px}.video-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.video-card .video-meta{padding:10px}.search-row .search-btn{padding:8px 10px}}

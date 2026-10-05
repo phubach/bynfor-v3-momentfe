@@ -77,11 +77,11 @@ export class ShortsStripComponent implements OnInit {
   openDetail(v: any, index: number): void {
     this.selected = v;
     this.selectedIndex = index;
-    if (v?.momentId) this.momentService.addVideoHistory(v.momentId).subscribe();
+    if (v?.momentId) this.momentService.addVideoHistory(v.momentId).subscribe({ error: () => {} });
     if (v?.id && !v?.attachmentUrl) {
       this.momentService.getVideo(v.id).subscribe({
         next: (res: any) => {
-          if (res?.data) this.selected = { ...v, ...res.data };
+          if (res?.data && this.selected === v) this.selected = { ...v, ...res.data };
         },
       });
     }

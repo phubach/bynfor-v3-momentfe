@@ -43,6 +43,13 @@ import { TokenInterceptor } from './core/auth/token.interceptor';
 import { SignatureInterceptor } from './core/auth/signature.interceptor';
 import { SocialCategoryVideoComponent } from './pages/social-category-video/social-category-video.component';
 import { SocialProfileComponent } from './pages/social-profile/social-profile.component';
+import { MomentRewardsComponent } from './pages/social-moment/moment-rewards/moment-rewards.component';
+import { MomentTextComponent } from './shared/moment-text/moment-text.component';
+import { ToastComponent } from './shared/toast/toast.component';
+import { VideoFeedbackComponent } from './pages/social-video/components/video-feedback/video-feedback.component';
+import { MomentReactionsComponent } from './pages/social-moment/moment-reactions/moment-reactions.component';
+import { RedPacketComponent } from './pages/social-moment/red-packet/red-packet.component';
+import { TagPeopleComponent } from './shared/tag-people/tag-people.component';
 import { MentionInputComponent } from './shared/mention-input/mention-input.component';
 import { VideoDetailPopupComponent } from './pages/social-category-video/video-detail-popup/video-detail-popup.component';
 
@@ -126,7 +133,14 @@ export const I18N_PROVIDERS = [
     SocialCategoryVideoComponent,
     VideoDetailPopupComponent,
     SocialProfileComponent,
-    MentionInputComponent
+    MentionInputComponent,
+    TagPeopleComponent,
+    MomentRewardsComponent,
+    MomentTextComponent,
+    ToastComponent,
+    VideoFeedbackComponent,
+    MomentReactionsComponent,
+    RedPacketComponent
   ],
   imports: [
     BrowserModule,

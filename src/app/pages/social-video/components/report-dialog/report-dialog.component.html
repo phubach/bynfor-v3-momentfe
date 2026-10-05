@@ -1,5 +1,22 @@
 <div class="overlay" *ngIf="open" (click)="cancel.emit()">
-  <div class="card" (click)="$event.stopPropagation()">
+  <div class="card" [class.detailed-card]="detailed" (click)="$event.stopPropagation()">
+    <ng-container *ngIf="detailed; else compactReport">
+      <header class="report-head"><h4><i class="fa fa-asterisk" aria-hidden="true"></i> Report Moment</h4><button type="button" (click)="cancel.emit()" aria-label="Close">×</button></header>
+      <div class="report-body">
+        <label class="field-label" for="moment-report-reason">Please provide reasons for reporting this Moment.</label>
+        <select id="moment-report-reason" [(ngModel)]="selected" [class.invalid]="!selected && busy"><option value="" disabled>Please select a reason</option><option *ngFor="let r of reasons" [value]="r">{{ r }}</option><option value="Something Else">Something Else</option></select>
+        <section class="evidence-grid">
+          <div class="evidence-field"><label>Images</label><label class="file-control">{{ images.length ? images.length + ' image(s) selected' : 'Upload Images' }}<span>Browse</span><input type="file" accept="image/*" multiple (change)="selectImages($event)" /></label><div class="file-list image-list" *ngIf="images.length"><span *ngFor="let image of images; let i = index">{{ image.name }} <button type="button" (click)="removeImage(i)">×</button></span></div></div>
+          <div class="evidence-field"><label>Video URL</label><input [(ngModel)]="videoUrl" placeholder="Video URL" [disabled]="!!videoFile" /></div>
+          <div class="or">OR</div>
+          <div class="evidence-field upload-video"><label>Attach Video</label><label class="upload-button">Upload<input type="file" accept="video/*" (change)="selectVideo($event)" /></label><small *ngIf="videoFile">{{ videoFile.name }}</small></div>
+          <div class="evidence-field"><label>Documents</label><label class="file-control">{{ documents.length ? documents.length + ' document(s) selected' : 'Upload Documents' }}<span>Browse</span><input type="file" accept=".pdf,.csv,.txt,.xlsx,.xls,.xlsm" multiple (change)="selectDocuments($event)" /></label><div class="file-list" *ngIf="documents.length"><span *ngFor="let doc of documents; let i = index">{{ doc.name }} <button type="button" (click)="removeDocument(i)">×</button></span></div></div>
+        </section>
+        <label class="field-label" for="moment-report-note">Note</label><textarea id="moment-report-note" [(ngModel)]="note" rows="5" maxlength="1500" placeholder="Add details that help us review this report."></textarea><small class="words-left">{{ wordsLeft() }} words remaining.</small>
+      </div>
+      <footer class="report-foot"><button type="button" class="primary" [disabled]="busy || !selected" (click)="send()">{{ busy ? 'Reporting…' : 'OKAY' }}</button><button type="button" class="secondary" (click)="cancel.emit()">Cancel</button></footer>
+    </ng-container>
+    <ng-template #compactReport>
     <h4>{{ 'Report' | i18next }}</h4>
     <label class="opt" *ngFor="let r of reasons">
       <input type="radio" name="rv-report" [value]="r" [(ngModel)]="selected" (ngModelChange)="isOther = false" /> {{ r }}
@@ -10,7 +27,8 @@
     <textarea *ngIf="isOther" [(ngModel)]="other" rows="2" maxlength="255"></textarea>
     <div class="actions">
       <button type="button" class="ghost" (click)="cancel.emit()">{{ 'common.cancel' | i18next }}</button>
-      <button type="button" [disabled]="busy || (!selected && !other)" (click)="send()">{{ 'common.confirm' | i18next }}</button>
+      <button type="button" [disabled]="busy || (isOther ? !other.trim() : !selected)" (click)="send()">{{ 'common.confirm' | i18next }}</button>
     </div>
+    </ng-template>
   </div>
 </div>

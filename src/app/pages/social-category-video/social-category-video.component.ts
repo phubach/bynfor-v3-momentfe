@@ -1,5 +1,6 @@
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { MomentService } from '../../services/moment.service';
 import { UserService } from '../../services/user.service';
 
@@ -15,6 +16,10 @@ import { UserService } from '../../services/user.service';
   styleUrls: ['./social-category-video.component.scss'],
 })
 export class SocialCategoryVideoComponent implements OnInit, OnDestroy {
+  hasMore = true;
+  private sequence = 0;
+  private request?: Subscription;
+  private query?: Subscription;
   videos: any[] = [];
   categories: any[] = [];
   categoryId?: string;
@@ -37,13 +42,10 @@ export class SocialCategoryVideoComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    const tag = this.route.snapshot.queryParamMap.get('tag');
-    if (tag) {
-      this.keyword = '#' + tag;
-      this.hashTag = '#' + tag;
-    }
     this.loadCategories();
-    this.loadVideos(true);
+    this.query = this.route.queryParamMap.subscribe(params => {
+      const tag = params.get('tag'); this.keyword = tag ? '#' + tag : ''; this.hashTag = this.keyword; this.loadVideos(true);
+    });
     this.scrollHandler = () => {
       const nearBottom = window.innerHeight + window.scrollY + 1000 >= document.body.scrollHeight;
       if (nearBottom && this.videos.length && !this.loading && !this.loadingMore) this.loadVideos(false);
@@ -52,6 +54,7 @@ export class SocialCategoryVideoComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.request?.unsubscribe(); this.query?.unsubscribe(); this.sequence++;
     window.removeEventListener('scroll', this.scrollHandler);
   }
 
@@ -64,22 +67,28 @@ export class SocialCategoryVideoComponent implements OnInit, OnDestroy {
   }
 
   loadVideos(reset = false): void {
+    if (!reset && (!this.hasMore || this.loading || this.loadingMore)) return;
     if (reset) {
+      this.request?.unsubscribe(); this.hasMore = true; this.loadingMore = false;
       this.page = 1;
       this.loading = true;
       this.error = '';
     } else {
       this.loadingMore = true;
     }
-    this.momentService.getNewVideos(this.page, this.pageSize, this.categoryId, this.keyword).subscribe({
+    const sequence = ++this.sequence;
+    this.request = this.momentService.getNewVideos(this.page, this.pageSize, this.categoryId, this.keyword).subscribe({
       next: (res: any) => {
-        const list = res?.data || [];
-        this.videos = reset ? list : [...this.videos, ...list];
+        if (sequence !== this.sequence) return;
+        const list = Array.isArray(res?.data) ? res.data : [];
+        this.hasMore = list.length >= this.pageSize;
+        this.videos = [...new Map((reset ? list : [...this.videos, ...list]).map(v => [v.id || v._id || v.attachmentUrl, v])).values()];
         this.page++;
         this.loading = false;
         this.loadingMore = false;
       },
       error: () => {
+        if (sequence !== this.sequence) return;
         this.loading = false;
         this.loadingMore = false;
         this.error = 'social.loadFailed';
@@ -150,11 +159,11 @@ export class SocialCategoryVideoComponent implements OnInit, OnDestroy {
   openDetail(v: any, index: number): void {
     this.selected = v;
     this.selectedIndex = index;
-    if (v?.momentId) this.momentService.addVideoHistory(v.momentId).subscribe();
+    if (v?.momentId) this.momentService.addVideoHistory(v.momentId).subscribe({ error: () => {} });
     if (v?.id && !v?.attachmentUrl) {
       this.momentService.getVideo(v.id).subscribe({
         next: (res: any) => {
-          if (res?.data) this.selected = { ...v, ...res.data };
+          if (res?.data && this.selected === v) this.selected = { ...v, ...res.data };
         },
       });
     }

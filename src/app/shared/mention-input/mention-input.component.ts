@@ -45,7 +45,7 @@ export class MentionInputComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    clearTimeout(this.searchTimer);
+    clearTimeout(this.searchTimer); this.searchSeq++;
   }
 
   displayName(u: TagUser): string {
@@ -92,7 +92,7 @@ export class MentionInputComponent implements OnInit, OnDestroy {
       (at === 0 || text.charAt(at - 1) === ' ') &&
       text.charAt(text.length - 1) !== ' ' &&
       text.split(' ').slice(-1)[0].includes('@');
-    clearTimeout(this.searchTimer);
+    clearTimeout(this.searchTimer); this.searchSeq++;
     if (!ok) {
       this.showSuggest = false;
       this.suggestions = [];

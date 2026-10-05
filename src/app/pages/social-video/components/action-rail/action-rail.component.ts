@@ -25,5 +25,6 @@ export class ActionRailComponent {
   @Output() openLikes = new EventEmitter<void>();
   @Output() report = new EventEmitter<void>();
   @Output() openComments = new EventEmitter<void>();
+  @Output() feedback = new EventEmitter<void>();
   @Output() share = new EventEmitter<void>();
 }

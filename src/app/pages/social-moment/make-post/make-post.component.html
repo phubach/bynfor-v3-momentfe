@@ -4,10 +4,13 @@
     <div class="head-tools">
       <i class="fa fa-info-circle info-icon" aria-hidden="true"
         [title]="'in_order_to_receive_moment_rewards_user_must_fill_in_category_to_be_eligible' | i18next"></i>
-      <a class="tool-btn" routerLink="/social/category-video">{{ 'social.category' | i18next }}</a>
+      <a class="tool-btn icon-btn reward-btn" routerLink="/social/moment-reward"
+        [title]="'social.openRewards' | i18next" [attr.aria-label]="'social.openRewards' | i18next">
+        <i class="fa fa-gift" aria-hidden="true"></i>
+      </a>
       <div class="tool-dropdown">
         <button type="button" class="tool-btn icon-btn" (click)="openMenu = openMenu === 'filter' ? null : 'filter'"
-          [class.active]="activeFilter !== 'all'" [attr.aria-label]="'social.filterAll' | i18next">
+                [class.active]="activeFilter !== 'all'" [attr.aria-label]="'social.filterAll' | i18next">
           <i class="fa fa-filter" aria-hidden="true"></i>
         </button>
         <ul class="tool-menu" *ngIf="openMenu === 'filter'">
@@ -18,6 +21,7 @@
           </li>
         </ul>
       </div>
+      <a class="tool-btn" routerLink="/social/category-video">{{ 'social.category' | i18next }}</a>
       <div class="tool-dropdown">
         <button type="button" class="tool-btn" (click)="openMenu = openMenu === 'audience' ? null : 'audience'">
           <i class="fa {{ audienceIcon() }}" aria-hidden="true"></i> {{ audienceLabelKey() | i18next }} <i class="fa fa-caret-down" aria-hidden="true"></i>
@@ -47,7 +51,7 @@
     <span class="fake-input">{{ 'social.whatsNew' | i18next }}</span>
   </div>
 
-  <div class="composer-open" *ngIf="expanded">
+  <fieldset class="composer-open" *ngIf="expanded" [disabled]="posting">
     <div class="composer-input-row">
       <span class="avatar clickable" (click)="goToMyProfile($event)">
         <img *ngIf="meAvatarUrl()" [src]="meAvatarUrl()" alt="" />
@@ -59,13 +63,44 @@
         [(text)]="content"
         [(tags)]="postTags"
         [multiline]="true"
-        [showEmoji]="false"
+        [showEmoji]="true"
         [rows]="1"
         [maxlength]="2000"
         inputClass="pill-input"
         [placeholder]="'social.whatsNew' | i18next"></app-mention-input>
     </div>
 
+    <div class="composer-options">
+      <label>{{ 'social.feelingActivity' | i18next }}
+        <select [(ngModel)]="selectedActivity" (ngModelChange)="onActivityChange()"><option [ngValue]="null">{{ 'social.noActivity' | i18next }}</option><option *ngFor="let activity of activities" [ngValue]="activity">{{ activity.name }}</option></select>
+      </label>
+      <label *ngIf="selectedActivity?.subActivities?.length">{{ 'social.feelingActivity' | i18next }}
+        <select [(ngModel)]="subActivity"><option *ngFor="let sub of selectedActivity.subActivities" [value]="sub.text">{{ sub.text }}</option></select>
+      </label>
+      <app-tag-people [(selected)]="selectedPeople"></app-tag-people>
+      <label *ngIf="accessedBy === 'IS_GROUP'">{{ 'social.group' | i18next }}
+        <select [(ngModel)]="groupId"><option value="">{{ 'social.selectGroup' | i18next }}</option><option *ngFor="let g of groups" [value]="g.id || g._id">{{ g.name || g.groupName }}</option></select>
+      </label>
+      <div class="link-preview" *ngIf="firstLink()"><a [href]="firstLink()" target="_blank" rel="noopener noreferrer">{{ firstLink() }}</a></div>
+      <label>{{ 'social.videoUrl' | i18next }}<input type="url" [(ngModel)]="videoUrl" placeholder="https://…" /></label>
+      <label *ngIf="video || videoUrl">{{ 'social.category' | i18next }}
+        <select [(ngModel)]="categoryId"><option value="">{{ 'social.selectCategory' | i18next }}</option><option *ngFor="let category of categories" [value]="category.id || category._id">{{ category.name }}</option></select>
+      </label>
+      <label *ngIf="video || videoUrl">{{ 'social.videoDescription' | i18next }}<input [(ngModel)]="videoDescription" maxlength="2000" /></label>
+      <small [class.composer-error]="wordsLeft() < 0">{{ 'social.wordsRemaining' | i18next }}: {{ wordsLeft() }}</small>
+    </div>
+    <div class="gift-settings">
+      <label><input type="checkbox" [(ngModel)]="giftEnabled" /> {{ 'social.shareGift' | i18next }}</label>
+      <div class="composer-options" *ngIf="giftEnabled">
+        <label>{{ 'social.giftWallet' | i18next }}<select [(ngModel)]="giftWallet"><option value="skill">{{ 'social.skillWallet' | i18next }}</option><option value="monetary">{{ 'social.monetaryWallet' | i18next }}</option><option value="earnings">{{ 'social.earningsWallet' | i18next }}</option></select></label>
+        <label>{{ 'social.giftName' | i18next }}<input [(ngModel)]="giftName" maxlength="120" /></label>
+        <label>{{ 'social.giftTitle' | i18next }}<input [(ngModel)]="giftTitle" maxlength="600" /></label>
+        <label>{{ 'social.giftQuantity' | i18next }}<input type="number" [(ngModel)]="giftQuantity" min="1" step="1" /></label>
+        <label>{{ 'social.giftAmount' | i18next }}<input type="number" [(ngModel)]="giftAmount" [min]="giftQuantity * 0.01" [max]="giftBalance() < 500 ? giftBalance() : 500" step="0.01" /></label>
+        <small>{{ 'social.giftBalance' | i18next }}: {{ giftBalance() | number:'1.2-2' }} · {{ 'social.giftLimit' | i18next }}</small>
+        <small class="composer-error" *ngIf="!giftValid()">{{ 'social.invalidGift' | i18next }}</small>
+      </div>
+    </div>
     <div class="preview-grid" *ngIf="images.length || video">
       <div class="preview-item" *ngFor="let img of images; let i = index">
         <img [src]="img.preview" alt="" />
@@ -116,5 +151,5 @@
         {{ posting ? ('social.posting' | i18next) : ('social.post' | i18next) }}
       </button>
     </div>
-  </div>
+  </fieldset>
 </div>

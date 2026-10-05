@@ -8,7 +8,7 @@ const ts = require('typescript');
 const root = path.resolve(__dirname, '..');
 const decorator = () => () => {};
 const angular = {
-  Component: decorator, Injectable: decorator, HostListener: decorator, Input: decorator, Output: decorator,
+  Inject: decorator, Component: decorator, Injectable: decorator, HostListener: decorator, Input: decorator, Output: decorator,
   EventEmitter: class { emit() {} },
 };
 function loadSource(relative) {
@@ -21,6 +21,7 @@ function loadSource(relative) {
     module, exports: module.exports,
     require(id) {
       if (id === '@angular/core') return angular;
+      if (id === 'rxjs') return require('rxjs');
       if (id.endsWith('social-video.model')) return loadSource('src/app/pages/social-video/social-video.model.ts');
       if (id.endsWith('user.service')) return loadSource('src/app/services/user.service.ts');
       if (id.includes('environments/environment')) return { environment: { LS_TOKEN_KEY: 'test-token' } };
@@ -88,6 +89,7 @@ test('a shared link starts with its requested video instead of a competing defau
   c.getVideos = () => assert.fail('Default feed must not compete with the shared video');
   c.getVideoCategories = () => {};
   c.getSuggestPeople = () => {};
+  c.getFriends = () => {};
   c.ngOnInit();
   assert.equal(requested, 'shared-video');
 });
@@ -143,7 +145,7 @@ test('header uses the authenticated profile, initials, and an avatar failure fal
   assert.equal(c.profileLink, '/social/social-media-profile/7');
   assert.equal(c.avatarUrl, '/avatar.png');
   c.avatarFailed = true;
-  assert.equal(c.avatarUrl, '');
+  assert.equal(c.avatarUrl, UserService.DEFAULT_AVATAR);
 });
 test('all locales parse and contain translated connection labels', () => {
   for (const file of fs.readdirSync(path.join(root, 'src/locale'))) {
@@ -176,4 +178,21 @@ test('posting a comment uses the updated moment returned by the original API', (
   assert.equal(c.videos[0].momentComments[0].comment_id, 'c');
   assert.equal(c.commentDraft, '');
   assert.equal(c.sendingComment, false);
+});
+
+test('video report uses original realtime report then inventory marker', () => {
+  const { of } = require('rxjs'); const calls = [];
+  const c = component({ saveVideoReport: body => { calls.push(body); return of({ data: {} }); }, reportVideo: body => { calls.push(body); return of({ data: {} }); } });
+  c.videos = [{ id: 'v', momentId: 'm' }]; c.myUserId = 7; c.reportInfo = { _id: 'report' }; c.showReport = true;
+  const toasts = []; c.showToast = (message, kind) => toasts.push(kind);
+  c.submitReport({ reason: 'reason', isOther: true });
+  assert.equal(calls[0]._id, 'report'); assert.equal(calls[0].report.reportedBy, 7); assert.equal(calls[0].report.isOthers, true);
+  assert.equal(calls[1].momentId, 'm'); assert.equal(c.reportBusy, false); assert.equal(c.showReport, false); assert.equal(toasts[0], 'success');
+});
+test('failed inventory report marker exposes error and retains report dialog', () => {
+  const { of, throwError } = require('rxjs');
+  const c = component({ saveVideoReport: () => of({ data: {} }), reportVideo: () => throwError(() => ({ error: { message: 'marker failed' } })) });
+  c.videos = [{ id: 'v', momentId: 'm' }]; c.myUserId = 7; c.reportInfo = {}; c.showReport = true;
+  const toasts = []; c.showToast = (message, kind) => toasts.push(kind); c.submitReport({ reason: 'reason' });
+  assert.equal(c.reportBusy, false); assert.equal(c.showReport, true); assert.equal(toasts[0], 'error');
 });

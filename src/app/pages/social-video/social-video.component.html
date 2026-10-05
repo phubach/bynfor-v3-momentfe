@@ -1,4 +1,5 @@
 <div class="sv-page">
+  <app-video-feedback *ngIf="showFeedback" [video]="videos[selectedIndex]" (close)="showFeedback = false"></app-video-feedback>
   <!-- Banner toast kiểu gốc (toast-top-full-width): nằm ngoài mọi tab/modal nên action nào cũng thấy -->
   <div class="sv-toast" [ngClass]="'is-' + toastKind" *ngIf="toast" role="alert">
     <span class="sv-toast-icon">{{ toastKind === 'success' ? '✓' : toastKind === 'error' ? '⚠' : 'ℹ' }}</span>
@@ -118,7 +119,8 @@
               (endorse)="endorse()"
               (like)="toggleLike()"
               (openLikes)="openLikeList()"
-              (report)="showReport = true"
+              (feedback)="showFeedback = true"
+              (report)="openReport()"
               (openComments)="openComments()"
               (share)="showShare = true"></app-action-rail>
           </div>
@@ -151,6 +153,7 @@
         <app-report-dialog
           [open]="showReport"
           [busy]="reportBusy"
+          [savedReport]="savedVideoReport"
           (cancel)="showReport = false"
           (submit)="submitReport($event)"></app-report-dialog>
 

@@ -25,6 +25,7 @@
     <span class="num">{{ commentCount }}</span>
   </button>
 
+  <button type="button" (click)="feedback.emit()" [attr.aria-label]="'social.videoFeedback' | i18next" [attr.data-tip]="'social.videoFeedback' | i18next"><span class="ic">✍</span></button>
   <button type="button" class="more" (click)="share.emit()" [attr.aria-label]="'more'" data-tip="More options">
     <span class="ic">⋮</span>
   </button>

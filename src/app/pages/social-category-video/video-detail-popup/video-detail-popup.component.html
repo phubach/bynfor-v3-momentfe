@@ -15,6 +15,7 @@
     </div>
 
     <aside class="vdp-side">
+      <p *ngIf="error" role="alert" class="vdp-error">{{ error | i18next }}</p>
       <div class="vdp-author clickable" (click)="goToProfile($event)">
         <img class="avatar-img" *ngIf="avatarUrl(video?.userResponseMoment) && !video.authorImgBroken" [src]="avatarUrl(video?.userResponseMoment)" alt="" (error)="video.authorImgBroken = true" />
         <span class="avatar" *ngIf="!avatarUrl(video?.userResponseMoment) || video.authorImgBroken">

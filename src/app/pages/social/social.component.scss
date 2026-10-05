@@ -5,53 +5,212 @@
   padding: 8px;
   background: radial-gradient(ellipse at 85% 65%, rgba(170, 203, 255, .42), transparent 58%), linear-gradient(135deg, #eaf4ff, #dceaff);
 }
-.social-chrome { position: sticky; top: 0; z-index: 10; padding-top: 8px; margin-top: -8px; }
+
+.social-chrome {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  margin: -8px -8px 0;
+  padding: 8px;
+  background: linear-gradient(180deg, #f2f8ff 0%, #dce9fd 100%);
+  border-bottom: 1px solid #cfdff5;
+  box-shadow: 0 10px 22px rgba(35, 89, 164, .16);
+}
+
 .byn-workspace-topbar {
   @include theme.surface;
-  min-height: 68px; display: flex; align-items: center; gap: 24px; padding: 10px 24px;
-  border-radius: 16px; background: linear-gradient(180deg, #f5faff, #dceaff);
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 10px 24px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #f5faff, #dceaff);
 }
-.byn-brand { display: inline-flex; margin-right: auto; flex-shrink: 0; }
-.byn-brand img { display: block; width: 156px; height: 42px; object-fit: contain; }
-.byn-account { display: flex; align-items: center; gap: 10px; min-width: 0; text-decoration: none; color: var(--byn-text); }
-.byn-account-avatar { position: relative; flex: none; width: 42px; height: 42px; }
+
+.byn-brand {
+  display: inline-flex;
+  margin-right: auto;
+  flex-shrink: 0;
+}
+
+.byn-brand img {
+  display: block;
+  width: 156px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.byn-account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  text-decoration: none;
+  color: var(--byn-text);
+}
+
+.byn-account-avatar {
+  position: relative;
+  flex: none;
+  width: 42px;
+  height: 42px;
+}
+
 .byn-account-avatar img, .byn-account-initial {
-  width: 42px; height: 42px; object-fit: cover; border: 2px solid #fff; border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+  border: 2px solid #fff;
+  border-radius: 50%;
   box-shadow: 0 4px 10px rgba(31, 71, 150, .18);
 }
-.byn-account-initial { display: grid; place-items: center; background: var(--byn-primary-gradient); color: #fff; font-weight: 700; }
-.byn-presence { position: absolute; right: -1px; bottom: 0; width: 12px; height: 12px; border: 2px solid #fff; border-radius: 50%; background: #8b96a7; }
-.byn-presence.online { background: #25cb49; }
-.byn-account-copy { display: grid; gap: 2px; font-size: 13px; min-width: 0; }
-.byn-account-copy b { max-width: 200px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.byn-account-copy small { font-size: 12px; color: var(--byn-muted); }
+
+.byn-account-initial {
+  display: grid;
+  place-items: center;
+  background: var(--byn-primary-gradient);
+  color: #fff;
+  font-weight: 700;
+}
+
+.byn-presence {
+  position: absolute;
+  right: -1px;
+  bottom: 0;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #8b96a7;
+}
+
+.byn-presence.online {
+  background: #25cb49;
+}
+
+.byn-account-copy {
+  display: grid;
+  gap: 2px;
+  font-size: 13px;
+  min-width: 0;
+}
+
+.byn-account-copy b {
+  max-width: 200px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.byn-account-copy small {
+  font-size: 12px;
+  color: var(--byn-muted);
+}
+
 .byn-topbar-logout {
   @include theme.surface;
-  display: inline-flex; align-items: center; gap: 8px; flex: none;
-  min-height: 42px; padding: 9px 17px; border-radius: 14px;
-  color: var(--byn-text); font: inherit; font-size: 13px; cursor: pointer;
-  &:hover { background: #fff; }
-}
-.social-nav {
-  display: flex; justify-content: center; padding: 10px 8px;
-  .nav-tabs { display: flex; gap: 8px; max-width: 100%; }
-  a {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 10px 20px; border: 1px solid transparent; border-radius: 14px;
-    color: var(--byn-primary); font-size: 14px; font-weight: 600; text-decoration: none;
-    &:hover { background: rgba(255, 255, 255, .65); }
-    &.active { border-color: #fff; background: var(--byn-primary-gradient); color: #fff; box-shadow: 0 5px 14px rgba(23, 105, 255, .22), inset 0 1px 0 rgba(255, 255, 255, .5); }
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  min-height: 42px;
+  padding: 9px 17px;
+  border-radius: 14px;
+  color: var(--byn-text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+
+  &:hover {
+    background: #fff;
   }
 }
-.social-body { max-width: 760px; margin: 0 auto; padding: 4px 12px 32px; }
-.social-body:has(app-social-video) { max-width: 1440px; }
-.social-body:has(app-social-category-video) { max-width: 1100px; }
+
+.social-nav {
+  display: flex;
+  justify-content: center;
+  padding: 8px 8px 0 8px;
+
+  .nav-tabs {
+    display: flex;
+    gap: 8px;
+    max-width: 100%;
+  }
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    color: var(--byn-primary);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+      background: rgba(255, 255, 255, .65);
+    }
+
+    &.active {
+      border-color: #fff;
+      background: var(--byn-primary-gradient);
+      color: #fff;
+      box-shadow: 0 5px 14px rgba(23, 105, 255, .22), inset 0 1px 0 rgba(255, 255, 255, .5);
+    }
+  }
+}
+
+.social-body {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 16px 12px 32px;
+}
+
 @media (max-width: 640px) {
-  .social-shell { padding: 6px; }
-  .byn-workspace-topbar { min-height: 62px; gap: 10px; padding: 8px 12px; }
-  .byn-brand img { width: 112px; height: 34px; }
-  .byn-account-copy { display: none; }
-  .byn-topbar-logout { padding: 8px 10px; min-height: 38px; }
-  .social-nav { padding: 8px 0; .nav-tabs { width: 100%; gap: 4px; } a { flex: 1; font-size: 13px; padding: 9px 8px; gap: 5px; } }
-  .social-body { padding: 4px 0 20px; }
+  .social-shell {
+    padding: 6px;
+  }
+  .social-chrome {
+    margin: -6px -6px 0;
+    padding: 6px 6px 8px;
+  }
+  .byn-workspace-topbar {
+    min-height: 62px;
+    gap: 10px;
+    padding: 8px 12px;
+  }
+  .byn-brand img {
+    width: 112px;
+    height: 34px;
+  }
+  .byn-account-copy {
+    display: none;
+  }
+  .byn-topbar-logout {
+    padding: 8px 10px;
+    min-height: 38px;
+  }
+  .social-nav {
+    padding: 8px 0;
+
+    .nav-tabs {
+      width: 100%;
+      gap: 4px;
+    }
+
+    a {
+      flex: 1;
+      font-size: 13px;
+      padding: 9px 8px;
+      gap: 5px;
+    }
+  }
+  .social-body {
+    padding: 12px 0 20px;
+  }
 }

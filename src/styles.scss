@@ -21,6 +21,10 @@ body {
 }
 
 button, input, textarea, select { font-family: inherit; }
+html { scrollbar-gutter: stable; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
 button:disabled { cursor: default; opacity: .6; }
 a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible {
   outline: 2px solid var(--byn-primary);

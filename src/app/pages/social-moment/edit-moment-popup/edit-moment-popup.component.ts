@@ -1,7 +1,8 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild, OnDestroy } from '@angular/core';
 import { MentionInputComponent } from '../../../shared/mention-input/mention-input.component';
 import { MomentService } from '../../../services/moment.service';
-import { UserService } from '../../../services/user.service';
+import { TagUser, UserService } from '../../../services/user.service';
+import { ToastService } from '../../../shared/toast/toast.service';
 
 interface PendingImage {
   file: File;
@@ -19,12 +20,14 @@ interface PendingImage {
   templateUrl: './edit-moment-popup.component.html',
   styleUrls: ['./edit-moment-popup.component.scss'],
 })
-export class EditMomentPopupComponent implements OnInit {
+export class EditMomentPopupComponent implements OnInit, OnDestroy {
   @Input() moment: any = null;
   @Output() saved = new EventEmitter<any>();
   @Output() closed = new EventEmitter<void>();
   @ViewChild('contentBox', { static: false }) contentBox?: MentionInputComponent;
 
+  selectedPeople: TagUser[] = [];
+  ngOnDestroy(): void { this.newImages.forEach(image => URL.revokeObjectURL(image.preview)); this.clearNewVideo(); }
   content = '';
   tags: string[] = [];
   activities: any[] = [];
@@ -39,7 +42,10 @@ export class EditMomentPopupComponent implements OnInit {
     { value: 'ALL_FRIENDS', labelKey: 'social.audFriends' },
     { value: 'ALL_FOLLOWERS', labelKey: 'social.audFollowers' },
     { value: 'ALL_FRIENDS_AND_FOLLOWERS', labelKey: 'social.audFriendsFollowers' },
+    { value: 'IS_GROUP', labelKey: 'social.audGroup' },
   ];
+  groups: any[] = [];
+  groupId = '';
   keptAttachments: any[] = [];
   newImages: PendingImage[] = [];
   newVideo: { file: File; preview: string } | null = null;
@@ -49,7 +55,7 @@ export class EditMomentPopupComponent implements OnInit {
   readonly maxImages = 6;
   readonly maxWords = 120;
 
-  constructor(private momentService: MomentService, private userService: UserService) {}
+  constructor(private momentService: MomentService, private userService: UserService, private toast: ToastService) {}
 
   ngOnInit(): void {
     const m = this.moment || {};
@@ -60,7 +66,9 @@ export class EditMomentPopupComponent implements OnInit {
       this.content = raw;
     }
     this.tags = [...(m.tags || [])];
+    this.selectedPeople = UserService.normalizeTagUsers([...new Map([...(m.tagUsers || []), ...(m.taggers || [])].map((u: any) => [String(u.id), u])).values()]);
     this.accessedBy = m.accessedBy || 'IS_PUBLIC';
+    this.groupId = m.groupId || '';
     this.keptAttachments = [...(m.attachments || [])];
     this.nameDisplayGift = m.nameDisplayGift || '';
     // Tên hiển thị: tên cá nhân + tên store (giống create-moment của customerfe).
@@ -70,6 +78,7 @@ export class EditMomentPopupComponent implements OnInit {
       if (!this.nameDisplayGift) this.nameDisplayGift = this.fullName;
       const meId = UserService.profileId(me);
       if (meId) {
+        this.momentService.getGroups(meId).subscribe({ next: (res: any) => this.groups = res?.data || res?.data?.list || [], error: () => {} });
         this.userService.getStoreByOwner(meId).subscribe({
           next: (res: any) => {
             const store = res?.data || res;
@@ -152,13 +161,15 @@ export class EditMomentPopupComponent implements OnInit {
 
   addVideoUrl(): void {
     const url = (this.videoUrl || '').trim();
-    if (!url) return;
+    if (!/^https?:\/\//i.test(url)) { this.error = 'social.invalidVideoUrl'; return; }
     this.keptAttachments.push({ attachmentType: 'VIDEO', attachmentUrl: url });
     this.videoUrl = '';
   }
 
   canSave(): boolean {
-    return !this.saving && !!this.content.trim() && this.wordsLeft() >= 0;
+    if (this.saving) return false;
+    if (this.accessedBy === 'IS_GROUP' && !this.groupId) return false;
+    return (!!this.content.trim() || this.keptAttachments.length > 0 || this.newImages.length > 0 || !!this.newVideo) && this.wordsLeft() >= 0;
   }
 
   close(): void {
@@ -199,14 +210,20 @@ export class EditMomentPopupComponent implements OnInit {
         subActivity: this.selectedSubActivity || undefined,
         nameDisplayGift: this.nameDisplayGift || undefined,
         accessedBy: this.accessedBy,
-        tags: this.tags,
+        ...(this.accessedBy === 'IS_GROUP' && this.groupId ? { groupId: this.groupId } : {}),
+        tags: [...new Set([...this.tags.filter(id => ![...(this.moment.taggers || []), ...(this.moment.tagUsers || [])].some((u: any) => String(u.id) === String(id))), ...this.selectedPeople.map(u => u.id)])],
+        taggers: this.selectedPeople.map(u => ({ ...u, name: u.fullName })),
+        taggerIds: this.selectedPeople.map(u => u.id),
+        tagUsers: this.selectedPeople,
         attachments,
       };
       const res: any = await this.momentService.updateMoment(body).toPromise();
       this.saved.emit(res?.data || body);
+      this.toast.success('social.postPublished', 'Moment published.');
       this.close();
     } catch (e: any) {
       this.error = e?.error?.message || e?.message || 'social.postFailed';
+      this.toast.error(e);
       this.saving = false;
     }
   }

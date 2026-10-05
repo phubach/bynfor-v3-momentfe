@@ -1,18 +1,60 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { shareReplay } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class MomentService {
   private readonly base = environment.API_ENDPOINT;
+  private readonly shareTargetRequests = new Map<string, Observable<any>>();
 
   constructor(private http: HttpClient) {}
 
-  getWallMoments(pageSize = 20, pageNumber = 1, myPost = false, friendPost = false, userId?: any) {
-    const params: any = { size: pageSize, page: pageNumber, myPost, fromTopMoment: false, forAdmin: false, hideByAdmin: false };
+  getWallMoments(pageSize = 20, pageNumber = 1, myPost = false, friendPost = false, userId?: any, fromTopMoment = false, hidden = false, storeId?: any) {
+    const params: any = { size: pageSize, page: pageNumber, myPost, fromTopMoment, forAdmin: false, hideByAdmin: !!hidden };
     if (userId != null) params.userId = userId;
     if (friendPost) params.friendAndFollower = true;
+    if (storeId != null && String(storeId) !== '') params.store = storeId;
     return this.http.get<any>(`${this.base}/moments-wall`, { params });
+  }
+
+  /** Nhóm của user để đăng với IS_GROUP (giống GroupService.getList bên customerfe, không đổi BE). */
+  getGroups(userId: string | number) {
+    return this.http.get<any>(`${environment.AUTH_API_ENDPOINT}/group/all/${userId}`);
+  }
+
+  /** Danh sách chat gốc (RelationsService.getUserChatMenu bên customerfe). */
+  getUserChatMenu(userId: string | number, userName = '') {
+    const key = `chat-menu:${userId}`;
+    return this.getCachedShareTargets(key, () => this.http.get<any>(`${environment.API_ENDPOINT_SOCKET_IO}/user/user-chat-menu/${userId}`, {
+      params: { userName } as any,
+    }));
+  }
+
+  /** Danh sách chat Groups gốc (getGroupsNameLiveChatUsingSocket bên customerfe). */
+  getGroupsOfUser(userId: string | number) {
+    const key = `chat-groups:${userId}`;
+    return this.getCachedShareTargets(key, () => this.http.get<any>(`${environment.API_ENDPOINT_SOCKET_IO}/group/get-groups-of-user/${userId}`));
+  }
+
+  /** Nạp recipients ngay sau login; component Moment dùng lại cùng cache khi mở Share. */
+  preloadShareTargets(userId: string | number, userName = ''): void {
+    if (userId == null || String(userId) === '') return;
+    this.getUserChatMenu(userId, userName).subscribe({ error: () => {} });
+    this.getGroupsOfUser(userId).subscribe({ error: () => {} });
+  }
+
+  resetShareTargetCache(): void {
+    this.shareTargetRequests.clear();
+  }
+
+  private getCachedShareTargets(key: string, request: () => Observable<any>): Observable<any> {
+    const cached = this.shareTargetRequests.get(key);
+    if (cached) return cached;
+    const source = request().pipe(shareReplay({ bufferSize: 1, refCount: false }));
+    this.shareTargetRequests.set(key, source);
+    return source;
   }
 
   getWallMoment(id: string) {
@@ -27,16 +69,20 @@ export class MomentService {
     return this.http.delete<any>(`${this.base}/moment/${id}`);
   }
 
-  createMoment(body: { content: string; attachments: any[]; accessedBy?: string; tags?: string[] }) {
+  createMoment(body: { content: string; attachments: any[]; accessedBy?: string; groupId?: string; tags?: string[]; tagUsers?: any[]; taggers?: any[]; taggerIds?: string[]; activity?: string; subActivity?: string; gift?: { shareMoney: number; quantityWallet: number; bynforTitle: string; nameDisplayGift: string; isEarnedSkillRewards: boolean; isMonetaryPoints: boolean; isEarnings: boolean } }) {
     const payload: any = {
       accessedBy: body.accessedBy || 'IS_PUBLIC',
-      tagUsers: [],
+      ...(body.groupId ? { groupId: body.groupId } : {}),
+      tagUsers: body.tagUsers || [],
+      taggers: body.taggers || [],
+      taggerIds: body.taggerIds || [],
       tags: body.tags || [],
-      activity: 'No Feeling/Activity',
-      subActivity: '',
+      activity: body.activity || 'No Feeling/Activity',
+      subActivity: body.subActivity || '',
       attachments: body.attachments || [],
       content: body.content || '',
-      redPacketShare: false,
+      redPacketShare: !!body.gift,
+      ...(body.gift || {}),
       isDisplayPublic: false,
       momentCampaign: null,
       isSocialBusinessAccountMoments: false,
@@ -84,8 +130,23 @@ export class MomentService {
     return this.http.post<any>(`${this.base}/moment-comment/delete/${momentId}`, data);
   }
 
-  reportMoment(momentId: string, reason: string) {
-    return this.http.post<any>(`${this.base}/moment-report/${momentId}`, { reason });
+  getReportedMoments(page = 1, size = 20) {
+    return this.http.post<any>(this.base + '/moments-reported-user', { order: { column: 'reportReasons.reportedAt', dir: 'desc' }, search: { value: '', regex: false }, start: (page - 1) * size, length: size });
+  }
+  revokeReport(momentId: string) { return this.http.put<any>(this.base + '/moment-report-revoke/' + momentId, {}); }
+
+  reportMoment(momentId: string, reason: string, evidence: { imageUrls?: string[]; videoUrls?: string[]; fileUrls?: string[]; note?: string } = {}) {
+    const body: any = { reason };
+    if (evidence.imageUrls?.length) body.imageUrls = evidence.imageUrls;
+    if (evidence.videoUrls?.length) body.videoUrls = evidence.videoUrls;
+    if (evidence.fileUrls?.length) body.fileUrls = evidence.fileUrls;
+    if (evidence.note?.trim()) body.note = evidence.note.trim();
+    return this.http.post<any>(`${this.base}/moment-report/${momentId}`, body);
+  }
+
+  /** Endpoint upload documents đang được customerfe dùng trước khi gửi report. */
+  uploadDocuments(formData: FormData) {
+    return this.http.post<any>(`${this.base}/products/documents`, formData);
   }
 
   getCustomerLikeOrDisLike(momentId: string, page = 1, pageSize = 10, expression = 'LIKE', expressedContent = '') {
@@ -121,9 +182,50 @@ export class MomentService {
     return this.http.get<any>(`${this.base}/video-category`);
   }
 
+  getVideoFeedbacks(userId: string, type: 'MAIN' | 'TARGET') {
+    return this.http.get<any>(`${environment.API_ENDPOINT_SOCKET_IO}/feedback`, { params: { userId, type } });
+  }
+
+  createVideoFeedback(body: any) {
+    return this.http.post<any>(`${environment.API_ENDPOINT_SOCKET_IO}/feedback`, body);
+  }
+
+  notifyVideoFeedback(userId: string, name: string) {
+    return this.http.post<any>(`${environment.API_ENDPOINT_CUSTOMER}/pushNotification/list`, {
+      pushNotificationRequest: [{ userId, text: `${name} left feedback for your video`, detailType: 'MAIN', messageType: 'FEEDBACK_VIDEO', messageState: 'UNREAD' }],
+    });
+  }
+
   /** Danh sách feeling/activity cho popup Edit (giống getListOfActivities của customerfe). */
   getListOfActivities() {
     return this.http.get<any>(`${this.base}/activity`);
+  }
+
+  getActiveMomentReward() {
+    return this.http.get<any>(`${this.base}/moment-reward-fund/get-active`);
+  }
+
+  claimMomentReward() {
+    return this.http.post<any>(`${this.base}/moment-reward-fund/grab`, {});
+  }
+
+  claimCreditReward() {
+    return this.http.post<any>(`${this.base}/moment-credit-reward/grab`, {});
+  }
+
+  getClaimedMomentRewards(page = 1, size = 10) {
+    return this.http.get<any>(`${environment.API_ENDPOINT_PAYMENT}/moment-reward/claimed`, { params: { partyId: 1, page, size } });
+  }
+
+  grabMonetaryGift(momentId: string, userId: string) {
+    return this.http.post<any>(`${this.base}/moment/red-packet/grab/${momentId}`, { userId: Number(userId), amount: 0 });
+  }
+
+  /** Danh sách người đã nhận quà của 1 moment (giống getWalletActionByMomentPage gốc). */
+  getWalletActionByMomentPage(momentId: string, page = 1, size = 5) {
+    return this.http.get<any>(`${environment.API_ENDPOINT_PAYMENT}/payment/wallet-point-action/user-grabbed-page`, {
+      params: { momentId, page: String(page), size: String(size) },
+    });
   }
 
   getVideo(id: string) {
@@ -132,6 +234,14 @@ export class MomentService {
 
   reportVideo(data: { momentId: string; id: string; reported: boolean }) {
     return this.http.post<any>(`${this.base}/report-video`, data);
+  }
+
+  getReportedVideo(id: string) {
+    return this.http.get<any>(`${environment.API_ENDPOINT_SOCKET_IO}/video/${encodeURIComponent(id)}`);
+  }
+
+  saveVideoReport(body: { _id?: string; videoId: string; report: { reportedBy: number | string; message: string; isOthers: boolean } }) {
+    return this.http.post<any>(`${environment.API_ENDPOINT_SOCKET_IO}/video/report`, body);
   }
 
   addVideoHistory(momentId: string) {

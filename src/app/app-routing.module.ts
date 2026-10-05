@@ -5,6 +5,7 @@ import { SocialComponent } from './pages/social/social.component';
 import { SocialMomentComponent } from './pages/social-moment/social-moment.component';
 import { SocialVideoComponent } from './pages/social-video/social-video.component';
 import { SocialCategoryVideoComponent } from './pages/social-category-video/social-category-video.component';
+import { MomentRewardsComponent } from './pages/social-moment/moment-rewards/moment-rewards.component';
 import { SocialProfileComponent } from './pages/social-profile/social-profile.component';
 import { authGuard } from './core/auth/auth.guard';
 
@@ -17,6 +18,7 @@ const routes: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'moment' },
       { path: 'moment', component: SocialMomentComponent },
+      { path: 'moment-reward', component: MomentRewardsComponent },
       { path: 'video', component: SocialVideoComponent },
       { path: 'category-video', component: SocialCategoryVideoComponent },
       { path: 'social-media-profile/:id', component: SocialProfileComponent },

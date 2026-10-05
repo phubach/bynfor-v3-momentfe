@@ -1,6 +1,7 @@
 import { Component, HostListener, Inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { I18NEXT_SERVICE, ITranslationService } from 'angular-i18next';
+import { switchMap } from 'rxjs';
 import { MomentService } from '../../services/moment.service';
 import { RelationsService } from '../../services/relations.service';
 import { UserService } from '../../services/user.service';
@@ -68,6 +69,9 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
   editingId: string | null = null;
   myUserId: number | string | null = null;
 
+  showFeedback = false;
+  reportInfo: any = null;
+  savedVideoReport: any = null;
   showReport = false;
   reportBusy = false;
   showShare = false;
@@ -380,6 +384,7 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
     }
     if (e.key === 'Escape') {
       this.showComments = false;
+      this.showFeedback = false;
       this.showReport = false;
       this.showShare = false;
       this.showLikes = false;
@@ -389,7 +394,7 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
   }
 
   private overlayOpen(): boolean {
-    return this.showGrid || this.showComments || this.showReport || this.showShare
+    return this.showFeedback || this.showGrid || this.showComments || this.showReport || this.showShare
       || this.showLikes || this.showDescription || this.showProfile || this.showPeopleModal;
   }
 
@@ -1218,14 +1223,23 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
   private lastDraftCaretVal = 0;
 
   // ---------- Report (gốc: reportReasons + report + reportVideo) ----------
-  submitReport(e: { reason: string }): void {
+  openReport(): void {
+    const v = this.current(); if (!v || this.reportBusy) return;
+    this.reportInfo = null; this.savedVideoReport = null; this.showReport = true; this.reportBusy = true;
+    this.momentService.getReportedVideo(v.id).subscribe({
+      next: res => { if (this.current()?.id !== v.id) { this.reportBusy = false; return; } this.reportInfo = res?.data || {}; this.savedVideoReport = String(this.reportInfo?.report?.reportedBy) === String(this.myUserId) ? this.reportInfo.report : null; this.reportBusy = false; },
+      error: e => { this.reportBusy = false; this.showReport = false; this.showToast(this.errMsg(e), 'error'); },
+    });
+  }
+  submitReport(e: { reason: string; isOther?: boolean }): void {
     const v = this.current();
     const reason = (e.reason || '').trim();
-    if (!v || !reason || this.reportBusy) return;
+    if (!v || !reason || this.reportBusy || this.myUserId == null) return;
     this.reportBusy = true;
-    this.momentService.reportMoment(v.momentId, reason).subscribe({
+    this.momentService.saveVideoReport({ _id: this.reportInfo?._id, videoId: v.id, report: { reportedBy: this.myUserId, message: reason, isOthers: !!e.isOther } }).pipe(
+      switchMap(() => this.momentService.reportVideo({ momentId: v.momentId, id: v.id, reported: true })),
+    ).subscribe({
       next: () => {
-        this.momentService.reportVideo({ momentId: v.momentId, id: v.id, reported: true }).subscribe({ next: () => {}, error: () => {} });
         this.reportBusy = false;
         this.showReport = false;
         this.showToast(this.tr('toastr.success.report_success', 'Your report is submitted successfully.'), 'success');

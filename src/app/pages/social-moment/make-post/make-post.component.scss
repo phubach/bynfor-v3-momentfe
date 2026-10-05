@@ -63,6 +63,11 @@
     i { color: #5e6f93; }
 
     &.active i, &.active { color: #1769ff; }
+
+    &.icon-btn { padding: 7px 10px; }
+
+    &.reward-btn i { color: #e89b0c; }
+    &.reward-btn:hover { border-color: #f0d9a8; background: #fffaf0; }
   }
 
   .tool-dropdown { position: relative; }
@@ -322,3 +327,12 @@
 }
 
 .composer { @include theme.surface; border-radius: 20px; }
+
+
+.composer { background: #fff; border: 1px solid #dce6f3; box-shadow: 0 5px 22px rgba(24,58,112,.045); padding: 20px; }
+.composer-options { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; margin: 18px 0; padding: 16px; border-radius: 16px; background: #f6f9fe; label { display: grid; align-content: start; gap: 6px; color: #5e6f93; font-size: 13px; } select,input { width: 100%; min-width: 0; border: 1px solid #d9e5f5; border-radius: 12px; padding: 10px 12px; background: #fff; color: #14213d; font: inherit; } small { color: #5e6f93; } }
+@media(max-width:640px){.composer{padding:16px}.composer-options{grid-template-columns:1fr;padding:12px}.composer-head{flex-wrap:wrap;gap:10px}}
+
+fieldset.composer-open { border: 0; padding: 0; margin: 0; min-width: 0; }
+.link-preview { margin: 10px 0; padding: 10px 14px; border-radius: 12px; background: #edf4ff; }
+.link-preview a { color: #1769ff; overflow-wrap: anywhere; }

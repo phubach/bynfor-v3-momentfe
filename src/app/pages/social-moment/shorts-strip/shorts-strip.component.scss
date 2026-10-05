@@ -127,3 +127,10 @@
   &.left { left: -12px; }
   &.right { right: -12px; }
 }
+
+
+.shorts { border-radius: 20px; padding: 20px; margin-bottom: 0; box-shadow: 0 5px 22px rgba(24,58,112,.045); }
+.shorts-track { gap: 16px; padding: 2px 2px 12px; scroll-snap-type: x proximity; }
+.short-card { flex-basis: calc((100% - 48px)/4); min-width: 190px; border-radius: 16px; scroll-snap-align: start; transition: box-shadow .2s, transform .2s; &:hover { box-shadow: 0 8px 20px #183a7018; transform: translateY(-2px); } .short-thumb video { height: auto; aspect-ratio: 4/5; } .short-desc { min-height: 32px; } .short-user { padding: 8px 12px 12px; } }
+.shorts-arrow { top: 42%; }
+@media(max-width:640px){.short-card{flex-basis:44%;min-width:160px}.shorts{padding:14px}}

@@ -4,6 +4,7 @@ import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, map, retry, shareReplay } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { RelationsService } from './relations.service';
+import { MomentService } from './moment.service';
 
 export interface TagUser {
   id: string;
@@ -20,7 +21,7 @@ export class UserService {
   private readonly user = '/user';
   private me$: Observable<any> | null = null;
 
-  constructor(private http: HttpClient, private relations: RelationsService) {}
+  constructor(private http: HttpClient, private relations: RelationsService, private moments: MomentService) {}
 
   /**
    * Gọi ngay sau đăng nhập thành công: nạp sẵn profile (GET /auth/user, có cache)
@@ -28,7 +29,13 @@ export class UserService {
    * lúc mở từng tab. Lỗi ở đây không chặn điều hướng.
    */
   warmSession(): void {
-    this.getCurrentUser().subscribe({ error: () => {} });
+    this.getCurrentUser().subscribe({
+      next: (profile) => {
+        const id = UserService.profileId(profile);
+        if (id) this.moments.preloadShareTargets(id, profile?.userName || '');
+      },
+      error: () => {},
+    });
     this.relations.getFriendsWithFollowing().subscribe({
       next: () => {},
       error: (e: any) => console.warn('[warmSession] friends preload failed', e?.status),
@@ -38,6 +45,7 @@ export class UserService {
   resetSessionCache(): void {
     this.me$ = null;
     this.tagRelatives$ = null;
+    this.moments.resetShareTargetCache();
   }
 
   getCurrentUser(): Observable<any> {
