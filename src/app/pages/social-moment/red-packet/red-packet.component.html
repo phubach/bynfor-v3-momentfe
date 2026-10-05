@@ -1,0 +1,83 @@
+<div class="rp-backdrop" (click)="close()">
+  <div class="rp-dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+
+    <!-- ============ MODAL CHI TIẾT (redPackageModelMoment gốc) ============ -->
+    <ng-container *ngIf="view === 'details'">
+      <div class="rp-head">
+        <button type="button" class="rp-x" (click)="close()" aria-label="Close">&times;</button>
+        <h4 *ngIf="available() <= 0" class="text-center">{{ 'all_gift_are_collected' | i18next }}</h4>
+        <h4 *ngIf="available() > 0 && moment?.bynforTitle" class="text-center">{{ moment.bynforTitle }}</h4>
+      </div>
+      <div class="rp-creator">
+        <img *ngIf="creatorAvatar()" [src]="creatorAvatar()" alt="" (error)="onAvatarError()" />
+        <span *ngIf="!creatorAvatar()" class="rp-abbr">{{ creatorInitials() }}</span>
+      </div>
+      <h3 class="rp-name text-center">{{ creatorName() }}</h3>
+      <h4 class="text-center"><a href="javascript:" (click)="close()">{{ 'monetary_gift_transferred_to_wallet' | i18next }}<i class="fa fa-angle-double-right" aria-hidden="true"></i></a></h4>
+      <div class="rp-opened">
+        <span>{{ 'opened' | i18next }} {{ totalRows }}/{{ moment?.quantityWallet || ('unlimited' | i18next) }}, ${{ totalCollected }}/{{ (moment?.shareMoney || 0).toFixed(2) }}</span>
+        <span *ngIf="myRank">{{ 'lucky_money.my_rank' | i18next }}: <a href="javascript:" (click)="myRankPage()">{{ myRank }}</a></span>
+      </div>
+      <div class="rp-list">
+        <p class="rp-loading" *ngIf="loadingGrabbers">{{ 'social.loading' | i18next }}</p>
+        <div class="rp-row" *ngFor="let item of grabbers" [class.me]="isMeGrabber(item)">
+          <img *ngIf="itemAvatar(item)" [src]="itemAvatar(item)" alt="" (error)="onItemAvatarError(item)" />
+          <span *ngIf="!itemAvatar(item)" class="rp-abbr sm">{{ itemInitials(item) }}</span>
+          <i class="fa fa-star rp-crown" *ngIf="item.isLuckiest" aria-hidden="true"></i>
+          <div class="rp-row-info">
+            <a href="javascript:" (click)="goToProfile(item.customerId)">{{ item.userName }}</a>
+            <div class="rp-amount">${{ intPart(item.amount) }}.<sup>{{ decPart(item.amount) }}</sup></div>
+            <small>{{ item.createdAt | date:'short' }}</small>
+          </div>
+        </div>
+        <div class="rp-empty" *ngIf="!loadingGrabbers && !grabbers.length">{{ 'datatable.empty_table' | i18next }}</div>
+      </div>
+      <div class="rp-paging" *ngIf="totalRows > size">
+        <button type="button" (click)="changePage(-1)" [disabled]="page <= 1">{{ 'datatable.previous' | i18next }}</button>
+        <span class="rp-page">{{ page }}</span>
+        <button type="button" (click)="changePage(1)" [disabled]="page * size >= totalRows">{{ 'datatable.next' | i18next }}</button>
+      </div>
+      <div class="rp-note"><i class="fa fa-info-circle" aria-hidden="true"></i>{{ 'monetary_gift_not_collected_after_72_hours' | i18next }}</div>
+      <div class="rp-totals">
+        <div>
+          <div><b>{{ 'shared' | i18next }}:</b> ${{ intPart(moment?.shareMoney) }}.<sup>{{ decPart(moment?.shareMoney) }}</sup></div>
+          <div><b>{{ 'collected_share' | i18next }}:</b> ${{ intPart(totalCollected) }}.<sup>{{ decPart(totalCollected) }}</sup></div>
+        </div>
+        <div>
+          <div><b>{{ 'quantity' | i18next }}:</b> {{ moment?.quantityWallet || ('unlimited' | i18next) }}</div>
+          <div><b>{{ 'collected_quantity' | i18next }}:</b> {{ totalRows }}</div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ============ MODAL MỞ BAO (redPackageModelMomentShare gốc) ============ -->
+    <ng-container *ngIf="view === 'grab'">
+      <div class="rp-head">
+        <button type="button" class="rp-x" (click)="close()" aria-label="Close">&times;</button>
+        <h4 *ngIf="moment?.bynforTitle" class="text-center">{{ moment.bynforTitle }}</h4>
+      </div>
+      <div class="rp-creator">
+        <img *ngIf="creatorAvatar()" [src]="creatorAvatar()" alt="" (error)="onAvatarError()" />
+        <span *ngIf="!creatorAvatar()" class="rp-abbr">{{ creatorInitials() }}</span>
+      </div>
+      <h4 class="text-center" *ngIf="moneyGrabbed == null && !luckyNext">{{ 'monetary_gift_with_random_amount' | i18next }}</h4>
+      <h3 class="rp-name text-center">{{ creatorName() }}</h3>
+      <h1 *ngIf="luckyNext" class="rp-lucky text-center">{{ 'better_luck_next_time' | i18next }}</h1>
+
+      <div *ngIf="moneyGrabbed == null && !luckyNext" class="rp-open-wrap" (click)="doGrab()">
+        <span class="rp-open-label">{{ 'open' | i18next }}</span>
+        <img class="rp-dollar" [class.spin]="imageShare" src="images/Dollar.png" alt="" width="150" height="150" />
+      </div>
+
+      <div *ngIf="moneyGrabbed != null && !luckyNext" class="rp-result text-center">
+        <span class="rp-money">${{ moneyGrabbed | number:'1.2-2' }}</span><br />
+        <h4 class="text-center"><a href="javascript:" (click)="close()">{{ 'monetary_gift_transferred_to_wallet' | i18next }}<i class="fa fa-angle-double-right" aria-hidden="true"></i></a></h4>
+      </div>
+
+      <p class="rp-error text-center" *ngIf="grabError">{{ grabError | i18next }}</p>
+
+      <div class="rp-viewall text-center" (click)="switchToDetails()" *ngIf="moneyGrabbed != null || luckyNext">{{ 'view_all_gift_receivers' | i18next }}</div>
+    </ng-container>
+
+  </div>
+</div>

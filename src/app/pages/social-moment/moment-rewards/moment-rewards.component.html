@@ -1,0 +1,58 @@
+<div class="rw-backdrop" (click)="close()">
+  <div class="rw-dialog" role="dialog" aria-modal="true" aria-label="Moment Rewards" (click)="$event.stopPropagation()">
+    <div class="rw-head">
+      <span class="rw-gift"><i class="fa fa-gift" aria-hidden="true"></i></span>
+      <div class="rw-head-text">
+        <h3>{{ 'social.momentRewards' | i18next }}</h3>
+        <p>{{ 'social.rewardHint' | i18next }}</p>
+      </div>
+      <button type="button" class="rw-x" (click)="close()" aria-label="Close">
+        <span aria-hidden="true"></span>
+      </button>
+    </div>
+
+    <div class="rw-body">
+      <div class="rw-status" *ngIf="!loading && fund" [class.eligible]="eligible() && !alreadyClaimed()" [class.claimed]="alreadyClaimed()">
+        <i class="fa" [ngClass]="alreadyClaimed() ? 'fa-check-circle' : eligible() ? 'fa-star' : 'fa-info-circle'" aria-hidden="true"></i>
+        <span *ngIf="alreadyClaimed()">{{ 'social.rewardClaimed' | i18next }}</span>
+        <span *ngIf="!alreadyClaimed() && eligible()">{{ 'social.rewardEligible' | i18next }}</span>
+        <span *ngIf="!alreadyClaimed() && !eligible()">{{ 'social.rewardNotEligible' | i18next }}</span>
+      </div>
+
+      <div class="rw-actions">
+        <button type="button" class="primary" (click)="claim()" [disabled]="busy || loading || !eligible() || alreadyClaimed()">
+          <i class="fa fa-hand-holding-dollar" aria-hidden="true"></i>
+          {{ (alreadyClaimed() ? 'social.rewardClaimed' : 'social.claimDailyReward') | i18next }}
+        </button>
+        <button type="button" (click)="claim(true)" [disabled]="busy || !meId">
+          <i class="fa fa-coins" aria-hidden="true"></i>
+          {{ 'social.claimCreditReward' | i18next }}
+        </button>
+        <button type="button" class="ghost" (click)="toggleHistory()" [attr.aria-expanded]="historyOpen">
+          <i class="fa fa-history" aria-hidden="true"></i>
+          {{ 'social.rewardHistory' | i18next }}
+          <i class="fa" [ngClass]="historyOpen ? 'fa-chevron-up' : 'fa-chevron-down'" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <p class="rw-loading" role="status" *ngIf="loading">
+        <i class="fa fa-spinner fa-spin" aria-hidden="true"></i> {{ 'social.loading' | i18next }}
+      </p>
+      <p class="success" role="status" *ngIf="message">
+        <i class="fa fa-check-circle" aria-hidden="true"></i> {{ 'social.rewardReceived' | i18next }}: {{ message }}
+      </p>
+      <p class="error" role="alert" *ngIf="error">
+        {{ error | i18next }}
+        <button type="button" (click)="refresh()" [disabled]="loading">{{ 'social.retry' | i18next }}</button>
+      </p>
+
+      <div *ngIf="historyOpen" class="history">
+        <p role="status" *ngIf="historyLoading">{{ 'social.loading' | i18next }}</p>
+        <p class="error" *ngIf="historyError">{{ 'social.loadFailed' | i18next }} <button type="button" (click)="loadHistory(page)">{{ 'social.retry' | i18next }}</button></p>
+        <p *ngIf="!historyLoading && !historyError && !history.length">{{ 'social.emptyRewards' | i18next }}</p>
+        <div class="history-item" *ngFor="let item of history"><span>{{ item.createdAt | date:'short' }}</span><span>{{ item.user?.firstName }} {{ item.user?.lastName }}</span><b>{{ item.amount | number:'1.2-2' }}</b></div>
+        <div class="paging" *ngIf="total > 10"><button type="button" (click)="loadHistory(page - 1)" [disabled]="page === 1 || historyLoading">‹</button><span>{{ page }}</span><button type="button" (click)="loadHistory(page + 1)" [disabled]="page * 10 >= total || historyLoading">›</button></div>
+      </div>
+    </div>
+  </div>
+</div>

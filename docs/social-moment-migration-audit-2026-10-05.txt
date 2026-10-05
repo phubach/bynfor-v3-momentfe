@@ -1,0 +1,166 @@
+ĐỐI CHIẾU SOCIAL / MOMENT — 05/10/2026
+
+KẾT LUẬN
+Trước lần sửa này, momentfe chưa chuyển đầy đủ Social/Moment của customerfe.
+Đã bổ sung nhiều luồng cốt lõi, đặc biệt tag người, reward, tương tác và report.
+Không kết luận tương đương 100%: các chênh lệch còn lại được liệt kê ở mục 5.
+Không sửa customerfe, không sửa BE, không chạy ng build. Không chuyển nhắn tin/live chat.
+Các kiểm tra dưới đây là kiểm tra source và logic mock, không chứng minh API thật hoạt động.
+
+1. NGUỒN ĐỐI CHIẾU
+customerfe/src/app/social-media/social-home/social-post-moment/
+customerfe/src/app/social-media/social-home/create-moment/
+customerfe/src/app/social-media/social-home/tag-people/
+customerfe/src/app/social-media/social-home/sum-act-wall/
+customerfe/src/app/social-media/social-home/moment-reward/
+customerfe/src/app/social-media/social-home/category-video/
+customerfe/src/app/social-media/social-home/new-social-media-profile/
+customerfe/src/app/social-live-chat/tiktok/ (chỉ các luồng video, report, feedback)
+customerfe/src/app/services/{moment,user,product,payment,socket,relations,
+  lucky-money-foundations,push-notification}.service.ts
+customerfe/src/app/interfaces/product/social-media/IMoment.ts
+momentfe/src/app/pages/{social,social-moment,social-video,social-category-video,social-profile}/
+momentfe/src/app/shared/mention-input/ và src/app/services/
+docs/social-video-migration-audit.txt là báo cáo từ các lần trước; kết quả kiểm tra
+và trạng thái feedback/report trong tài liệu mới này áp dụng cho lần sửa hiện tại.
+
+2. CÁC CHÊNH LỆCH ĐÃ XỬ LÝ
+
+Tag người:
+- Gốc applySelectedTagsToClone gộp tags từ mention và selectedTags, gửi thêm
+  taggers/taggerIds/tagUsers. Bản mới trước đây chỉ có postTags và gửi tagUsers rỗng.
+- Thêm TagPeopleComponent dùng danh sách bạn/người theo dõi và user/suggestion.
+  Chọn/xóa người, tìm kiếm, giới hạn 10 người như tagLimit của gốc.
+- Tạo/sửa bài gửi tags đã gộp, taggers, taggerIds và tagUsers.
+- Hiển thị người được tag trong feed; bấm tên mở profile theo ID.
+- Request tìm kiếm tag cũ không được ghi đè kết quả tìm kiếm mới.
+- MentionInput tăng sequence khi query không còn hợp lệ hoặc component bị hủy.
+
+Tạo/sửa nội dung:
+- Tạo bài có feeling/activity + subActivity, emoji, đếm từ (120 từ), Video URL.
+- Video mới có categoryId và description trong attachment; category không còn
+  chỉ là nút điều hướng sang trang duyệt video.
+- URL video phải bắt đầu bằng http:// hoặc https://.
+- Sửa bài chỉ có media được phép lưu; trước đây canSave bắt buộc có nội dung chữ.
+- Giữ các field bài gốc khi update; các URL preview mới được thu hồi khi component hủy.
+
+Reward:
+- Thêm khu vực Moment Rewards trong feed và route /social/moment-reward.
+- Daily reward: GET /inventory/moment-reward-fund/get-active,
+  POST /inventory/moment-reward-fund/grab; đọc eligibleUsers và monetaryGrabbedUsers.
+- Credit reward: POST /inventory/moment-credit-reward/grab.
+- Lịch sử: GET /payment/moment-reward/claimed, partyId=1, page/size;
+  đọc data.list và data.paging.totalRows, có phân trang/lỗi/retry.
+- Tạo monetary gift: dùng POST /inventory/moment với redPacketShare, shareMoney,
+  quantityWallet, bynforTitle, nameDisplayGift và ba cờ chọn ví như gốc.
+- Ví lấy từ auth/user: wallet, depositMoney, orderMoneyAvailable.
+  Kiểm tra số người nguyên >=1, tối thiểu 0.01/người, không vượt số dư hoặc 500,
+  tiền chỉ có hai chữ số thập phân; có xác nhận trước khi đăng và tải lại profile sau đăng.
+- Hiển thị và nhận quà tiền: POST /inventory/moment/red-packet/grab/{momentId},
+  body {userId, amount:0}. Chặn bài của mình, đã nhận, hết tiền, đủ người nhận,
+  settlementDoneRedPacket, isGrab=false và không thuộc người được tag ở bài public.
+- Lỗi API hiển thị; không mô phỏng số tiền hoặc thành công khi request thất bại.
+
+Tương tác/feed:
+- Khôi phục likedByMe, likeCount và trạng thái endorse từ expressions/endorsements;
+  xử lý ID number/string và số like giảm về 0.
+- Thêm bộ chọn 7 cảm xúc, dislike, endorse, danh sách người phản ứng có lọc emoji/
+  phân trang/kết bạn/follow, report bài và share trong thanh hành động.
+- Không endorse bài của chính mình; chặn tương tác khi profile thiếu stateId,
+  bài có blocked/userBlocked; feed comment/create kiểm tra MUTE_MOMENT khi profile có status này.
+- Thêm Top Moments (fromTopMoment=true), Reported Moments và revoke report.
+- Reply gửi đúng parent_id, tách bình luận gốc khỏi trả lời khi render.
+- API addComment của gốc trả toàn bộ Moment. Feed và popup category nay đọc
+  data.comments thay vì thêm toàn bộ Moment thành một comment.
+- Khi gửi thất bại, giữ draft/tags để thử lại.
+- Feed và Categories có sequence/cancel request, loại bài/video trùng và dừng
+  tải thêm khi đã hết dữ liệu; permalink không bị response feed ghi đè.
+- Popup category bỏ qua kết quả gửi/comment/like của video vừa rời khỏi.
+- Hiển thị toàn bộ ảnh/video trong bài, có xem ảnh lớn; tệp ngoài IMAGE/VIDEO
+  hiển thị dưới dạng link http(s), không bị render như ảnh.
+- Nội dung và bình luận có link/hashtag bấm được bằng Angular text binding,
+  không đưa nội dung người dùng vào innerHTML.
+
+Video feedback/report:
+- Feedback là tính năng video độc lập, không phải nhắn tin live chat.
+- Thêm gửi feedback, hai tab MAIN/TARGET, trả lời, phân trang client theo danh sách
+  API gốc, báo lỗi và giữ draft khi thất bại.
+- GET/POST {API_ENDPOINT_SOCKET_IO}/feedback giữ mainId=creator,
+  targetId=viewer; reply gửi parentId/message/createdBy.
+- POST /customer/pushNotification/list thông báo FEEDBACK_VIDEO như gốc.
+  Nếu thông báo lỗi sau khi feedback lưu thành công, hiển thị lỗi riêng.
+- Report video đọc GET {API_ENDPOINT_SOCKET_IO}/video/{id} để lấy _id/report cũ,
+  lưu POST /video/report với reportedBy/message/isOthers, sau đó POST
+  /inventory/report-video để đánh dấu. Không dùng moment-report thay cho video-report.
+- Chỉ báo thành công khi cả hai bước report hoàn tất; không nuốt lỗi bước đánh dấu.
+- Report Moment vẫn dùng /inventory/moment-report/{id} riêng.
+
+3. GIAO DIỆN VÀ WIDTH
+social.component.scss dùng một social-body width:100%, max-width:1440px theo Video.
+Xóa hai override 760px cho Moment và 1100px cho Categories.
+html scrollbar-gutter:stable giúp vị trí nội dung ổn định khi chiều dài tab khác nhau.
+Moment/composer/shorts/categories có khoảng cách lớn hơn, viền nhẹ, thẻ bo góc,
+màu chữ rõ hơn, hover nhẹ, layout mobile và hỗ trợ prefers-reduced-motion.
+Shorts hiển thị khoảng bốn thẻ trên desktop; Categories hai cột trên mobile.
+Các popup mới dùng cùng màu/viền; player Video vẫn giữ nền đen.
+Thêm nhãn en/vn; các locale khác sử dụng fallback tiếng Anh đã cấu hình.
+
+4. KIỂM CHỨNG
+- TypeScript --noEmit: qua.
+- scripts/check-moment-templates.mjs: Angular source/template diagnostics,
+  không emit, không bundle, không tạo dist, không chạy ng build: qua.
+- scripts/verify-moment-migration.cjs: 12 kiểm tra qua.
+- scripts/verify-video-migration.cjs: 16 kiểm tra qua; sửa mock Inject/getFriends
+  và kỳ vọng default-avatar cho phù hợp source đã có trước lần sửa này.
+- Tổng 28 kiểm tra: qua.
+- Kiểm tra Sass của 8 stylesheet liên quan: qua.
+- Git status customerfe không có thay đổi; không có thao tác ghi vào Code BE.
+- Browser từ chối truy cập localhost:4200 do quyền đã bị từ chối; không có screenshot
+  sau sửa, không xác nhận desktop/mobile bằng browser trong lần này.
+- Chưa gửi bài, nhận thưởng, chuyển tiền, feedback hoặc report vào API thật.
+
+5. CÒN CHÊNH LỆCH — KHÔNG ĐÁNH DẤU ĐÃ CHUYỂN ĐỦ
+
+A. Social Business/nhóm:
+  Tạo Moment dành cho business, isDisplayPublic, trạng thái phê duyệt, audience
+  IS_GROUP + chọn nhóm, giới hạn nội dung riêng cho business chưa tương đương.
+  Profile mới có thông tin cơ bản nhưng chưa đầy đủ profile/QR/địa lý của gốc.
+
+B. Các loại bài đặc biệt:
+  QR store/profile/real-estate/service/campaign/donation/distributor,
+  momentCampaign, momentDonationPage, auction event, productIds và các thẻ tương ứng
+  chưa có toàn bộ màn hình chọn/tạo/hiển thị trong momentfe.
+  Chỉ giữ field sẵn có khi edit không đồng nghĩa đã chuyển các luồng tạo mới này.
+
+C. Reward nâng cao:
+  Danh sách người nhận quà theo Moment, totalCollected/myRank/myRankIndex,
+  Skill Reward Party/weekend/eligibility/winners ngoài daily Moment Reward,
+  quản trị/cập nhật các quà đã chia sẻ và quota endorse theo get-verified-and-valid
+  chưa chuyển đầy đủ. Việc có nút nhận thưởng không bao phủ toàn bộ hệ sinh thái Reward.
+
+D. Media và comment nâng cao:
+  Composer mới còn một video upload mỗi lần, metadata dùng cho video mới;
+  chưa có metadata editor riêng cho từng video cũ, thumbnail selector/crop/trimmer
+  và tất cả các loại file upload như gốc.
+  Reply trong Moment feed có đọc/gửi; sửa/xóa và chọn emoji riêng cho reply chưa
+  đầy đủ như bình luận gốc. Popup category chưa có đầy đủ CRUD comment của Video.
+
+E. Trạng thái/quota, đồng bộ và lọc:
+  Guard stateId/MUTE trong feed chưa được thống nhất cho tất cả các màn Video/Profile.
+  Danh sách like tab Comment trong Video còn lọc người đã like theo trang hiện tại;
+  không phải danh sách đầy đủ người bình luận.
+  Chưa có lớp lọc category phía client cho mọi shape attachmentInfo/categoryId.
+  Chưa port realtime moment/video; báo cáo cũ cũng chưa tìm thấy nơi gọi một số
+  hàm đăng ký realtime của gốc, nên chưa khẳng định chúng hoạt động lúc chạy.
+
+F. Cần kiểm tra runtime:
+  Auth/user có đủ trường ví/stateId/status không; định dạng response thật của reward,
+  feedback/report trên realtime origin; CORS/token/signature; nguồn video hỏng;
+  thao tác đổi filter/video nhanh; share qua nền tảng ngoài; layout desktop/mobile.
+  Các điểm này không thể xác nhận bằng typecheck hay các test mock hiện có.
+
+6. LỆNH KIỂM TRA LẠI (KHÔNG BUILD)
+npm run verify:moment
+npm run verify:video
+npm run verify:templates
+node node_modules/typescript/bin/tsc --noEmit -p tsconfig.json

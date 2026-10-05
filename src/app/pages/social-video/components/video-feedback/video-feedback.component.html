@@ -1,0 +1,14 @@
+<div class="overlay" (click)="close.emit()">
+  <section class="panel" role="dialog" aria-modal="true" [attr.aria-label]="'social.videoFeedback' | i18next" (click)="$event.stopPropagation()">
+    <header><h3>{{ 'social.videoFeedback' | i18next }}</h3><button type="button" (click)="close.emit()" [disabled]="sending" [attr.aria-label]="'social.cancel' | i18next">×</button></header>
+    <nav><button type="button" [class.active]="tab === 'MAIN'" (click)="load('MAIN')">{{ 'social.feedbackReceived' | i18next }}</button><button type="button" [class.active]="tab === 'TARGET'" (click)="load('TARGET')">{{ 'social.feedbackSent' | i18next }}</button></nav>
+    <p *ngIf="error" class="error" role="alert">{{ error | i18next }}</p><p *ngIf="success" class="success" role="status">{{ 'social.feedbackSuccess' | i18next }}</p>
+    <p *ngIf="loading">{{ 'social.loading' | i18next }}</p>
+    <div class="items" *ngIf="!loading">
+      <article *ngFor="let item of visible()"><small>{{ item.createdAt | date:'short' }}</small><strong>{{ tab === 'MAIN' ? item.targetUser?.userName : item.mainUser?.userName }}</strong><p><app-moment-text [text]="item.message"></app-moment-text></p><div class="reply" *ngFor="let comment of item.comments"><small>{{ comment.createdAt | date:'short' }}</small><p>{{ comment.message }}</p></div><button type="button" (click)="replyTo = item" [disabled]="sending">{{ 'social.reply' | i18next }}</button></article>
+      <p *ngIf="!items.length">{{ 'social.emptyFeedback' | i18next }}</p>
+    </div>
+    <div class="paging" *ngIf="items.length > 10"><button type="button" (click)="page = page - 1" [disabled]="page <= 1">‹</button><span>{{ page }}</span><button type="button" (click)="page = page + 1" [disabled]="page * 10 >= items.length">›</button></div>
+    <div class="write"><small *ngIf="replyTo">{{ 'social.replyingTo' | i18next }} <button type="button" (click)="replyTo = null" [disabled]="sending">×</button></small><textarea [(ngModel)]="draft" [disabled]="sending" rows="3" maxlength="2000" [placeholder]="'social.feedbackPlaceholder' | i18next"></textarea><button type="button" class="primary" (click)="send()" [disabled]="!canSend()">{{ 'social.post' | i18next }}</button></div>
+  </section>
+</div>

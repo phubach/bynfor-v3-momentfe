@@ -276,3 +276,8 @@
     &:disabled { opacity: 0.6; }
   }
 }
+
+// Đồng bộ mọi modal Moment với Report Moment.
+.emp-backdrop { z-index: 220; align-items: center; padding: 56px 24px 32px; background: rgba(7, 22, 48, .93); }
+.emp-panel { width: min(860px, calc(100vw - 48px)); max-height: calc(100dvh - 88px); overflow: auto; box-shadow: 0 24px 68px rgba(0, 0, 0, .38); }
+@media(max-width:640px){.emp-backdrop{padding:24px 12px}.emp-panel{width:calc(100vw - 24px);max-height:calc(100dvh - 48px)}}

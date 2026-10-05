@@ -101,3 +101,8 @@
     }
   }
 }
+
+// Đồng bộ mọi modal Moment với Report Moment.
+.cam-backdrop { z-index: 220; padding: 56px 24px 32px; background: rgba(7, 22, 48, .93); }
+.cam-panel { width: min(860px, calc(100vw - 48px)); max-height: calc(100dvh - 88px); overflow: auto; box-shadow: 0 24px 68px rgba(0, 0, 0, .38); }
+@media(max-width:640px){.cam-backdrop{padding:24px 12px}.cam-panel{width:calc(100vw - 24px);max-height:calc(100dvh - 48px)}}
