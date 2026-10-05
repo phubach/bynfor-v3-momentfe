@@ -52,6 +52,7 @@ import { RedPacketComponent } from './pages/social-moment/red-packet/red-packet.
 import { TagPeopleComponent } from './shared/tag-people/tag-people.component';
 import { MentionInputComponent } from './shared/mention-input/mention-input.component';
 import { VideoDetailPopupComponent } from './pages/social-category-video/video-detail-popup/video-detail-popup.component';
+import { ConfirmDialogComponent } from './shared/confirm-dialog/confirm-dialog.component';
 
 export function appInit(i18next: ITranslationService) {
   return () =>
@@ -140,7 +141,8 @@ export const I18N_PROVIDERS = [
     ToastComponent,
     VideoFeedbackComponent,
     MomentReactionsComponent,
-    RedPacketComponent
+    RedPacketComponent,
+    ConfirmDialogComponent
   ],
   imports: [
     BrowserModule,

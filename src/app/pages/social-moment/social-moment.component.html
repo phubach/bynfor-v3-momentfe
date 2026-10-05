@@ -234,6 +234,23 @@
     </div>
   </div>
   <app-moment-reactions *ngIf="reactionsTarget" [moment]="reactionsTarget" [meId]="meId" (close)="reactionsTarget = null"></app-moment-reactions>
+  <div class="delete-overlay" *ngIf="deleteTarget" role="dialog" aria-modal="true" [attr.aria-label]="'social.delete' | i18next" (click)="closeDeleteDialog()">
+    <section class="delete-panel" (click)="$event.stopPropagation()">
+      <header>
+        <h3><i class="fa fa-trash-o" aria-hidden="true"></i> {{ 'social.delete' | i18next }}</h3>
+        <button type="button" class="delete-close" (click)="closeDeleteDialog()" [disabled]="!!deletingPostId" aria-label="Close">×</button>
+      </header>
+      <div class="delete-body">
+        <p>{{ confirmDeleteText() }}</p>
+      </div>
+      <footer>
+        <button type="button" class="delete-cancel" (click)="closeDeleteDialog()" [disabled]="!!deletingPostId">{{ 'social.cancel' | i18next }}</button>
+        <button type="button" class="delete-confirm" (click)="confirmDeletePost()" [disabled]="!!deletingPostId">
+          <i class="fa" [ngClass]="deletingPostId ? 'fa-spinner fa-spin' : 'fa-trash-o'" aria-hidden="true"></i> {{ 'social.delete' | i18next }}
+        </button>
+      </footer>
+    </section>
+  </div>
   <app-red-packet *ngIf="packetTarget" [moment]="packetTarget.moment" [meId]="meId" [view]="packetTarget.view" [luckyNext]="packetTarget.luckyNext" (closed)="packetTarget = null" (updated)="onPacketUpdated($event)"></app-red-packet>
   <app-report-dialog *ngIf="reportTarget" [open]="true" [detailed]="true" [busy]="reporting" (cancel)="reportTarget = null" (submit)="report($event)"></app-report-dialog>
   <app-edit-moment-popup

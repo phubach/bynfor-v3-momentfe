@@ -56,6 +56,7 @@ export class MakePostComponent implements OnInit, OnDestroy {
   video: PendingVideo | null = null;
   expanded = false;
   posting = false;
+  giftConfirmOpen = false;
   error = '';
   serverError = '';
   readonly maxImages = 6;
@@ -246,11 +247,11 @@ export class MakePostComponent implements OnInit, OnDestroy {
     return (this.giftEnabled || !!this.subActivity || !!this.content.trim() || this.images.length > 0 || !!this.video || /^https?:\/\//i.test(this.videoUrl.trim()));
   }
 
-  async submit(): Promise<void> {
+  async submit(giftConfirmed = false): Promise<void> {
     if (!this.canPost()) return;
     if (this.me?.status === 'MUTE_MOMENT') { this.error = 'your_account_is_not_allowed_to_post_moments_due_to_some_behavior'; return; }
     if (this.videoUrl.trim() && !/^https?:\/\//i.test(this.videoUrl.trim())) { this.error = 'social.invalidVideoUrl'; return; }
-    if (this.giftEnabled && !window.confirm(this.i18n.t('social.confirmGift', { amount: this.giftAmount }))) return;
+    if (this.giftEnabled && !giftConfirmed) { this.giftConfirmOpen = true; return; }
     this.posting = true;
     this.error = '';
     try {
@@ -305,6 +306,11 @@ export class MakePostComponent implements OnInit, OnDestroy {
     } finally {
       this.posting = false;
     }
+  }
+
+  confirmGiftPost(): void {
+    this.giftConfirmOpen = false;
+    this.submit(true);
   }
 
   private reset(): void {

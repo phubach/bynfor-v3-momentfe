@@ -487,6 +487,7 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
   editPostDraft = '';
   savingPost = false;
   deletingPostId: string | null = null;
+  deleteTarget: any = null;
 
   // ---------- sửa bài qua popup Edit Moment ----------
   editingMoment: any = null;
@@ -529,13 +530,23 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
     if (this.deletingPostId) return;
     // Giống social-moment-item gốc: bài bị lock thì chặn xóa.
     if (m?.lockMomentStatus === 'YES') { this.actionError = 'social.lockedMoment'; return; }
-    if (!window.confirm(this.confirmDeleteText())) return;
-    this.deletingPostId = m._id;
+    this.deleteTarget = m;
     this.openMenuId = null;
+  }
+
+  closeDeleteDialog(): void {
+    if (!this.deletingPostId) this.deleteTarget = null;
+  }
+
+  confirmDeletePost(): void {
+    const m = this.deleteTarget;
+    if (!m || this.deletingPostId) return;
+    this.deletingPostId = m._id;
     this.momentService.deleteMoment(m._id).subscribe({
       next: () => {
         this.moments = this.moments.filter((x) => x._id !== m._id);
         this.deletingPostId = null;
+        this.deleteTarget = null;
         this.toast?.success('social.postDeleted', 'Moment deleted.');
       },
       error: (e) => { this.deletingPostId = null; this.toast?.error(e); },

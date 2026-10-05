@@ -201,6 +201,15 @@
           (follow)="profileFollow()"
           (unfollow)="profileUnfollow()"></app-creator-profile>
 
+        <app-confirm-dialog
+          [open]="removeFriendConfirmOpen"
+          [titleKey]="'social.removeFriend'"
+          [messageKey]="'social.confirmRemoveFriend'"
+          [confirmKey]="'social.removeFriend'"
+          icon="fa-user-times"
+          (closed)="removeFriendConfirmOpen = false"
+          (confirmed)="confirmProfileRemoveFriend()"></app-confirm-dialog>
+
         <div class="desc-modal" *ngIf="showDescription && current()" (click)="showDescription = false">
           <div class="desc-card" (click)="$event.stopPropagation()">
             <div class="desc-head"><strong>{{ 'Description' | i18next }}</strong><button type="button" (click)="showDescription = false">✕</button></div>

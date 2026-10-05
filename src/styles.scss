@@ -21,7 +21,7 @@ body {
 }
 
 /* Khi modal Moment mở, chỉ modal được cuộn; không cho feed phía sau dịch chuyển. */
-body:has(.gallery-overlay, .forward-overlay, .rw-backdrop, .rp-backdrop, .emp-backdrop, .cam-backdrop, app-report-dialog .overlay, app-moment-reactions .overlay) {
+body:has(.gallery-overlay, .forward-overlay, .delete-overlay, app-confirm-dialog .confirm-overlay, .rw-backdrop, .rp-backdrop, .emp-backdrop, .cam-backdrop, app-report-dialog .overlay, app-moment-reactions .overlay) {
   overflow: hidden;
   overscroll-behavior: none;
 }

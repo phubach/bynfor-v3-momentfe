@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
 import { TagUser, UserService } from '../../services/user.service';
 
 @Component({
@@ -11,10 +11,11 @@ import { TagUser, UserService } from '../../services/user.service';
       </label>
       <small role="status" *ngIf="error">{{ 'social.loadFailed' | i18next }}</small>
       <div class="people" *ngIf="keyword || expanded" (scroll)="onPeopleScroll($event)">
-        <button type="button" *ngFor="let user of available()" (click)="add(user)" [disabled]="selected.length >= 10">
+        <button type="button" *ngFor="let user of available()" (click)="add(user)">
           <span class="initial">{{ (user.fullName || user.userName).slice(0, 1) }}</span>{{ user.fullName || user.userName }} <span>+</span>
         </button>
-        <small *ngIf="!loading && !available().length">{{ 'social.noPeople' | i18next }}</small>
+        <small class="tag-limit" *ngIf="limitNotice">{{ 'social.tagLimitReached' | i18next }}</small>
+        <small *ngIf="!loading && !tagLimitReached() && !available().length">{{ 'social.noPeople' | i18next }}</small>
         <small *ngIf="loading">{{ 'social.loading' | i18next }}</small>
       </div>
     </div>
@@ -23,7 +24,7 @@ import { TagUser, UserService } from '../../services/user.service';
     </div>
     <button type="button" class="toggle" (click)="togglePeople()">{{ (expanded ? 'social.cancel' : 'social.tagSomeone') | i18next }} · {{ selected.length }}/10</button>
   `,
-  styles: [`:host{display:block;position:relative}.tag-search{position:relative}label{display:grid;gap:6px;font-size:13px;color:#5e6f93}input{width:100%;padding:10px 12px;border:1px solid #d9e5f5;border-radius:12px;background:#fff;font:inherit}.people{position:absolute;z-index:35;top:calc(100% + 8px);left:0;right:0;display:grid;gap:4px;max-height:240px;overflow:auto;padding:6px;border:1px solid #d9e5f5;border-radius:14px;background:#fff;box-shadow:0 14px 30px rgba(15,31,74,.16)}.people button{display:flex;align-items:center;gap:8px;text-align:left;padding:8px;border:0;border-radius:10px;background:#f1f6ff;color:#14213d}.people button span:last-child{margin-left:auto}.initial{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#dceaff;color:#1769ff}.tagged{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.tagged button,.toggle{border:1px solid #d9e5f5;background:#fff;color:#1769ff;border-radius:20px;padding:6px 10px;cursor:pointer}.toggle{margin-top:8px}small{color:#5e6f93}`],
+  styles: [`:host{display:block;position:relative}.tag-search{position:relative}label{display:grid;gap:6px;font-size:13px;color:#5e6f93}input{width:100%;padding:10px 12px;border:1px solid #d9e5f5;border-radius:12px;background:#fff;font:inherit}.people{position:absolute;z-index:35;top:calc(100% + 8px);left:0;right:0;display:grid;gap:4px;max-height:240px;overflow:auto;padding:6px;border:1px solid #d9e5f5;border-radius:14px;background:#fff;box-shadow:0 14px 30px rgba(15,31,74,.16)}.people button{display:flex;align-items:center;gap:8px;text-align:left;padding:8px;border:0;border-radius:10px;background:#f1f6ff;color:#14213d}.people button span:last-child{margin-left:auto}.initial{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#dceaff;color:#1769ff}.tag-limit{padding:8px 10px;border-radius:10px;background:#fff6df;color:#a26100}.tagged{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.tagged button,.toggle{border:1px solid #d9e5f5;background:#fff;color:#1769ff;border-radius:20px;padding:6px 10px;cursor:pointer}.toggle{margin-top:8px}small{color:#5e6f93}`],
 })
 export class TagPeopleComponent implements OnInit, OnDestroy {
   @Input() selected: TagUser[] = [];
@@ -34,6 +35,7 @@ export class TagPeopleComponent implements OnInit, OnDestroy {
   expanded = false;
   error = false;
   loading = false;
+  limitNotice = false;
   private page = 0;
   private hasMore = true;
   private query = '';
@@ -49,15 +51,18 @@ export class TagPeopleComponent implements OnInit, OnDestroy {
   available(): TagUser[] {
     return this.users.filter(u => !this.selected.some(s => String(s.id) === String(u.id)));
   }
+  tagLimitReached(): boolean { return this.selected.length >= 10; }
   search(value: string): void {
     this.keyword = value;
     this.error = false;
+    this.limitNotice = false;
     clearTimeout(this.timer);
     const query = this.searchTerm(value);
     this.timer = setTimeout(() => this.startSearch(query), 300);
   }
   togglePeople(): void {
     this.expanded = !this.expanded;
+    this.limitNotice = false;
     if (this.expanded) this.startSearch(this.searchTerm(this.keyword));
   }
   onPeopleScroll(event: Event): void {
@@ -69,7 +74,36 @@ export class TagPeopleComponent implements OnInit, OnDestroy {
     this.page = 0;
     this.hasMore = true;
     this.users = [];
-    this.loadNextPage();
+    this.loadInitialPages();
+  }
+  /** API gợi ý của customerfe phân trang 10 bản ghi; mở menu sẽ ghép hai trang đầu. */
+  private loadInitialPages(): void {
+    const sequence = ++this.sequence;
+    this.loading = true;
+    this.request?.unsubscribe();
+    this.request = forkJoin({
+      first: this.userService.findUserSuggestion(this.query, 1),
+      second: this.userService.findUserSuggestion(this.query, 2),
+    }).subscribe({
+      next: result => {
+        if (sequence !== this.sequence) return;
+        const first = UserService.normalizeTagUsers(result.first?.data);
+        const second = UserService.normalizeTagUsers(result.second?.data);
+        this.users = [...new Map([...first, ...second].map(u => [u.id, u])).values()];
+        this.page = 2;
+        this.hasMore = this.responseHasMore(result.second, second.length, 2);
+        this.loading = false;
+      },
+      error: () => {
+        if (sequence !== this.sequence) return;
+        // Danh sách bạn bè/following vẫn là dự phòng khi API gợi ý tạm thời lỗi.
+        this.users = this.filterRelatives(this.query).slice(0, 20);
+        this.page = 2;
+        this.hasMore = false;
+        this.loading = false;
+        this.error = true;
+      },
+    });
   }
   private loadNextPage(): void {
     if (this.loading || !this.hasMore) return;
@@ -89,7 +123,7 @@ export class TagPeopleComponent implements OnInit, OnDestroy {
       error: () => {
         if (sequence !== this.sequence) return;
         // Danh sách bạn bè/following vẫn là dự phòng khi API gợi ý tạm thời lỗi.
-        if (page === 1) this.users = this.filterRelatives(this.query).slice(0, 10);
+        if (page === 1) this.users = this.filterRelatives(this.query).slice(0, 20);
         this.hasMore = false;
         this.loading = false;
         this.error = true;
@@ -110,16 +144,18 @@ export class TagPeopleComponent implements OnInit, OnDestroy {
   }
   private searchTerm(value: string): string { return (value || '').trim().replace(/^@+\s*/, ''); }
   add(user: TagUser): void {
-    if (this.selected.length >= 10 || this.selected.some(u => String(u.id) === String(user.id))) return;
+    if (this.selected.length >= 10) { this.limitNotice = true; return; }
+    if (this.selected.some(u => String(u.id) === String(user.id))) return;
     this.selected = [...this.selected, user];
     this.selectedChange.emit(this.selected);
     // Chọn xong thì dọn từ khóa @ và đóng popover để form trở lại gọn gàng.
     this.keyword = '';
     this.expanded = false;
     this.error = false;
+    this.limitNotice = false;
     clearTimeout(this.timer);
     this.sequence++;
     this.request?.unsubscribe();
   }
-  remove(user: TagUser): void { this.selected = this.selected.filter(u => String(u.id) !== String(user.id)); this.selectedChange.emit(this.selected); }
+  remove(user: TagUser): void { this.selected = this.selected.filter(u => String(u.id) !== String(user.id)); this.limitNotice = false; this.selectedChange.emit(this.selected); }
 }

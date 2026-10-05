@@ -76,6 +76,7 @@
       <label>{{ 'social.feelingActivity' | i18next }}
         <select [(ngModel)]="selectedActivity" (ngModelChange)="onActivityChange()"><option [ngValue]="null">{{ 'social.noActivity' | i18next }}</option><option *ngFor="let activity of activities" [ngValue]="activity">{{ activity.name }}</option></select>
       </label>
+      <app-tag-people [(selected)]="selectedPeople"></app-tag-people>
       <label *ngIf="selectedActivity?.subActivities?.length">{{ 'social.feelingActivity' | i18next }}
         <select [(ngModel)]="subActivity"><option *ngFor="let sub of selectedActivity.subActivities" [value]="sub.text">{{ sub.text }}</option></select>
       </label>
@@ -84,7 +85,6 @@
         <select [(ngModel)]="groupId"><option value="">{{ 'social.selectGroup' | i18next }}</option><option *ngFor="let g of groups" [value]="g.id || g._id">{{ g.name || g.groupName }}</option></select>
       </label>
       <div class="link-preview" *ngIf="firstLink()"><a [href]="firstLink()" target="_blank" rel="noopener noreferrer">{{ firstLink() }}</a></div>
-      <app-tag-people [(selected)]="selectedPeople"></app-tag-people>
       <label *ngIf="video || videoUrl">{{ 'social.category' | i18next }}
         <select [(ngModel)]="categoryId"><option value="">{{ 'social.selectCategory' | i18next }}</option><option *ngFor="let category of categories" [value]="category.id || category._id">{{ category.name }}</option></select>
       </label>
@@ -153,4 +153,13 @@
       </button>
     </div>
   </fieldset>
+  <app-confirm-dialog
+    [open]="giftConfirmOpen"
+    [titleKey]="'social.shareGift'"
+    [messageKey]="'social.confirmGift'"
+    [messageParams]="{ amount: giftAmount }"
+    [confirmKey]="'social.post'"
+    icon="fa-gift"
+    (closed)="giftConfirmOpen = false"
+    (confirmed)="confirmGiftPost()"></app-confirm-dialog>
 </div>
