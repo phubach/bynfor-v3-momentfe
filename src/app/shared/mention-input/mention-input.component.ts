@@ -25,6 +25,8 @@ export class MentionInputComponent implements OnInit, OnDestroy {
   @Input() emojiPerLine = 8;
   @Input() emojiSize = 26;
   @Output() submitted = new EventEmitter<void>();
+  /** Đồng bộ người chọn bằng @ với Tag Someone của form cha. */
+  @Output() mentionSelected = new EventEmitter<TagUser>();
   @ViewChild('boxInput', { static: false }) boxInput?: ElementRef<HTMLInputElement>;
   @ViewChild('boxText', { static: false }) boxText?: ElementRef<HTMLTextAreaElement>;
 
@@ -100,8 +102,8 @@ export class MentionInputComponent implements OnInit, OnDestroy {
     }
     const q = text.slice(at + 1).toLowerCase();
     this.applyLocalFilter(q);
-    // Gõ từ 2 ký tự: tìm thêm trên server (giống findUserSuggestion của customerfe).
-    if (q.trim().length >= 2) {
+    // Gõ ngay sau @ cũng tìm server để danh sách giống Tag Someone.
+    if (q.trim().length >= 1) {
       const seq = ++this.searchSeq;
       this.searchTimer = setTimeout(() => {
         this.userService.findUserSuggestion(text.slice(at + 1).trim(), 1).subscribe({
@@ -144,6 +146,7 @@ export class MentionInputComponent implements OnInit, OnDestroy {
       this.tags = [...this.tags, u.id];
       this.tagsChange.emit(this.tags);
     }
+    this.mentionSelected.emit(u);
     this.showSuggest = false;
     this.suggestions = [];
   }

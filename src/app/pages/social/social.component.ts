@@ -35,14 +35,14 @@ export class SocialComponent implements OnInit {
 
   get avatarUrl(): string {
     if (!this.profile) return '';
-    // Hết ảnh thật (giống chatfe dùng default-user.jpg) thì hiện ảnh mặc định,
-    // chỉ còn initials khi chưa load xong profile.
-    if (this.avatarFailed) return UserService.DEFAULT_AVATAR;
-    return UserService.avatarUrl(this.profile, this.avatarOriginalFallback) || UserService.DEFAULT_AVATAR;
+    // Không dùng ảnh placeholder ở header: thiếu ảnh đại diện phải hiện initials.
+    if (this.avatarFailed) return '';
+    return UserService.avatarUrl(this.profile, this.avatarOriginalFallback);
   }
 
   onAvatarError(): void {
-    if (!this.avatarOriginalFallback && this.avatarUrl !== UserService.avatarUrl(this.profile, true)) {
+    const original = UserService.avatarUrl(this.profile, true);
+    if (!this.avatarOriginalFallback && original && this.avatarUrl !== original) {
       this.avatarOriginalFallback = true;
     } else {
       this.avatarFailed = true;

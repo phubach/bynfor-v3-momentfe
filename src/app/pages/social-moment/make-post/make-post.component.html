@@ -62,6 +62,7 @@
         class="pill-mention"
         [(text)]="content"
         [(tags)]="postTags"
+        (mentionSelected)="addMentionedPerson($event)"
         [multiline]="true"
         [showEmoji]="true"
         [rows]="1"
@@ -69,6 +70,7 @@
         inputClass="pill-input"
         [placeholder]="'social.whatsNew' | i18next"></app-mention-input>
     </div>
+    <small class="words-remaining" [class.composer-error]="wordsLeft() < 0">{{ 'social.wordsRemaining' | i18next }}: {{ wordsLeft() }}</small>
 
     <div class="composer-options">
       <label>{{ 'social.feelingActivity' | i18next }}
@@ -77,17 +79,16 @@
       <label *ngIf="selectedActivity?.subActivities?.length">{{ 'social.feelingActivity' | i18next }}
         <select [(ngModel)]="subActivity"><option *ngFor="let sub of selectedActivity.subActivities" [value]="sub.text">{{ sub.text }}</option></select>
       </label>
-      <app-tag-people [(selected)]="selectedPeople"></app-tag-people>
+      <label>{{ 'social.videoUrl' | i18next }}<input type="url" [(ngModel)]="videoUrl" placeholder="https://…" /></label>
       <label *ngIf="accessedBy === 'IS_GROUP'">{{ 'social.group' | i18next }}
         <select [(ngModel)]="groupId"><option value="">{{ 'social.selectGroup' | i18next }}</option><option *ngFor="let g of groups" [value]="g.id || g._id">{{ g.name || g.groupName }}</option></select>
       </label>
       <div class="link-preview" *ngIf="firstLink()"><a [href]="firstLink()" target="_blank" rel="noopener noreferrer">{{ firstLink() }}</a></div>
-      <label>{{ 'social.videoUrl' | i18next }}<input type="url" [(ngModel)]="videoUrl" placeholder="https://…" /></label>
+      <app-tag-people [(selected)]="selectedPeople"></app-tag-people>
       <label *ngIf="video || videoUrl">{{ 'social.category' | i18next }}
         <select [(ngModel)]="categoryId"><option value="">{{ 'social.selectCategory' | i18next }}</option><option *ngFor="let category of categories" [value]="category.id || category._id">{{ category.name }}</option></select>
       </label>
       <label *ngIf="video || videoUrl">{{ 'social.videoDescription' | i18next }}<input [(ngModel)]="videoDescription" maxlength="2000" /></label>
-      <small [class.composer-error]="wordsLeft() < 0">{{ 'social.wordsRemaining' | i18next }}: {{ wordsLeft() }}</small>
     </div>
     <div class="gift-settings">
       <label><input type="checkbox" [(ngModel)]="giftEnabled" /> {{ 'social.shareGift' | i18next }}</label>

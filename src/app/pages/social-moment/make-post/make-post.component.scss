@@ -186,6 +186,16 @@
     }
   }
 
+  .words-remaining {
+    display: block;
+    /* Căn với mép phải của pill-input, chừa phần nút emoji bên phải. */
+    width: calc(100% - 80px);
+    margin: 6px 32px 0 48px;
+    text-align: right;
+    color: #5e6f93;
+    font-size: 13px;
+  }
+
   textarea {
     width: 100%;
     border: 0;

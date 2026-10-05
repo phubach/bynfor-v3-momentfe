@@ -53,6 +53,8 @@
   },
   "toastr": {
     "success": {
+      "endorsed": "Moment endorsed.",
+      "endorse_removed": "Moment endorsement removed.",
       "customer_store_updated_successfully": "Your Store was updated.",
       "unarchived_message_successfully": "Message removed from archive",
       "membership_refund_request_created_successfully": "Membership refund request created successfully. We will refund the membership payment deducting any Skill Reward that the membership user had received within 7 days upon the request of cancellation. ",
@@ -11897,6 +11899,7 @@
     "confirmDelete": "Delete this post? This cannot be undone.",
     "editMoment": "Edit Moment",
     "noActivity": "No feeling / activity",
+    "feelingActivity": "Feeling / activity",
     "momentContent": "Moment",
     "wordsRemaining": "Words remaining",
     "tagSomeone": "Tag Someone",
@@ -11990,6 +11993,8 @@
     "friendAdded": "Friend request sent.",
     "followedMsg": "You are now following.",
     "unfollowedMsg": "You unfollowed.",
-    "momentShared": "Moment link ready to share."
+    "momentShared": "Moment link ready to share.",
+    "muted": "Muted",
+    "unmuted": "Unmuted"
   }
 }

@@ -44,6 +44,11 @@ export class MakePostComponent implements OnInit, OnDestroy {
   videoUrl = '';
   wordsLeft(): number { return 120 - (this.content.trim() ? this.content.trim().split(/\s+/).length : 0); }
   onActivityChange(): void { this.subActivity = this.selectedActivity?.subActivities?.[0]?.text || ''; }
+  /** Chọn @ trong nội dung phải hiện đồng thời tại Tag Someone và đi vào payload tagUsers. */
+  addMentionedPerson(user: TagUser): void {
+    if (!user?.id || this.selectedPeople.some(person => String(person.id) === String(user.id))) return;
+    this.selectedPeople = [...this.selectedPeople, user];
+  }
   ngOnDestroy(): void { this.images.forEach(image => URL.revokeObjectURL(image.preview)); this.clearVideo(); }
   content = '';
   postTags: string[] = [];

@@ -27,6 +27,11 @@ export class EditMomentPopupComponent implements OnInit, OnDestroy {
   @ViewChild('contentBox', { static: false }) contentBox?: MentionInputComponent;
 
   selectedPeople: TagUser[] = [];
+  /** Đồng bộ mention @ trong nội dung với danh sách Tag Someone. */
+  addMentionedPerson(user: TagUser): void {
+    if (!user?.id || this.selectedPeople.some(person => String(person.id) === String(user.id))) return;
+    this.selectedPeople = [...this.selectedPeople, user];
+  }
   ngOnDestroy(): void { this.newImages.forEach(image => URL.revokeObjectURL(image.preview)); this.clearNewVideo(); }
   content = '';
   tags: string[] = [];

@@ -36,6 +36,7 @@
         #contentBox
         [(text)]="content"
         [(tags)]="tags"
+        (mentionSelected)="addMentionedPerson($event)"
         [multiline]="true"
         [showEmoji]="true"
         [rows]="4"

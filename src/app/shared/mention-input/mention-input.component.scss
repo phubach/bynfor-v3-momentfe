@@ -58,7 +58,24 @@ textarea.mention-box {
 }
 
 .emoji-panel {
-  margin-top: 6px;
+  /* Popover nổi: không làm mention row, avatar hoặc form bên dưới bị giãn chiều cao. */
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 70;
+  max-width: min(360px, calc(100vw - 48px));
+  max-height: min(420px, calc(100dvh - 180px));
+  overflow: auto;
+  padding: 4px;
+  background: #fff;
+  border: 1px solid #d7e3f4;
+  border-radius: 14px;
+  box-shadow: 0 16px 36px rgba(15, 31, 74, 0.2);
+}
+
+.emoji-panel emoji-mart {
+  display: block;
+  max-width: 100%;
 }
 
 .mention-list {
