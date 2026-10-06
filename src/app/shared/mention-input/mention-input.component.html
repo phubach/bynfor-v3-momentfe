@@ -22,7 +22,7 @@
       [rows]="rows"
       autocomplete="off"></textarea>
     <button type="button" class="emoji-toggle" *ngIf="showEmoji" (click)="toggleEmoji()" aria-label="Emoji">😀</button>
-    <ul class="mention-list" *ngIf="showSuggest">
+    <ul class="mention-list" [class.up]="dropUp" *ngIf="showSuggest">
       <li *ngFor="let u of suggestions" (mousedown)="select(u)">
         <img *ngIf="avatarUrl(u)" [src]="avatarUrl(u)" alt="" />
         <span class="mini-avatar" *ngIf="!avatarUrl(u)">{{ avatarText(u) }}</span>

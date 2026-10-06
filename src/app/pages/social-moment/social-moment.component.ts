@@ -384,6 +384,26 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
     return m?.createdByFull || m?.userResponseMoment || {};
   }
 
+  tagExtras(m: any): any[] {
+    const users = [m?.createdByFull, ...(m?.comments || []).map((c: any) => c?.createdByFull)];
+    const seen = new Set<string>();
+    const out: any[] = [];
+    for (const u of users) {
+      const id = UserService.profileId(u);
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      out.push({
+        id,
+        userName: u.userName || '',
+        fullName: [u.firstName, u.lastName].filter(Boolean).join(' ') || u.fullName || u.name || '',
+        firstName: u.firstName || '',
+        lastName: u.lastName || '',
+        profilePictureUrl: u.profilePictureUrl || '',
+      });
+    }
+    return out;
+  }
+
   posterName(m: any): string {
     return this.displayName(this.poster(m));
   }

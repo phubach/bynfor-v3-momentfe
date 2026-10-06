@@ -146,6 +146,27 @@ export class VideoDetailPopupComponent implements OnChanges {
     return (u.fullName || u.name || u.userName || c?.fullName || c?.name || c?.userName || c?.firstName || '').trim();
   }
 
+  tagExtras(): any[] {
+    const v = this.video || {};
+    const users = [v?.userResponseMoment, ...(this.comments || []).map((c: any) => c?.createdByFull)];
+    const seen = new Set<string>();
+    const out: any[] = [];
+    for (const u of users) {
+      const id = UserService.profileId(u);
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      out.push({
+        id,
+        userName: u.userName || '',
+        fullName: [u.firstName, u.lastName].filter(Boolean).join(' ') || u.fullName || u.name || '',
+        firstName: u.firstName || '',
+        lastName: u.lastName || '',
+        profilePictureUrl: u.profilePictureUrl || '',
+      });
+    }
+    return out;
+  }
+
   toggleVideoLike(): void {
     const v = this.video;
     if (!v?.momentId || this.likingVideo) return;

@@ -71,6 +71,8 @@
                 [showEmoji]="true"
                 [emojiPerLine]="6"
                 [emojiSize]="22"
+                [dropUp]="true"
+                [extraUsers]="tagExtras()"
                 (submitted)="sendReply(c)"></app-mention-input>
               <button type="button" (click)="sendReply(c)" [disabled]="sendingReply || !replyMessage.trim()">
                 <i class="fa fa-paper-plane-o" aria-hidden="true"></i>
@@ -105,6 +107,8 @@
           [showEmoji]="true"
           [emojiPerLine]="6"
           [emojiSize]="22"
+          [dropUp]="true"
+          [extraUsers]="tagExtras()"
           [placeholder]="'social.shareComment' | i18next"
           (submitted)="sendComment()"></app-mention-input>
         <button type="button" (click)="sendComment()" [disabled]="sending || !message.trim()">

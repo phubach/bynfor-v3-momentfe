@@ -180,6 +180,7 @@
           [(text)]="commentDrafts[m._id]"
           [(tags)]="commentTags[m._id]"
           [showEmoji]="true"
+          [extraUsers]="tagExtras(m)"
           [placeholder]="'social.writeComment' | i18next"
           (submitted)="sendComment(m)"></app-mention-input>
         <button type="button" (click)="sendComment(m)" [disabled]="sendingComment[m._id]">

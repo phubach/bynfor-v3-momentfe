@@ -24,8 +24,9 @@ export class MentionInputComponent implements OnInit, OnDestroy {
   @Input() rows = 1;
   @Input() emojiPerLine = 8;
   @Input() emojiSize = 26;
+  @Input() extraUsers: TagUser[] = [];
+  @Input() dropUp = false;
   @Output() submitted = new EventEmitter<void>();
-  /** Đồng bộ người chọn bằng @ với Tag Someone của form cha. */
   @Output() mentionSelected = new EventEmitter<TagUser>();
   @ViewChild('boxInput', { static: false }) boxInput?: ElementRef<HTMLInputElement>;
   @ViewChild('boxText', { static: false }) boxText?: ElementRef<HTMLTextAreaElement>;
@@ -125,14 +126,26 @@ export class MentionInputComponent implements OnInit, OnDestroy {
     }
   }
 
+  private pool(): TagUser[] {
+    const seen = new Set<string>();
+    const out: TagUser[] = [];
+    for (const u of [...(this.extraUsers || []), ...this.relatives]) {
+      if (u?.id && !seen.has(u.id)) {
+        seen.add(u.id);
+        out.push(u);
+      }
+    }
+    return out;
+  }
+
   private applyLocalFilter(q: string): void {
-    this.suggestions = this.relatives
+    this.suggestions = this.pool()
       .filter(
         (u) =>
           (u.userName && u.userName.toLowerCase().includes(q)) ||
           (u.fullName && u.fullName.toLowerCase().includes(q)),
       )
-      .slice(0, 8);
+      .slice(0, 50);
     this.showSuggest = this.suggestions.length > 0;
   }
 
@@ -151,11 +164,10 @@ export class MentionInputComponent implements OnInit, OnDestroy {
     this.suggestions = [];
   }
 
-  /** Bỏ id đã tag nếu @Tên tương ứng không còn trong text. */
   private pruneTags(): void {
     if (!this.tags.length) return;
     const byId: { [id: string]: TagUser } = {};
-    this.relatives.forEach((u) => (byId[u.id] = u));
+    this.pool().forEach((u) => (byId[u.id] = u));
     const kept = this.tags.filter((id) => {
       const u = byId[id];
       if (!u) return true;
