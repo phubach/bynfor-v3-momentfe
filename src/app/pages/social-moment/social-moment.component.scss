@@ -474,6 +474,7 @@
 .forward-list{display:grid;gap:12px;max-height:46dvh;overflow:auto;padding:6px 12px 6px 0}
 .forward-row{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px}
 .fw-check{position:relative;display:inline-block;width:22px;height:22px;flex:none}
+.sent-undo{color:#1769ff;font-size:20px;cursor:pointer;flex:none}
 .fw-check input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
 .fw-check span{position:absolute;inset:0;border:2px solid #b9c8e2;border-radius:50%;background:#fff}
 .fw-check input:checked + span{background:#1769ff;border-color:#1769ff}

@@ -8,6 +8,7 @@ import { RelationsService } from '../../services/relations.service';
 import { UserService } from '../../services/user.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { AlertService } from '../../services/alert.service';
+import { ChatService } from '../../services/chat.service';
 
 declare let alertify: any;
 
@@ -224,6 +225,7 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private toast: ToastService,
     private alertService: AlertService,
+    private chatService: ChatService,
     @Inject(I18NEXT_SERVICE) private i18n: ITranslationService,
   ) {
     this.toast = withToastFallback(toast);
@@ -798,9 +800,8 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
   forwardGroups: any[] = [];
   forwardSelected: string[] = [];
   forwardKeyword = '';
-  forwardMsg = '';
   forwardLoading = false;
-  forwardDone = '';
+  forwardSending = false;
   fwBroken = new Set<string>();
 
   /** Nạp danh sách chat gốc và chuẩn hóa mọi schema socket đã dùng ở customerfe. */
@@ -813,24 +814,40 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
         const groupsFromMenu = raw.filter((item: any) => this.isForwardGroup(item) && !item?.hide).map((g: any) => this.normaliseForwardGroup(g)).filter(Boolean);
         if (individuals.length) this.forwardIndividuals = individuals;
         else this.preloadForwardIndividualsFallback();
-        if (groupsFromMenu.length) this.forwardGroups = groupsFromMenu;
+        if (groupsFromMenu.length) this.mergeForwardGroups(groupsFromMenu, 'chat-menu');
       },
       error: () => this.preloadForwardIndividualsFallback(),
     });
     this.momentService.getGroupsOfUser(this.meId).subscribe({
       next: (res: any) => {
-        const groups = this.forwardResponseList(res).filter((g: any) => !g?.hide).map((g: any) => this.normaliseForwardGroup(g)).filter(Boolean);
-        if (groups.length) this.forwardGroups = groups;
+        const raw = this.forwardResponseList(res);
+        if (raw.length) console.debug('[forward] groups-of-user sample:', JSON.stringify(raw[0]).slice(0, 500));
+        const groups = raw.filter((g: any) => !g?.hide).map((g: any) => this.normaliseForwardGroup(g)).filter(Boolean);
+        if (groups.length) this.mergeForwardGroups(groups, 'socket-groups');
         else if (!this.forwardGroups.length) this.preloadForwardGroupsFallback();
       },
       error: () => { if (!this.forwardGroups.length) this.preloadForwardGroupsFallback(); },
     });
   }
 
+  /**
+   * Gộp nhóm từ nhiều nguồn theo id, ưu tiên bản có tên thật.
+   * (Tránh nguồn sau ghi đè tên thật bằng `Group <id>`.)
+   */
+  private mergeForwardGroups(list: any[], source: string): void {
+    const map = new Map<string, any>(this.forwardGroups.map((g: any) => [String(g.id), g]));
+    for (const g of list) {
+      const cur = map.get(String(g.id));
+      if (!cur || (cur.fallback && !g.fallback)) map.set(String(g.id), g);
+    }
+    this.forwardGroups = [...map.values()];
+    console.debug(`[forward] groups merged from ${source}: total=${this.forwardGroups.length}`);
+  }
+
   private forwardResponseList(res: any): any[] {
     const data = res?.data ?? res;
     if (Array.isArray(data)) return data;
-    return data?.list || data?.items || data?.content || [];
+    return data?.list || data?.items || data?.content || data?.groups || data?.groupList || [];
   }
 
   private isForwardGroup(item: any): boolean {
@@ -846,10 +863,18 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
   }
 
   private normaliseForwardGroup(group: any): any | null {
-    const id = group?._id ?? group?.id ?? group?.groupId;
+    // Một số API bọc group thật trong { group: {...} }.
+    const src = group?.group && typeof group.group === 'object' ? { ...group.group, ...group } : group;
+    const id = src?._id ?? src?.id ?? src?.groupId ?? src?.groupID ?? src?.group_id ?? src?.gid;
     if (id == null || String(id) === '') return null;
-    const name = group?.name || group?.groupName || group?.displayName || group?.title || `Group ${id}`;
-    return { id: String(id), name, fullName: name, profilePictureUrl: group?.profilePictureUrl || group?.profileSmallPictureUrl || group?.avatarUrl || group?.avatar || group?.imageUrl || '' };
+    const fallback = !(src?.name || src?.groupName || src?.group_name || src?.displayName || src?.title || src?.groupTitle);
+    const name = fallback
+      ? `Group ${id}`
+      : src.name || src.groupName || src.group_name || src.displayName || src.title || src.groupTitle;
+    if (fallback) {
+      console.debug('[forward] group without standard name field:', Object.keys(src || {}), src);
+    }
+    return { id: String(id), name, fullName: name, fallback, profilePictureUrl: src?.profilePictureUrl || src?.profileSmallPictureUrl || src?.avatarUrl || src?.avatar || src?.imageUrl || '' };
   }
 
   private preloadForwardIndividualsFallback(): void {
@@ -860,14 +885,17 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
     if (!this.meId) return;
     this.momentService.getGroups(this.meId).subscribe({
       next: (res: any) => {
-        this.forwardGroups = this.forwardResponseList(res).map((g: any) => this.normaliseForwardGroup(g)).filter(Boolean);
+        const raw = this.forwardResponseList(res);
+        if (raw.length) console.debug('[forward] groups fallback sample:', JSON.stringify(raw[0]).slice(0, 500));
+        this.mergeForwardGroups(raw.map((g: any) => this.normaliseForwardGroup(g)).filter(Boolean), 'auth-groups');
       },
       error: () => {},
     });
   }
 
   openForward(m: any): void {
-    this.forwardTarget = m; this.forwardSelected = []; this.forwardKeyword = ''; this.forwardMsg = ''; this.forwardDone = '';
+    this.forwardTarget = m; this.forwardSelected = []; this.forwardKeyword = '';
+    this.sentIds = new Set<string>(); this.sentMsgIds = {};
     this.openMenuId = null;
     if (!this.forwardIndividuals.length || !this.forwardGroups.length) {
       this.forwardLoading = true;
@@ -892,10 +920,6 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
     return this.forwardGroups.filter((g: any) => (g.name || '').toLowerCase().includes(kw));
   }
 
-  hasForwards(): boolean {
-    return this.forwardSelected.length > 0;
-  }
-
   fwAvatar(u: any): string {
     const url = UserService.avatarUrl(u);
     return url && !this.fwBroken.has(url) ? url : '';
@@ -911,29 +935,133 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
     return (name.slice(0, 2) || '?').toUpperCase();
   }
 
-  toggleForwardUser(id: string): void {
-    const key = String(id);
+  toggleForwardUser(key: string): void {
+    if (this.sentIds.has(key)) return;
     this.forwardSelected = this.forwardSelected.includes(key)
       ? this.forwardSelected.filter(x => x !== key)
       : [...this.forwardSelected, key];
   }
 
-  /** Template Angular không có global String(), nên chuẩn hóa ID trong component. */
-  isForwardSelected(id: any): boolean {
-    return this.forwardSelected.includes(String(id));
+  isForwardSelected(key: string): boolean {
+    return this.forwardSelected.includes(String(key));
   }
 
-  /** Không có chat-socket ở momentfe nên forward = chép nội dung + link để gửi (không gọi BE mới). */
-  confirmForward(): void {
-    if (!this.forwardTarget || !this.forwardSelected.length) return;
-    const link = this.momentUrl(this.forwardTarget);
-    const text = `${this.decodeText(this.forwardTarget.content || this.forwardTarget.description || '')}\n${link}${this.forwardMsg.trim() ? '\n' + this.forwardMsg.trim() : ''}`;
-    const done = () => {
-      this.forwardDone = 'social.forwardCopied';
-      this.toast?.success('social.forwardCopied', 'Moment copied. Paste it to send to the selected friends.');
+  isForwardSent(key: string): boolean {
+    return this.sentIds.has(String(key));
+  }
+
+  hasForwards(): boolean {
+    return this.forwardSelected.some((k) => !this.sentIds.has(k));
+  }
+
+  private forwardTargetOf(key: string): { kind: 'u' | 'g'; target: any } | null {
+    const id = key.slice(2);
+    if (key.startsWith('g:')) {
+      const g = (this.forwardGroups || []).find((x: any) => String(x.id) === id);
+      return g ? { kind: 'g', target: g } : null;
+    }
+    const u = (this.forwardIndividuals || []).find((x: any) => String(x.id) === id);
+    return u ? { kind: 'u', target: u } : null;
+  }
+
+  private forwardPayload(toUserId?, groupId?): any {
+    const m = this.forwardTarget || {};
+    const me = this.me || {};
+    const atts = m?.attachments || [];
+    const videos = atts.filter((a: any) => a?.attachmentType === 'VIDEO' && a?.attachmentUrl).map((a: any) => a.attachmentUrl);
+    const images = atts.filter((a: any) => a?.attachmentType !== 'VIDEO' && a?.attachmentUrl).map((a: any) => a.attachmentUrl);
+    const text = this.decodeText(m.content || m.description || '').trim();
+    const fullName = me.firstName ? `${me.firstName} ${me.lastName || ''}`.trim() : me.userName || '';
+    const base: any = {
+      fromUserId: me.id ?? me.userId,
+      from: me.userName || '',
+      firstName: me.firstName || '',
+      lastName: me.lastName || '',
+      profilePictureUrl: me.profilePictureUrl || '',
+      videos,
+      images,
+      momentId: m._id,
     };
-    if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(done, () => this.legacyCopy(text, done));
-    else this.legacyCopy(text, done);
+    if (toUserId != null) base.toUserId = toUserId;
+    if (groupId != null) base.groupId = groupId;
+    if (text && (videos.length || images.length)) {
+      return { ...base, message: `Images|⁑${fullName}|⁑${new Date().toISOString()}`, newMessage: text, messageType: 7, prevMessageType: 14 };
+    }
+    return { ...base, message: text || 'media', messageType: text ? 1 : 14 };
+  }
+
+  private sentIds = new Set<string>();
+  private sentMsgIds: { [key: string]: string[] } = {};
+
+  private numericTargetId(raw: any): number | null {
+    const n = Number(raw);
+    return Number.isFinite(n) && n >= 1 ? n : null;
+  }
+
+  confirmForward(): void {
+    if (!this.forwardTarget || this.forwardSending) return;
+    const pending = this.forwardSelected.filter((k) => !this.sentIds.has(k));
+    if (!pending.length) return;
+    this.forwardSending = true;
+    let left = pending.length;
+    const doneOne = () => {
+      if (--left <= 0) this.forwardSending = false;
+    };
+    pending.forEach((key) => {
+      const found = this.forwardTargetOf(key);
+      if (!found) {
+        this.forwardSelected = this.forwardSelected.filter((x) => x !== key);
+        doneOne();
+        return;
+      }
+      // Cá nhân: toUserId bắt buộc số ≥ 1. Nhóm: groupId giữ nguyên (chuỗi ObjectId vẫn hợp lệ).
+      let payload: any;
+      if (found.kind === 'g') {
+        const gid = found.target.id;
+        if (gid == null || String(gid) === '') {
+          this.forwardSelected = this.forwardSelected.filter((x) => x !== key);
+          this.toast?.show('Cannot forward: invalid group id', 'error');
+          doneOne();
+          return;
+        }
+        payload = this.forwardPayload(undefined, gid);
+      } else {
+        const numericId = this.numericTargetId(found.target.id);
+        if (numericId == null) {
+          this.forwardSelected = this.forwardSelected.filter((x) => x !== key);
+          this.toast?.show(`Cannot forward: invalid target id (${String(found.target.id ?? '?')})`, 'error');
+          doneOne();
+          return;
+        }
+        payload = this.forwardPayload(numericId);
+      }
+      this.sentIds.add(key);
+      this.chatService.saveMsg(payload).subscribe({
+        next: (res: any) => {
+          const id = res?.data?._id;
+          if (id) this.sentMsgIds[key] = [...(this.sentMsgIds[key] || []), id];
+          else this.sentIds.delete(key);
+          doneOne();
+        },
+        error: (e) => {
+          this.sentIds.delete(key);
+          const status = e?.status ?? '?';
+          const serverMsg = e?.error?.message || (typeof e?.error === 'string' ? e.error : '');
+          console.debug('[forward] saveMsg failed:', status, key, serverMsg, e?.url || '');
+          this.toast?.show(`Forward failed (HTTP ${status})${serverMsg ? ': ' + serverMsg : ''}`, 'error');
+          doneOne();
+        },
+      });
+    });
+  }
+
+  undoForward(key: string): void {
+    const ids = this.sentMsgIds[key] || [];
+    const meId = this.meId;
+    ids.forEach((id) => this.chatService.deleteMsg(id, meId).subscribe({ error: () => {} }));
+    delete this.sentMsgIds[key];
+    this.sentIds.delete(key);
+    this.forwardSelected = this.forwardSelected.filter((x) => x !== key);
   }
 
   // ---------- Realtime-lite (polling, không thêm socket dep) ----------

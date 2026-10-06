@@ -6,11 +6,18 @@
         <label class="field-label" for="moment-report-reason">Please provide reasons for reporting this Moment.</label>
         <select id="moment-report-reason" [(ngModel)]="selected" [class.invalid]="!selected && busy"><option value="" disabled>Please select a reason</option><option *ngFor="let r of reasons" [value]="r">{{ r }}</option><option value="Something Else">Something Else</option></select>
         <section class="evidence-grid">
-          <div class="evidence-field"><label>Images</label><label class="file-control">{{ images.length ? images.length + ' image(s) selected' : 'Upload Images' }}<span>Browse</span><input type="file" accept="image/*" multiple (change)="selectImages($event)" /></label><div class="file-list image-list" *ngIf="images.length"><span *ngFor="let image of images; let i = index">{{ image.name }} <button type="button" (click)="removeImage(i)">×</button></span></div></div>
+          <div class="evidence-field"><label>Images</label><label class="file-control">{{ images.length ? images.length + ' image(s) selected' : 'Upload Images' }}<span>Browse</span><input type="file" accept="image/*" multiple (change)="selectImages($event)" /></label>
+            <div class="thumb-list" *ngIf="imagePreviews.length">
+              <div class="thumb-item" *ngFor="let src of imagePreviews; let i = index">
+                <img [src]="src" alt="" />
+                <button type="button" class="thumb-remove" (click)="removeImage(i)" aria-label="Remove">×</button>
+              </div>
+            </div>
+          </div>
           <div class="evidence-field"><label>Video URL</label><input [(ngModel)]="videoUrl" placeholder="Video URL" [disabled]="!!videoFile" /></div>
           <div class="or">OR</div>
           <div class="evidence-field upload-video"><label>Attach Video</label><label class="upload-button">Upload<input type="file" accept="video/*" (change)="selectVideo($event)" /></label><small *ngIf="videoFile">{{ videoFile.name }}</small></div>
-          <div class="evidence-field"><label>Documents</label><label class="file-control">{{ documents.length ? documents.length + ' document(s) selected' : 'Upload Documents' }}<span>Browse</span><input type="file" accept=".pdf,.csv,.txt,.xlsx,.xls,.xlsm" multiple (change)="selectDocuments($event)" /></label><div class="file-list" *ngIf="documents.length"><span *ngFor="let doc of documents; let i = index">{{ doc.name }} <button type="button" (click)="removeDocument(i)">×</button></span></div></div>
+          <div class="evidence-field"><label>Documents</label><label class="file-control">{{ documents.length ? documents.length + ' document(s) selected' : 'Upload Documents' }}<span>Browse</span><input type="file" accept=".pdf,.csv,.txt,.xlsx,.xls,.xlsm" multiple (change)="selectDocuments($event)" /></label><div class="file-list" *ngIf="documents.length"><span *ngFor="let doc of documents; let i = index"><i class="fa fa-file-text-o" aria-hidden="true"></i> {{ doc.name }} <button type="button" (click)="removeDocument(i)">×</button></span></div></div>
         </section>
         <label class="field-label" for="moment-report-note">Note</label><textarea id="moment-report-note" [(ngModel)]="note" rows="5" maxlength="1500" placeholder="Add details that help us review this report."></textarea><small class="words-left">{{ wordsLeft() }} words remaining.</small>
       </div>

@@ -11981,11 +11981,11 @@
     "videoTooLarge": "Video must be 10MB or smaller.",
     "sharedLink": "Shared link",
     "attachedProduct": "Attached product",
-    "shareToLiveChat": "Share Moment To Live Chat",
+    "shareToLiveChat": "Share to Live Chat",
     "individuals": "Individuals",
     "groups": "Groups",
     "done": "Done",
-    "noFound": "No found",
+    "noFound": "No results found.",
     "commentPosted": "Comment posted.",
     "commentSaved": "Comment saved.",
     "commentDeleted": "Comment deleted.",
@@ -11998,6 +11998,7 @@
     "unfollowedMsg": "You unfollowed.",
     "momentShared": "Moment link ready to share.",
     "muted": "Muted",
-    "unmuted": "Unmuted"
+    "unmuted": "Unmuted",
+    "sending": "Sending..."
   }
 }

@@ -11938,6 +11938,13 @@
     "feedbackPlaceholder": "Viết phản hồi hoặc trả lời…",
     "feedbackNotificationFailed": "Đã lưu phản hồi, nhưng chưa gửi được thông báo.",
     "attachment": "Tệp đính kèm",
-    "viewReactions": "Xem người bày tỏ cảm xúc"
+    "viewReactions": "Xem người bày tỏ cảm xúc",
+    "shareToLiveChat": "Chia sẻ vào Live Chat",
+    "individuals": "Cá nhân",
+    "groups": "Nhóm",
+    "done": "Xong",
+    "forward": "Chuyển tiếp",
+    "noFound": "Không tìm thấy.",
+    "sending": "Đang gửi..."
   }
 }

@@ -4,6 +4,8 @@ import { Router } from '@angular/router';
 import { MomentService } from '../../../services/moment.service';
 import { TagUser, UserService } from '../../../services/user.service';
 import { ToastService } from '../../../shared/toast/toast.service';
+import { AlertService } from '../../../services/alert.service';
+import { videoFileError } from '../../../shared/utils/file.utils';
 
 declare let alertify: any;
 
@@ -86,7 +88,7 @@ export class MakePostComponent implements OnInit, OnDestroy {
   openMenu: 'filter' | 'audience' | 'attach' | null = null;
   captureMode: 'photo' | 'video' | null = null;
 
-  constructor(private momentService: MomentService, private userService: UserService, private router: Router, private toast: ToastService, @Inject(I18NEXT_SERVICE) private i18n: ITranslationService) {}
+  constructor(private momentService: MomentService, private userService: UserService, private router: Router, private toast: ToastService, private alertService: AlertService, @Inject(I18NEXT_SERVICE) private i18n: ITranslationService) {}
 
   ngOnInit(): void {
     this.userService.getCurrentUser().subscribe((me) => {
@@ -174,8 +176,14 @@ export class MakePostComponent implements OnInit, OnDestroy {
         this.images.push({ file: media.file, preview: media.preview });
       }
     } else {
-      this.clearVideo();
-      this.video = { file: media.file, preview: media.preview };
+      const errKey = videoFileError(media.file);
+      if (errKey) {
+        URL.revokeObjectURL(media.preview);
+        this.alertService.errorTop(this.i18n.t(errKey));
+      } else {
+        this.clearVideo();
+        this.video = { file: media.file, preview: media.preview };
+      }
     }
     this.expanded = true;
   }
@@ -226,8 +234,11 @@ export class MakePostComponent implements OnInit, OnDestroy {
   }
 
   private setVideoFile(file: File): void {
-    // Giống gốc: video thường max 10MB.
-    if (file.size > 10 * 1024 * 1024) { this.error = 'social.videoTooLarge'; return; }
+    const errKey = videoFileError(file);
+    if (errKey) {
+      this.alertService.errorTop(this.i18n.t(errKey));
+      return;
+    }
     this.clearVideo();
     this.video = { file, preview: URL.createObjectURL(file) };
   }

@@ -1,8 +1,11 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild, OnDestroy } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild, OnDestroy, Inject } from '@angular/core';
+import { I18NEXT_SERVICE, ITranslationService } from 'angular-i18next';
 import { MentionInputComponent } from '../../../shared/mention-input/mention-input.component';
 import { MomentService } from '../../../services/moment.service';
 import { TagUser, UserService } from '../../../services/user.service';
 import { ToastService } from '../../../shared/toast/toast.service';
+import { AlertService } from '../../../services/alert.service';
+import { videoFileError } from '../../../shared/utils/file.utils';
 
 interface PendingImage {
   file: File;
@@ -60,7 +63,13 @@ export class EditMomentPopupComponent implements OnInit, OnDestroy {
   readonly maxImages = 6;
   readonly maxWords = 120;
 
-  constructor(private momentService: MomentService, private userService: UserService, private toast: ToastService) {}
+  constructor(
+    private momentService: MomentService,
+    private userService: UserService,
+    private toast: ToastService,
+    private alertService: AlertService,
+    @Inject(I18NEXT_SERVICE) private i18n: ITranslationService,
+  ) {}
 
   ngOnInit(): void {
     const m = this.moment || {};
@@ -148,8 +157,13 @@ export class EditMomentPopupComponent implements OnInit, OnDestroy {
       .forEach((file) => this.newImages.push({ file, preview: URL.createObjectURL(file) }));
     const video = files.find((f) => f.type.startsWith('video/'));
     if (video) {
-      if (this.newVideo) URL.revokeObjectURL(this.newVideo.preview);
-      this.newVideo = { file: video, preview: URL.createObjectURL(video) };
+      const errKey = videoFileError(video);
+      if (errKey) {
+        this.alertService.errorTop(this.i18n.t(errKey));
+      } else {
+        if (this.newVideo) URL.revokeObjectURL(this.newVideo.preview);
+        this.newVideo = { file: video, preview: URL.createObjectURL(video) };
+      }
     }
     (e.target as HTMLInputElement).value = '';
   }
