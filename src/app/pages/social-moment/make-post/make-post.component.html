@@ -153,13 +153,4 @@
       </button>
     </div>
   </fieldset>
-  <app-confirm-dialog
-    [open]="giftConfirmOpen"
-    [titleKey]="'social.shareGift'"
-    [messageKey]="'social.confirmGift'"
-    [messageParams]="{ amount: giftAmount }"
-    [confirmKey]="'social.post'"
-    icon="fa-gift"
-    (closed)="giftConfirmOpen = false"
-    (confirmed)="confirmGiftPost()"></app-confirm-dialog>
 </div>

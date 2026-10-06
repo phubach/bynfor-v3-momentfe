@@ -21,7 +21,7 @@ body {
 }
 
 /* Khi modal Moment mở, chỉ modal được cuộn; không cho feed phía sau dịch chuyển. */
-body:has(.gallery-overlay, .forward-overlay, .delete-overlay, app-confirm-dialog .confirm-overlay, .rw-backdrop, .rp-backdrop, .emp-backdrop, .cam-backdrop, app-report-dialog .overlay, app-moment-reactions .overlay) {
+body:has(.gallery-overlay, .forward-overlay, .delete-overlay, .rw-backdrop, .rp-backdrop, .emp-backdrop, .cam-backdrop, app-report-dialog .overlay, app-moment-reactions .overlay) {
   overflow: hidden;
   overscroll-behavior: none;
 }
@@ -32,6 +32,50 @@ html { scrollbar-gutter: stable; }
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
 button:disabled { cursor: default; opacity: .6; }
+
+/* Alertify confirm giống customerfe: nút dồn phải, Cancel đỏ + OKAY xanh gradient. */
+.alertify .ajs-footer .ajs-buttons.ajs-primary {
+  justify-content: end !important;
+}
+
+.alertify .ajs-footer .ajs-buttons .ajs-button.btn {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 8px 22px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.42857143;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, .2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .15), 0 1px 1px rgba(0, 0, 0, .075);
+}
+
+.alertify .ajs-footer .ajs-buttons .ajs-button.btn-primary {
+  color: #fff;
+  background-image: linear-gradient(to bottom, #337ab7 0%, #265a88 100%);
+  border-color: #245580;
+}
+
+.alertify .ajs-footer .ajs-buttons .ajs-button.btn-primary:hover {
+  background-color: #265a88;
+  background-position: 0 -15px;
+}
+
+.alertify .ajs-footer .ajs-buttons .ajs-button.btn-danger {
+  color: #fff;
+  background-image: linear-gradient(to bottom, #d9534f 0%, #c12e2f 100%);
+  border-color: #b92c28;
+}
+
+.alertify .ajs-footer .ajs-buttons .ajs-button.btn-danger:hover {
+  background-color: #c12e2f;
+  background-position: 0 -15px;
+}
 a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible {
   outline: 2px solid var(--byn-primary);
   outline-offset: 3px;

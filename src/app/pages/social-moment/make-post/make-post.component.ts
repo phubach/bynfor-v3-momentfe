@@ -5,6 +5,8 @@ import { MomentService } from '../../../services/moment.service';
 import { TagUser, UserService } from '../../../services/user.service';
 import { ToastService } from '../../../shared/toast/toast.service';
 
+declare let alertify: any;
+
 interface PendingImage {
   file: File;
   preview: string;
@@ -56,7 +58,6 @@ export class MakePostComponent implements OnInit, OnDestroy {
   video: PendingVideo | null = null;
   expanded = false;
   posting = false;
-  giftConfirmOpen = false;
   error = '';
   serverError = '';
   readonly maxImages = 6;
@@ -251,7 +252,13 @@ export class MakePostComponent implements OnInit, OnDestroy {
     if (!this.canPost()) return;
     if (this.me?.status === 'MUTE_MOMENT') { this.error = 'your_account_is_not_allowed_to_post_moments_due_to_some_behavior'; return; }
     if (this.videoUrl.trim() && !/^https?:\/\//i.test(this.videoUrl.trim())) { this.error = 'social.invalidVideoUrl'; return; }
-    if (this.giftEnabled && !giftConfirmed) { this.giftConfirmOpen = true; return; }
+    if (this.giftEnabled && !giftConfirmed) {
+      alertify.confirm(
+        this.i18n.t('social.confirmGift', { amount: this.giftAmount }),
+        (ok: boolean) => { if (ok) this.submit(true); },
+      ).set({ title: this.i18n.t('social.shareGift'), movable: false }).set('labels', { ok: this.i18n.t('alertify.ok'), cancel: this.i18n.t('common.cancel') });
+      return;
+    }
     this.posting = true;
     this.error = '';
     try {
@@ -306,11 +313,6 @@ export class MakePostComponent implements OnInit, OnDestroy {
     } finally {
       this.posting = false;
     }
-  }
-
-  confirmGiftPost(): void {
-    this.giftConfirmOpen = false;
-    this.submit(true);
   }
 
   private reset(): void {

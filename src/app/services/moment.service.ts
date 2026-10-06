@@ -110,7 +110,7 @@ export class MomentService {
     });
   }
 
-  expressComment(momentId: string, commentId: string, expression: any = '👍') {
+  expressComment(momentId: string, commentId: string, expression: any) {
     return this.http.post<any>(`${this.base}/moment-comment/expression/${momentId}/${commentId}`, expression);
   }
 

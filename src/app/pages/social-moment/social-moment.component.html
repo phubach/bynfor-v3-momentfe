@@ -24,7 +24,7 @@
         <button type="button" class="menu-btn" *ngIf="isMine(m) && !m.redPacketShare" (click)="startEditPost(m)" aria-label="Edit">
           <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
         </button>
-        <button type="button" class="menu-btn danger" *ngIf="isMine(m) && !m.redPacketShare" (click)="deletePost(m)" aria-label="Delete">
+        <button type="button" class="menu-btn danger" *ngIf="isMine(m) && !m.redPacketShare" (click)="deleteMoment(m)" aria-label="Delete">
           <i class="fa fa-trash-o" aria-hidden="true"></i>
         </button>
         <ul class="menu-list" *ngIf="openMenuId === m._id">
@@ -146,10 +146,16 @@
           <small class="comment-time">{{ c.commentedAt | date: 'short' }}</small>
         </div>
         <div class="comment-actions">
-          <button type="button" [class.on]="isLikedComment(c)" (click)="likeFeedComment(m, c)" aria-label="Like">
-            <i class="fa fa-thumbs-o-up" aria-hidden="true"></i>
-            <span *ngIf="(c.expressions || []).length">{{ (c.expressions || []).length }}</span>
-          </button>
+          <div class="react-wrap" (mouseenter)="openReactions(c)" (mouseleave)="scheduleCloseReactions()">
+            <div class="react-bar" *ngIf="reactionFor === commentId(c)" (mouseenter)="openReactions(c)">
+              <span *ngFor="let emoji of reactionEmojis" (click)="likeFeedComment(m, c, emoji)">{{ emoji }}</span>
+            </div>
+            <button type="button" [class.on]="isLikedComment(c)" (click)="likeFeedComment(m, c)" aria-label="Like">
+              <i class="fa fa-thumbs-o-up" *ngIf="!(c.expressions || []).length" aria-hidden="true"></i>
+              <span class="expr" *ngIf="(c.expressions || []).length">{{ lastExpression(c) }}</span>
+              <span *ngIf="(c.expressions || []).length">{{ (c.expressions || []).length }}</span>
+            </button>
+          </div>
           <div class="cmenu-wrap" *ngIf="isOwnComment(c)">
             <button type="button" (click)="commentMenuId = commentMenuId === commentId(c) ? null : commentId(c)" aria-label="More">
               <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
@@ -234,23 +240,6 @@
     </div>
   </div>
   <app-moment-reactions *ngIf="reactionsTarget" [moment]="reactionsTarget" [meId]="meId" (close)="reactionsTarget = null"></app-moment-reactions>
-  <div class="delete-overlay" *ngIf="deleteTarget" role="dialog" aria-modal="true" [attr.aria-label]="'social.delete' | i18next" (click)="closeDeleteDialog()">
-    <section class="delete-panel" (click)="$event.stopPropagation()">
-      <header>
-        <h3><i class="fa fa-trash-o" aria-hidden="true"></i> {{ 'social.delete' | i18next }}</h3>
-        <button type="button" class="delete-close" (click)="closeDeleteDialog()" [disabled]="!!deletingPostId" aria-label="Close">×</button>
-      </header>
-      <div class="delete-body">
-        <p>{{ confirmDeleteText() }}</p>
-      </div>
-      <footer>
-        <button type="button" class="delete-cancel" (click)="closeDeleteDialog()" [disabled]="!!deletingPostId">{{ 'social.cancel' | i18next }}</button>
-        <button type="button" class="delete-confirm" (click)="confirmDeletePost()" [disabled]="!!deletingPostId">
-          <i class="fa" [ngClass]="deletingPostId ? 'fa-spinner fa-spin' : 'fa-trash-o'" aria-hidden="true"></i> {{ 'social.delete' | i18next }}
-        </button>
-      </footer>
-    </section>
-  </div>
   <app-red-packet *ngIf="packetTarget" [moment]="packetTarget.moment" [meId]="meId" [view]="packetTarget.view" [luckyNext]="packetTarget.luckyNext" (closed)="packetTarget = null" (updated)="onPacketUpdated($event)"></app-red-packet>
   <app-report-dialog *ngIf="reportTarget" [open]="true" [detailed]="true" [busy]="reporting" (cancel)="reportTarget = null" (submit)="report($event)"></app-report-dialog>
   <app-edit-moment-popup

@@ -7,8 +7,10 @@ import { MomentService } from '../../services/moment.service';
 import { RelationsService } from '../../services/relations.service';
 import { UserService } from '../../services/user.service';
 import { ToastService } from '../../shared/toast/toast.service';
+import { AlertService } from '../../services/alert.service';
 
-/** Toast dự phòng khi component bị khởi tạo thiếu DI (test/script). */
+declare let alertify: any;
+
 function withToastFallback(t: any): ToastService {
   if (t && typeof t.show === 'function' && typeof t.success === 'function' && typeof t.error === 'function') return t;
   return { show() {}, success() {}, error() {}, dismiss() {}, tr: (_k: string, f: string) => f } as unknown as ToastService;
@@ -221,17 +223,10 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private toast: ToastService,
+    private alertService: AlertService,
     @Inject(I18NEXT_SERVICE) private i18n: ITranslationService,
   ) {
     this.toast = withToastFallback(toast);
-  }
-
-  private confirmDeleteText(): string {
-    try {
-      return this.i18n.t('social.confirmDelete');
-    } catch {
-      return 'Delete this post?';
-    }
   }
 
   /** Avatar/tên -> trang profile của user đó (giống customerfe). */
@@ -245,7 +240,6 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
       this.me = me; this.meId = UserService.profileId(me); this.moments.forEach(m => this.normalize(m));
       this.preloadForwardLists();
     });
-    // Permalink ?postId=, lọc ?userId=, ?viewId= (mã hóa AES 'userId' như customerfe), ?store=.
     this.querySub = this.route.queryParamMap.subscribe((params) => {
       this.filterUserId = params.get('userId') || '';
       const viewId = params.get('viewId') || '';
@@ -257,7 +251,6 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
       this.loadFeed(true);
       if (postId) this.pinPost(postId);
     });
-    // Cuộn tới đáy thì tự tải thêm (không dùng nút Load more).
     this.scrollHandler = () => {
       const nearBottom = window.innerHeight + window.scrollY + 1000 >= document.body.scrollHeight;
       if (nearBottom && this.hasMore && !this.loading && !this.loadingMore && this.moments.length) {
@@ -265,7 +258,6 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
       }
     };
     window.addEventListener('scroll', this.scrollHandler);
-    // Realtime-lite giống wall gốc: 60s poll trang 1 khi tab đang hiển thị, chèn bài mới lên đầu.
     this.pollTimer = setInterval(() => {
       if (document.hidden || this.loading || this.loadingMore || this.reportedFeed || this.hiddenFeed) return;
       const req = this.storeFeed
@@ -483,11 +475,25 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
   savingEdit = false;
   likedComments: { [id: string]: boolean } = {};
 
+  // ---------- thanh reaction hover (đúng 7 emoji của app-social-moment-emoji gốc) ----------
+  readonly reactionEmojis = ['👍', '💖', '😍', '😀', '😱', '😭', '😡'];
+  reactionFor: string | null = null;
+  private reactionTimer: any = null;
+
+  openReactions(c: any): void {
+    clearTimeout(this.reactionTimer);
+    this.reactionFor = this.commentId(c);
+  }
+
+  scheduleCloseReactions(): void {
+    clearTimeout(this.reactionTimer);
+    this.reactionTimer = setTimeout(() => (this.reactionFor = null), 250);
+  }
+
   editingPostId: string | null = null;
   editPostDraft = '';
   savingPost = false;
   deletingPostId: string | null = null;
-  deleteTarget: any = null;
 
   // ---------- sửa bài qua popup Edit Moment ----------
   editingMoment: any = null;
@@ -528,29 +534,32 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
 
   deletePost(m: any): void {
     if (this.deletingPostId) return;
-    // Giống social-moment-item gốc: bài bị lock thì chặn xóa.
+
     if (m?.lockMomentStatus === 'YES') { this.actionError = 'social.lockedMoment'; return; }
-    this.deleteTarget = m;
     this.openMenuId = null;
-  }
-
-  closeDeleteDialog(): void {
-    if (!this.deletingPostId) this.deleteTarget = null;
-  }
-
-  confirmDeletePost(): void {
-    const m = this.deleteTarget;
-    if (!m || this.deletingPostId) return;
-    this.deletingPostId = m._id;
-    this.momentService.deleteMoment(m._id).subscribe({
-      next: () => {
-        this.moments = this.moments.filter((x) => x._id !== m._id);
-        this.deletingPostId = null;
-        this.deleteTarget = null;
-        this.toast?.success('social.postDeleted', 'Moment deleted.');
+    alertify.confirm(
+      this.i18n.t('alertify.do_you_want_to_remove_a_moment'),
+      (ok: boolean) => {
+        if (!ok) return;
+        this.deletingPostId = m._id;
+        this.momentService.deleteMoment(m._id).subscribe({
+          next: () => {
+            this.moments = this.moments.filter((x) => x._id !== m._id);
+            this.deletingPostId = null;
+            this.toast?.success('social.postDeleted', 'Moment deleted.');
+          },
+          error: (e) => { this.deletingPostId = null; this.toast?.error(e); },
+        });
       },
-      error: (e) => { this.deletingPostId = null; this.toast?.error(e); },
-    });
+    ).set({ title: this.i18n.t('common.confirm'), movable: false }).set('labels', { ok: this.i18n.t('alertify.ok'), cancel: this.i18n.t('common.cancel') });
+  }
+
+  deleteMoment(m: any) {
+    if(this.me.lockMomentStatus === 'YES'){
+      this.alertService.errorTop((this.i18n.t('cant_delete_moment_error_message')));
+      return;
+    }
+    this.deletePost(m);
   }
 
   likeSummary(m: any): string {
@@ -605,21 +614,38 @@ export class SocialMomentComponent implements OnInit, OnDestroy {
     return !!id && String(id) === String(this.meId);
   }
 
+  /** Emoji expression cuối cùng (đúng getExpressions(...).slice(-1) của gốc). */
+  lastExpression(c: any): string {
+    const arr = c?.expressions || [];
+    if (!arr.length) return '';
+    const e = arr[arr.length - 1];
+    return typeof e === 'string' ? e : e?.expressedContent || '👍';
+  }
+
   isLikedComment(c: any): boolean {
     return !!this.likedComments[String(this.meId) + ':' + this.commentId(c)] || (c.expressions || []).some((e: any) => String(e.expressedBy) === String(this.meId));
   }
 
-  likeFeedComment(m: any, c: any): void {    const id = this.commentId(c);
+  likeFeedComment(m: any, c: any, content = '👍'): void {
+    const id = this.commentId(c);
     if (!m?._id || !id) return;
-    const key = String(this.meId) + ':' + id;
-    const liked = !!this.likedComments[key];
-    if (liked) return;
-    this.likedComments[key] = true;
-    c.expressions = [...(c.expressions || []), { expressedBy: this.meId, expressedContent: '👍' }];
-    this.momentService.expressComment(m._id, id, '👍').subscribe({
+    this.reactionFor = null;
+    clearTimeout(this.reactionTimer);
+    c.expressions = c.expressions || [];
+    const mine = c.expressions.find((x: any) => String(x.expressedBy) === String(this.meId));
+    let expr: any;
+    if (!mine) {
+      expr = { expressedBy: this.meId, expression: 'LIKE', expressedAt: new Date(), expressedContent: content };
+      c.expressions = [...c.expressions, expr];
+    } else if (mine.expressedContent === content) {
+      expr = { ...mine };
+      c.expressions = c.expressions.filter((x: any) => String(x.expressedBy) !== String(this.meId));
+    } else {
+      expr = { ...mine, expressedContent: content };
+      c.expressions = c.expressions.map((x: any) => (String(x.expressedBy) === String(this.meId) ? expr : x));
+    }
+    this.momentService.expressComment(m._id, id, expr).subscribe({
       error: (e) => {
-        delete this.likedComments[key];
-        c.expressions = (c.expressions || []).slice(0, -1);
         this.toast?.error(e);
       },
     });

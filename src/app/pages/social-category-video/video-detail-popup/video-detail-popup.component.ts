@@ -35,8 +35,14 @@ export class VideoDetailPopupComponent implements OnChanges {
   likedComments: { [id: string]: boolean } = {};
   error = '';
   private selectionVersion = 0;
+  private meId: string | number | null = null;
 
-  constructor(private momentService: MomentService, private router: Router) {}
+  constructor(private momentService: MomentService, private router: Router, private userService: UserService) {
+    this.userService.getCurrentUser().subscribe({
+      next: (me: any) => (this.meId = UserService.profileId(me) || me?.id || null),
+      error: () => {},
+    });
+  }
 
   goToProfile(e: Event): void {
     e.stopPropagation();
@@ -163,15 +169,51 @@ export class VideoDetailPopupComponent implements OnChanges {
     return this.video?.momentLikes?.length ?? this.video?.likeCount ?? 0;
   }
 
-  likeComment(c: any): void {
+  // ---------- thanh reaction hover (đúng 7 emoji của app-social-moment-emoji gốc) ----------
+  readonly reactionEmojis = ['👍', '💖', '😍', '😀', '😱', '😭', '😡'];
+  reactionFor: string | null = null;
+  private reactionTimer: any = null;
+
+  openReactions(c: any): void {
+    clearTimeout(this.reactionTimer);
+    this.reactionFor = c.comment_id || c._id;
+  }
+
+  scheduleCloseReactions(): void {
+    clearTimeout(this.reactionTimer);
+    this.reactionTimer = setTimeout(() => (this.reactionFor = null), 250);
+  }
+
+  /** Emoji expression cuối cùng (đúng getExpressions(...).slice(-1) của gốc). */
+  lastExpression(c: any): string {
+    const arr = c?.expressions || [];
+    if (!arr.length) return '';
+    const e = arr[arr.length - 1];
+    return typeof e === 'string' ? e : e?.expressedContent || '👍';
+  }
+
+  likeComment(c: any, content = '👍'): void {
     const id = c.comment_id || c._id;
-    if (!this.video?.momentId || !id || this.likedComments[id]) return;
-    this.likedComments[id] = true;
-    c.expressions = [...(c.expressions || []), '👍'];
-    this.momentService.expressComment(this.video.momentId, id, '👍').subscribe({
+    if (!this.video?.momentId || !id) return;
+    this.reactionFor = null;
+    clearTimeout(this.reactionTimer);
+    c.expressions = c.expressions || [];
+    const mine = c.expressions.find((x: any) => String(x.expressedBy) === String(this.meId));
+    let expr: any;
+    if (!mine) {
+      expr = { expressedBy: this.meId, expression: 'LIKE', expressedAt: new Date(), expressedContent: content };
+      c.expressions = [...c.expressions, expr];
+    } else if (mine.expressedContent === content) {
+      expr = { ...mine };
+      c.expressions = c.expressions.filter((x: any) => String(x.expressedBy) !== String(this.meId));
+    } else {
+      expr = { ...mine, expressedContent: content };
+      c.expressions = c.expressions.map((x: any) => (String(x.expressedBy) === String(this.meId) ? expr : x));
+    }
+    this.likedComments[id] = c.expressions.some((x: any) => String(x.expressedBy) === String(this.meId));
+    this.momentService.expressComment(this.video.momentId, id, expr).subscribe({
       error: () => {
         delete this.likedComments[id];
-        c.expressions = (c.expressions || []).slice(0, -1);
       },
     });
   }

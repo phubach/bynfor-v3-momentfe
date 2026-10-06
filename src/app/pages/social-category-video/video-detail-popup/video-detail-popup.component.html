@@ -78,10 +78,16 @@
             </div>
           </div>
           <div class="comment-actions">
-            <button type="button" [class.on]="likedComments[c.comment_id || c._id]" (click)="likeComment(c)" aria-label="Like comment">
-              <i class="fa fa-thumbs-o-up" aria-hidden="true"></i>
-              <span *ngIf="(c.expressions || []).length">{{ (c.expressions || []).length }}</span>
-            </button>
+            <div class="react-wrap" (mouseenter)="openReactions(c)" (mouseleave)="scheduleCloseReactions()">
+              <div class="react-bar" *ngIf="reactionFor === (c.comment_id || c._id)" (mouseenter)="openReactions(c)">
+                <span *ngFor="let emoji of reactionEmojis" (click)="likeComment(c, emoji)">{{ emoji }}</span>
+              </div>
+              <button type="button" [class.on]="likedComments[c.comment_id || c._id]" (click)="likeComment(c)" aria-label="Like comment">
+                <i class="fa fa-thumbs-o-up" *ngIf="!(c.expressions || []).length" aria-hidden="true"></i>
+                <span class="expr" *ngIf="(c.expressions || []).length">{{ lastExpression(c) }}</span>
+                <span *ngIf="(c.expressions || []).length">{{ (c.expressions || []).length }}</span>
+              </button>
+            </div>
             <button type="button" (click)="openReply(c)" aria-label="Reply">
               <i class="fa fa-commenting-o" aria-hidden="true"></i>
             </button>

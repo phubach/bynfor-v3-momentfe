@@ -321,6 +321,32 @@
       flex-direction: column;
       gap: 2px;
 
+      .react-wrap {
+        position: relative;
+      }
+
+      .react-bar {
+        position: absolute;
+        bottom: calc(100% + 8px);
+        right: -6px;
+        z-index: 25;
+        display: flex;
+        gap: 8px;
+        background: #000;
+        border-radius: 24px;
+        padding: 8px 14px;
+        font-size: 26px;
+        white-space: nowrap;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+
+        span {
+          cursor: pointer;
+          transition: transform 0.12s;
+
+          &:hover { transform: scale(1.3); }
+        }
+      }
+
       button {
         border: 0;
         background: transparent;
@@ -461,9 +487,3 @@
 @media(max-width:720px){.forward-overlay{padding:24px 12px}.forward-panel{width:calc(100vw - 24px);max-height:calc(100dvh - 48px)}.forward-cols{grid-template-columns:1fr}}
 .link-preview{margin:10px 0}a{color:#1769ff;overflow-wrap:anywhere}
 
-.delete-overlay{position:fixed;inset:0;z-index:220;display:flex;align-items:center;justify-content:center;padding:56px 24px 32px;background:rgba(7,22,48,.93)}
-.delete-panel{width:min(520px,calc(100vw - 48px));overflow:hidden;border:1px solid rgba(255,255,255,.74);border-radius:18px;background:#fff;box-shadow:0 24px 68px rgba(0,0,0,.38)}
-.delete-panel header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 22px;border-bottom:1px solid #e7eef8}.delete-panel h3{margin:0;color:#14213d;font-size:18px}.delete-panel h3 i{margin-right:9px;color:#df4652}.delete-close{width:32px;height:32px;border:0;border-radius:50%;background:transparent;color:#5e6f93;font-size:23px;line-height:1;cursor:pointer}.delete-close:hover{background:#f1f5fb;color:#14213d}
-.delete-body{padding:22px}.delete-body p{margin:0;color:#14213d;font-size:15px;line-height:1.55}.delete-body small{display:block;margin-top:8px;color:#7585a2}
-.delete-panel footer{display:flex;justify-content:flex-end;gap:10px;padding:15px 22px;border-top:1px solid #e7eef8;background:#f8fbff}.delete-panel footer button{border:0;border-radius:10px;padding:10px 18px;font:inherit;font-weight:700;cursor:pointer}.delete-cancel{background:#eaf0f8;color:#334462}.delete-confirm{background:#df4652;color:#fff}.delete-confirm:hover{background:#c83240}.delete-confirm i{margin-right:6px}
-@media(max-width:640px){.delete-overlay{padding:24px 12px}.delete-panel{width:calc(100vw - 24px)}}

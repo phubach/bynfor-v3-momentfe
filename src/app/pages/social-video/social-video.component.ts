@@ -7,16 +7,8 @@ import { RelationsService } from '../../services/relations.service';
 import { UserService } from '../../services/user.service';
 import { ERelationStatus, ReelComment, ReelVideo, VideoTab } from './social-video.model';
 
-/**
- * Container social-video (move từ customerfe `tiktok.component`):
- * - BE GIỮ NGUYÊN: getVideos/getVideoCategories/getVideo/addVideoHistory/express/endorse/
- *   comment CRUD/expressComment/reportVideo+reportMoment/getCustomerLikeOrDisLike/searchHashTag,
- *   follow/unfollow/addToFriends/cancel/accept/getCustomerRelation/getFriendsWithFollowing.
- * - UI TÁCH MODULE theo yêu cầu leader: mỗi layout là 1 component con
- *   (category-bar, video-tabs, reel-player, reel-info, action-rail, comment-sheet,
- *   friend-pane, report-dialog, share-sheet, like-list, people-suggest-modal).
- *   Bỏ jQuery/Bootstrap/modal jQuery.
- */
+declare let alertify: any;
+
 @Component({
   selector: 'app-social-video',
   standalone: false,
@@ -91,7 +83,6 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
   profileLoading = false;
   memberProfile: any = null;
   relationUser: any = null;
-  removeFriendConfirmOpen = false;
 
   // ---------- Lưới duyệt video (gốc: category-video grid + video-history grid) ----------
   showGrid = false;
@@ -1401,19 +1392,19 @@ export class SocialVideoComponent implements OnInit, OnDestroy {
 
   profileRemoveFriend(): void {
     if (!this.memberProfile?.id || this.myUserId == null) return;
-    this.removeFriendConfirmOpen = true;
-  }
-
-  confirmProfileRemoveFriend(): void {
-    if (!this.memberProfile?.id || this.myUserId == null) return;
-    this.removeFriendConfirmOpen = false;
-    this.relations.removeFromFriends(this.memberProfile.id, this.myUserId as any).subscribe({
-      next: () => {
-        this.relationUser = { ...(this.relationUser || {}), relationStatus: 'UNFOLLOWED', relationStatusText: '' };
-        this.showToast(this.tr('cancel_friend_successfully', 'Friend removed successfully.'), 'success');
+    alertify.confirm(
+      this.i18n.t('alertify.do_you_want_to_remove_friend'),
+      (ok: boolean) => {
+        if (!ok) return;
+        this.relations.removeFromFriends(this.memberProfile.id, this.myUserId as any).subscribe({
+          next: () => {
+            this.relationUser = { ...(this.relationUser || {}), relationStatus: 'UNFOLLOWED', relationStatusText: '' };
+            this.showToast(this.tr('cancel_friend_successfully', 'Friend removed successfully.'), 'success');
+          },
+          error: (err: any) => this.showToast(this.errMsg(err), 'error'),
+        });
       },
-      error: (err: any) => this.showToast(this.errMsg(err), 'error'),
-    });
+    ).set({ title: this.i18n.t('common.confirm'), movable: false }).set('labels', { ok: this.i18n.t('alertify.ok'), cancel: this.i18n.t('common.cancel') });
   }
 
   profileFollow(): void {
